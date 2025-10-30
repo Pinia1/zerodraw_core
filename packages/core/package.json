@@ -1,0 +1,45 @@
+{
+  "name": "@monorepo/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "React 组件库",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "clean": "rm -rf dist",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "echo \"No tests yet\""
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "styled-components": "^6.1.19",
+    "antd": "^5.0.0",
+    "react-konva": "^18.2.10",
+    "react-konva-utils": "^1.0.6"
+  },
+  "dependencies": {
+    "@monorepo/common": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@types/styled-components": "^5.1.35",
+    "antd": "^5.27.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "styled-components": "^6.1.19",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}

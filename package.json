@@ -1,0 +1,32 @@
+{
+  "name": "frontend-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "基于 pnpm 的前端 monorepo 工程",
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./packages/**\" dev",
+    "dev:core": "pnpm --filter @monorepo/core dev",
+    "dev:common": "pnpm --filter @monorepo/common dev",
+    "dev:web": "pnpm --filter @monorepo/web dev",
+    "build": "pnpm --filter \"./packages/**\" build",
+    "lint": "eslint \"packages/**/*.{ts,tsx,js,jsx}\" --max-warnings 0",
+    "lint:fix": "eslint \"packages/**/*.{ts,tsx,js,jsx}\" --fix",
+    "test": "pnpm --filter \"./packages/**\" test",
+    "clean": "pnpm --filter \"./packages/**\" clean && rm -rf node_modules",
+    "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "prettier": "^3.1.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
