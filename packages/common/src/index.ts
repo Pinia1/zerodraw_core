@@ -1,3 +1,4 @@
 export * from 'ahooks';
-export * from './types';
 export * from './utils';
+
+export { default as useMediaQuery } from './hooks/useMediaQuery';

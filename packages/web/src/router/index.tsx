@@ -1,6 +1,7 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 import Drawing from '../pages/Drawing';
+import Login from '../pages/Login';
 import NotFound from '../pages/NotFound';
 
 export const router = createBrowserRouter([
@@ -10,6 +11,10 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Navigate to="/drawing" replace />,
+      },
+      {
+        path: 'drawing',
         element: <Drawing />,
       },
       {
@@ -17,5 +22,9 @@ export const router = createBrowserRouter([
         element: <NotFound />,
       },
     ],
+  },
+  {
+    path: '/login',
+    element: <Login />,
   },
 ]);
