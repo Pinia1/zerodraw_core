@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
+import { User } from '../entities/UserEntities';
+import { generateToken } from '../jwt';
+import { userRepository } from '../repository/UserRepository';
 
 interface GithubTokenResponse {
   access_token: string;
+  refresh_token: string;
   token_type: string;
   scope: string;
 }
@@ -11,11 +15,11 @@ interface GithubUser {
   id: number;
   login: string;
   avatar_url: string;
-  email: string | null;
-  name: string | null;
-  bio: string | null;
-  blog: string | null;
-  location: string | null;
+  email: string | undefined;
+  name: string | undefined;
+  bio: string | undefined;
+  blog: string | undefined;
+  location: string | undefined;
   public_repos: number;
   followers: number;
   following: number;
@@ -31,18 +35,13 @@ export const githubLogin = async (req: Request, res: Response) => {
   if (!code) {
     return res.status(400).json({ error: 'Authorization code is required' });
   }
-
   const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
   const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
   if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
     console.error('GitHub OAuth credentials not configured');
     return res.status(500).json({ error: 'Server configuration error' });
   }
-
   try {
-    console.log('Exchanging code for access token...');
-
-    // 1. 用 code 换取 access_token
     const tokenResponse = await axios.post<GithubTokenResponse>(
       'https://github.com/login/oauth/access_token',
       {
@@ -64,8 +63,6 @@ export const githubLogin = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Failed to get access token' });
     }
 
-    console.log('Access token received, fetching user info...');
-
     // 2. 用 token 获取用户信息
     const userResponse = await axios.get<GithubUser>('https://api.github.com/user', {
       headers: {
@@ -75,12 +72,8 @@ export const githubLogin = async (req: Request, res: Response) => {
     });
 
     const githubUser = userResponse.data;
-
-    console.log(`User authenticated: ${githubUser.login}`);
-
-    // 3. 构造返回的用户信息
-    const user = {
-      id: githubUser.id,
+    const userInfo = {
+      githubId: githubUser.id,
       username: githubUser.login,
       avatar: githubUser.avatar_url,
       email: githubUser.email,
@@ -91,14 +84,26 @@ export const githubLogin = async (req: Request, res: Response) => {
       publicRepos: githubUser.public_repos,
       followers: githubUser.followers,
       following: githubUser.following,
+      githubAccessToken: accessToken,
     };
 
-    // 4. 返回结果
-    // 注意：实际生产环境中，应该生成自己的 JWT token
-    res.json({
+    let user = await userRepository.findOne({ where: { githubId: githubUser.id } });
+    if (user) {
+      Object.assign(user, userInfo);
+      user = await userRepository.save(user as User);
+    } else {
+      user = userRepository.create(userInfo);
+      user = await userRepository.save(user);
+    }
+
+    const token = generateToken({
+      id: user.id,
+    });
+
+    res.send({
       success: true,
-      token: accessToken, // 在生产环境中应该生成自己的 JWT
-      user,
+      token: token,
+      user: user,
     });
   } catch (error: any) {
     console.error('GitHub OAuth Error:', error.response?.data || error.message);
