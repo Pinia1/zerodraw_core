@@ -1,5 +1,18 @@
+import { useSize } from '@monorepo/common';
 import { Drawing } from '@monorepo/core';
+import { useRef } from 'react';
+
+import styled from 'styled-components';
+
+const Container = styled.div`
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+`;
 
 export default () => {
-  return <Drawing />;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const size = useSize(containerRef);
+
+  return <Container ref={containerRef}>{size && <Drawing size={size} />}</Container>;
 };
