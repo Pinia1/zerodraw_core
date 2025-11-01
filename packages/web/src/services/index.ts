@@ -1,5 +1,6 @@
 import { axios, AxiosError, InternalAxiosRequestConfig } from '@monorepo/common';
 import { message } from 'antd';
+import { useUserStore } from '../store/useUserStore';
 
 const request = axios.create({
   baseURL: 'http://localhost:3008',
@@ -38,15 +39,13 @@ request.interceptors.response.use(
       switch (status) {
         case 401:
           message.error('登录失败');
-          localStorage.removeItem('token');
-          window.location.href = '/login';
+          setTimeout(() => {
+            useUserStore.getState().setUser(null);
+            window.location.href = '/login';
+          }, 1000);
           break;
-
-        default:
-          console.error(`❌ 请求失败: ${status}`, data);
       }
     }
-    message.error('请求失败');
     return Promise.reject(error);
   }
 );

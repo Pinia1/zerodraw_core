@@ -1,29 +1,36 @@
 import { useMediaQuery, useRequest } from '@monorepo/common';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, Skeleton, theme } from 'antd';
 import { useMemo } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
+import Dot from '../componenets/Dot';
 import { getUserInfo } from '../services/login';
+import { useUserStore } from '../store/useUserStore';
 
-const Root = styled.div`
+const Root = styled.div<{ $theme: any }>`
   width: 100%;
   min-height: 100vh;
+  background: ${({ $theme }) => ($theme === 'dark' ? '#000' : '#fff')};
 `;
 
 function Layout() {
   const [windowTheme] = useMediaQuery();
-  const navigate = useNavigate();
+  const { setUser } = useUserStore();
   const algorithm = useMemo(() => {
     return windowTheme === 'dark' ? theme.darkAlgorithm : theme.compactAlgorithm;
   }, [windowTheme]);
 
-  useRequest(getUserInfo, {
+  const { loading } = useRequest(getUserInfo, {
     onSuccess: (data) => {
       if (data) {
-        console.log(data, 'userinfo');
+        setUser(data as any);
       }
     },
   });
+
+  if (loading) {
+    return <Skeleton active />;
+  }
 
   return (
     <ConfigProvider
@@ -31,8 +38,9 @@ function Layout() {
         algorithm: [algorithm, theme.compactAlgorithm],
       }}
     >
-      <Root>
+      <Root $theme={windowTheme}>
         <Outlet />
+        <Dot />
       </Root>
     </ConfigProvider>
   );

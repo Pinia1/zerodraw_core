@@ -14,6 +14,8 @@ export const getUserInfo = () => {
   return request.get('/api/user/info');
 };
 
-export const githubLogin = (code: string): Promise<{ token: string; user: User }> => {
-  return request.get(`/github/login?code=${code}`);
+export const githubLogin = (params: { code: string }): Promise<{ token: string; user: User }> => {
+  return request.get(`/github/login`, {
+    params,
+  });
 };

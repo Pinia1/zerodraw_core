@@ -12,15 +12,17 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
     "@monorepo/common": "workspace:*",
     "@monorepo/core": "workspace:*",
     "antd": "^5.27.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-konva": "^18.2.10",
+    "react-konva-utils": "^1.0.6",
     "react-router-dom": "^7.9.5",
     "styled-components": "^6.1.19",
-    "react-konva": "^18.2.10",
-    "react-konva-utils": "^1.0.6"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",
