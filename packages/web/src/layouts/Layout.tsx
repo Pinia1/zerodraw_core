@@ -1,8 +1,9 @@
-import { useMediaQuery } from '@monorepo/common';
+import { useMediaQuery, useRequest } from '@monorepo/common';
 import { ConfigProvider, theme } from 'antd';
 import { useMemo } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { getUserInfo } from '../services/login';
 
 const Root = styled.div`
   width: 100%;
@@ -11,10 +12,18 @@ const Root = styled.div`
 
 function Layout() {
   const [windowTheme] = useMediaQuery();
-
+  const navigate = useNavigate();
   const algorithm = useMemo(() => {
     return windowTheme === 'dark' ? theme.darkAlgorithm : theme.compactAlgorithm;
   }, [windowTheme]);
+
+  useRequest(getUserInfo, {
+    onSuccess: (data) => {
+      if (data) {
+        console.log(data, 'userinfo');
+      }
+    },
+  });
 
   return (
     <ConfigProvider

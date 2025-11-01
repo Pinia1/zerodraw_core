@@ -5,25 +5,37 @@ import 'reflect-metadata';
 import { AppDataSource } from './db/connection';
 import { errorMiddleware } from './middleware/error';
 import authRoutes from './routes/auth';
+import userRoutes from './routes/user';
 
 dotenv.config();
 
 const app: Express = express();
 const PORT = process.env.PORT || 3008;
 
-// 中间件
+// 基础中间件
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(errorMiddleware);
 
-app.use('/github', authRoutes);
-app.get('/', (req: Request, res: Response) => {
+// 路由
+app.get('/', (_req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
+
+app.use('/github', authRoutes);
+app.use('/api/user', userRoutes);
+
+// 404 处理（放在所有路由之后）
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: 'not found' });
+  res.status(404).json({
+    code: 404,
+    message: '请求的资源不存在',
+    path: req.path,
+  });
 });
+
+// 错误处理中间件（必须放在最后）
+app.use(errorMiddleware);
 
 // 启动服务器
 const server = app.listen(PORT, async () => {

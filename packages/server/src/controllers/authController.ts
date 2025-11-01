@@ -1,8 +1,10 @@
 import axios from 'axios';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { User } from '../entities/UserEntities';
 import { generateToken } from '../jwt';
+import { successResponse } from '../middleware/error';
 import { userRepository } from '../repository/UserRepository';
+import { ApiError } from '../utils/ApiError';
 
 interface GithubTokenResponse {
   access_token: string;
@@ -25,23 +27,27 @@ interface GithubUser {
   following: number;
 }
 
-export const githubLogin = async (req: Request, res: Response) => {
-  const { error, code } = req.query;
-
-  if (error) {
-    return res.status(400).json(error);
-  }
-
-  if (!code) {
-    return res.status(400).json({ error: 'Authorization code is required' });
-  }
-  const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
-  const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
-  if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-    console.error('GitHub OAuth credentials not configured');
-    return res.status(500).json({ error: 'Server configuration error' });
-  }
+export const githubLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { error, code } = req.query;
+
+    if (error) {
+      throw ApiError.badRequest(`GitHub授权失败: ${error}`);
+    }
+
+    if (!code) {
+      throw ApiError.badRequest('缺少授权码');
+    }
+
+    const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
+    const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
+
+    if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+      console.error('GitHub OAuth credentials not configured');
+      throw ApiError.internal('服务器配置错误');
+    }
+
+    // 1. 用授权码换取 access token
     const tokenResponse = await axios.post<GithubTokenResponse>(
       'https://github.com/login/oauth/access_token',
       {
@@ -60,7 +66,7 @@ export const githubLogin = async (req: Request, res: Response) => {
 
     if (!accessToken) {
       console.error('No access token received from GitHub');
-      return res.status(401).json({ error: 'Failed to get access token' });
+      throw ApiError.unauthorized('获取访问令牌失败');
     }
 
     // 2. 用 token 获取用户信息
@@ -87,6 +93,7 @@ export const githubLogin = async (req: Request, res: Response) => {
       githubAccessToken: accessToken,
     };
 
+    // 3. 查找或创建用户
     let user = await userRepository.findOne({ where: { githubId: githubUser.id } });
     if (user) {
       Object.assign(user, userInfo);
@@ -96,28 +103,25 @@ export const githubLogin = async (req: Request, res: Response) => {
       user = await userRepository.save(user);
     }
 
+    // 4. 生成 JWT token
     const token = generateToken({
       id: user.id,
     });
 
-    res.send({
-      success: true,
-      token: token,
-      user: user,
-    });
+    return successResponse(res, { token, user }, '登录成功');
   } catch (error: any) {
     console.error('GitHub OAuth Error:', error.response?.data || error.message);
 
-    if (error.response?.status === 401) {
-      return res.status(401).json({
-        error: 'Invalid authorization code',
-        details: error.response?.data,
-      });
+    // 处理 axios 错误
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        return next(ApiError.unauthorized('授权码无效或已过期'));
+      }
+      if (error.response?.status === 403) {
+        return next(ApiError.forbidden('GitHub API 访问被限制'));
+      }
     }
 
-    res.status(500).json({
-      error: 'Authentication failed',
-      message: process.env.NODE_ENV === 'development' ? error.message : undefined,
-    });
+    next(error);
   }
 };

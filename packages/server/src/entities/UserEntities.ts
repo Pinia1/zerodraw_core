@@ -13,7 +13,6 @@ export class User {
   id: number;
 
   @Column({ type: 'int', unique: true, name: 'github_id' })
-  @Index()
   githubId: number;
 
   @Column({ type: 'int', default: 0, name: 'view_num' })
