@@ -1,16 +1,11 @@
 import React from 'react';
-import { Layer, Rect, Stage } from 'react-konva';
+import { Stage } from 'react-konva';
 import type { DrawingProps } from '..';
+import useBindStageRef from '../hooks/useBindRef';
 
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size } = props;
-
-  return (
-    <Stage width={size.width} height={size.height}>
-      <Layer>
-        <Rect width={size.width} height={size.height} fill="red" />
-      </Layer>
-    </Stage>
-  );
+  const stageRef = useBindStageRef();
+  return <Stage ref={stageRef} style={{}} width={size.width} height={size.height}></Stage>;
 };
 export default Drawing;
