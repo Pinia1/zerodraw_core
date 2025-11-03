@@ -1,5 +1,8 @@
 import { CanvasConfigTypes } from '../types/Drawing';
 
+export const PROMPT_WIDTH = 250;
+export const ASIDE_WIDTH = 250;
+export const RATIO = 16 / 9;
 export const initConfig: CanvasConfigTypes = {
   scale: 1,
   stagePosition: { x: 0, y: 0 },

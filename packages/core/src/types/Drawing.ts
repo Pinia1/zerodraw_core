@@ -56,3 +56,16 @@ export interface CanvasConfigTypes {
   //layer 背景色
   layerBackground: string;
 }
+
+export interface StageConfigTypes {
+  scale: number;
+  x: number;
+  y: number;
+}
+
+export interface LayerConfigTypes {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}

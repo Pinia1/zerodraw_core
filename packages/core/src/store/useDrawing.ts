@@ -1,10 +1,15 @@
 import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { LayerConfigTypes, StageConfigTypes } from '../types/Drawing';
 
 interface DrawingState {
   stageRef: React.RefObject<Konva.Stage> | null;
   bindRef: (ref: React.RefObject<Konva.Stage>) => void;
+  stageConfig: StageConfigTypes;
+  setStageConfig: (config: StageConfigTypes) => void;
+  layerConfig: LayerConfigTypes;
+  setLayerConfig: (config: LayerConfigTypes) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -12,6 +17,23 @@ export const useDrawingStore = create<DrawingState>()(
     (set, get) => ({
       stageRef: null,
       bindRef: (ref: DrawingState['stageRef']) => set({ stageRef: ref }),
+
+      //stage config
+      stageConfig: {
+        scale: 1,
+        x: 0,
+        y: 0,
+      },
+      setStageConfig: (config: StageConfigTypes) => set({ stageConfig: config }),
+
+      //layer config
+      layerConfig: {
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+      },
+      setLayerConfig: (config: LayerConfigTypes) => set({ layerConfig: config }),
     }),
     {
       name: 'drawing-storage',
