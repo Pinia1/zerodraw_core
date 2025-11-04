@@ -21,14 +21,15 @@
     "test": "echo \"No tests yet\""
   },
   "peerDependencies": {
+    "antd": "^5.0.0",
+    "konva": "^9.2.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "styled-components": "^6.1.19",
-    "antd": "^5.0.0",
     "react-konva": "^18.2.10",
     "react-konva-utils": "^1.0.6",
+    "styled-components": "^6.1.19",
     "zustand": "^5.0.8",
-    "konva": "^9.2.0"
+    "use-image": "^1.1.4"
   },
   "dependencies": {
     "@monorepo/common": "workspace:*"
@@ -38,12 +39,13 @@
     "@types/react-dom": "^18.2.0",
     "@types/styled-components": "^5.1.35",
     "antd": "^5.27.6",
+    "konva": "^9.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.19",
     "tsup": "^8.0.0",
     "typescript": "^5.3.0",
     "zustand": "^5.0.8",
-    "konva": "^9.2.0"
+    "use-image": "^1.1.4"
   }
 }

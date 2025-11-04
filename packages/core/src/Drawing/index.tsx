@@ -1,25 +1,38 @@
-import { useMount } from '@monorepo/common';
+import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
+import Konva from 'konva';
 import React from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
 import useBindStageRef from '../hooks/useBindRef';
 import { useDrawingStore } from '../store/useDrawing';
-import { ASIDE_WIDTH, PROMPT_WIDTH, RATIO } from '../utils/drawing';
+import type { Point2D } from '../types/Drawing';
+import {
+  ASIDE_WIDTH,
+  INCREASE_SCALE,
+  MAX_SCALE,
+  MIN_SCALE,
+  PROMPT_WIDTH,
+  RATIO,
+  REDUCE_SCALE,
+  WIDTH,
+} from '../utils/drawing';
 import Layer from './components/Layer';
+import Mosic from './components/Mosic';
 
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size } = props;
   const stageRef = useBindStageRef();
-  const { stageConfig, setLayerConfig } = useDrawingStore(
+  const { stageConfig, setStageConfig, setLayerConfig, layerConfig } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
       setStageConfig: state.setStageConfig,
       setLayerConfig: state.setLayerConfig,
+      layerConfig: state.layerConfig,
     }))
   );
 
-  const init = () => {
+  const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
     setLayerConfig({
@@ -28,10 +41,63 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       x: (size.width - PROMPT_WIDTH - width + ASIDE_WIDTH) / 2,
       y: (size.height - height) / 2,
     });
-  };
+  });
 
   useMount(() => {
     init();
+  });
+  //windows chrome会触发聚焦菜单栏
+  useKeyPress('alt', (e) => {
+    e.preventDefault();
+  });
+
+  const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
+    const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
+    const newScale = stageConfig.scale * scaleBy;
+    const newX = pointer?.x - (pointer?.x - stageConfig.x) * scaleBy;
+    const newY = pointer?.y - (pointer?.y - stageConfig.y) * scaleBy;
+    return {
+      scale: newScale,
+      x: newX,
+      y: newY,
+    };
+  });
+
+  const scaling = useMemoizedFn((newScale: number, newPos: Point2D) => {
+    const ratio = Math.round(((layerConfig.width * newScale) / WIDTH) * 100);
+    if (ratio < MIN_SCALE || ratio > MAX_SCALE) return;
+    setStageConfig({ scale: newScale, x: newPos.x, y: newPos.y });
+  });
+
+  const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
+    e.evt.preventDefault();
+    const stage = e.target.getStage();
+
+    const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
+    const deltaY = e.evt.deltaY;
+    //鼠标滚动事件值比较大而且有小数点
+    if (!Number.isInteger(deltaY)) {
+      const { scale, x, y } = getScaleAndPosition(
+        deltaY,
+        Math.abs(deltaY) > 2 ? REDUCE_SCALE : INCREASE_SCALE,
+        pointer
+      );
+      return scaling(scale, { x, y });
+    }
+
+    if (e.evt.altKey && deltaY !== 0) {
+      const { scale, x, y } = getScaleAndPosition(deltaY, 0.03, pointer);
+      return scaling(scale, { x, y });
+    }
+
+    const threshold = 1;
+    if (Math.abs(deltaY) < threshold && Math.abs(e.evt.deltaX) < threshold) return;
+
+    const newPosition = {
+      x: stageConfig.x - e.evt.deltaX,
+      y: stageConfig.y - deltaY,
+    };
+    setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
   });
 
   return (
@@ -44,9 +110,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y={stageConfig.y}
       scaleX={stageConfig.scale}
       scaleY={stageConfig.scale}
+      onContextMenu={(e) => e.evt.preventDefault()}
+      onWheel={onStageWheel}
     >
       <Layer />
+      <Mosic />
     </Stage>
   );
 };
+
 export default Drawing;

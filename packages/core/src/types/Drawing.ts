@@ -1,3 +1,8 @@
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
 export interface CanvasConfigTypes {
   /**画布缩放属性 */
   scale: number;
@@ -57,15 +62,11 @@ export interface CanvasConfigTypes {
   layerBackground: string;
 }
 
-export interface StageConfigTypes {
+export interface StageConfigTypes extends Point2D {
   scale: number;
-  x: number;
-  y: number;
 }
 
-export interface LayerConfigTypes {
+export interface LayerConfigTypes extends Point2D {
   width: number;
   height: number;
-  x: number;
-  y: number;
 }
