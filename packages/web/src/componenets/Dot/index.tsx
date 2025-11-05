@@ -18,6 +18,7 @@ const Dot = () => {
 
   return (
     <Dropdown
+      placement="top"
       menu={{
         items: [
           {

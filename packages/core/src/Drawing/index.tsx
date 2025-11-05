@@ -1,6 +1,6 @@
 import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -46,10 +46,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
+  const cursorStyle = useMemo(() => {
+    if (stageDraggable) return 'grab';
+    return 'default';
+  }, [stageDraggable]);
+
   useMount(() => {
     init();
   });
-  //windows chrome
   useKeyPress(
     'space',
     () => {
@@ -68,6 +72,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       events: ['keyup'],
     }
   );
+  //windows chrome
   useKeyPress('alt', (e) => e.preventDefault());
 
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
@@ -129,7 +134,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   return (
     <Stage
       ref={stageRef}
-      style={{}}
+      style={{
+        cursor: cursorStyle,
+      }}
       width={size.width}
       height={size.height}
       x={stageConfig.x}
@@ -137,12 +144,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       scaleX={stageConfig.scale}
       scaleY={stageConfig.scale}
       onContextMenu={(e) => e.evt.preventDefault()}
-      onWheel={onStageWheel}
       draggable={stageDraggable}
+      onWheel={onStageWheel}
       onDragEnd={onDragEnd}
     >
-      <Layer />
       <Mosic />
+      <Layer />
     </Stage>
   );
 };
