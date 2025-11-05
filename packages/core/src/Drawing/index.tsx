@@ -1,6 +1,6 @@
 import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
-import React from 'react';
+import React, { useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -23,6 +23,9 @@ import Mosic from './components/Mosic';
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size } = props;
   const stageRef = useBindStageRef();
+
+  const [stageDraggable, setStageDraggable] = useState(false);
+
   const { stageConfig, setStageConfig, setLayerConfig, layerConfig } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
@@ -46,10 +49,26 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   useMount(() => {
     init();
   });
-  //windows chrome会触发聚焦菜单栏
-  useKeyPress('alt', (e) => {
-    e.preventDefault();
-  });
+  //windows chrome
+  useKeyPress(
+    'space',
+    () => {
+      setStageDraggable(true);
+    },
+    {
+      events: ['keydown'],
+    }
+  );
+  useKeyPress(
+    'space',
+    () => {
+      setStageDraggable(false);
+    },
+    {
+      events: ['keyup'],
+    }
+  );
+  useKeyPress('alt', (e) => e.preventDefault());
 
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
@@ -75,7 +94,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
     const deltaY = e.evt.deltaY;
-    //鼠标滚动事件值比较大而且有小数点
     if (!Number.isInteger(deltaY)) {
       const { scale, x, y } = getScaleAndPosition(
         deltaY,
@@ -100,6 +118,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
   });
 
+  const onDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+    setStageConfig({
+      ...stageConfig,
+      x: e.target.x(),
+      y: e.target.y(),
+    });
+  });
+
   return (
     <Stage
       ref={stageRef}
@@ -112,6 +138,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       scaleY={stageConfig.scale}
       onContextMenu={(e) => e.evt.preventDefault()}
       onWheel={onStageWheel}
+      draggable={stageDraggable}
+      onDragEnd={onDragEnd}
     >
       <Layer />
       <Mosic />

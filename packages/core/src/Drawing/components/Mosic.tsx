@@ -23,8 +23,6 @@ const Mosic: React.FC = () => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       listening={false}
-      hitGraphEnabled={false}
-      imageSmoothingEnabled={false}
     >
       <Rect
         x={0}
