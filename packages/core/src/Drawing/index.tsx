@@ -99,13 +99,17 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     e.evt.preventDefault();
     const stage = e.target.getStage();
 
+    //cache test
     if (!wheelingRef.current) {
       wheelingRef.current = true;
       const layers = stage?.getChildren();
-      layers?.forEach((layer) => {
+      layers?.forEach((layer, idx) => {
+        if (!idx) {
+          layer.cache({ pixelRatio: 0.3 });
+        }
         const group = layer.getChildren((item) => item.getType() === 'Group')[0];
         if (group) {
-          group.cache({ pixelRatio: 0.6 });
+          group.cache({ pixelRatio: 0.3 });
         }
       });
     }

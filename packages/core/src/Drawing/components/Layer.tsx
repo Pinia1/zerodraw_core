@@ -24,9 +24,9 @@ const Layer: React.FC<LayerProps> = ({}) => {
     ctx.fillStyle = 'red';
 
     const path2D = new Path2D(testPath);
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 1000; i++) {
       ctx.save();
-      ctx.translate(i * 10, 0);
+      ctx.translate(i * 1, i * 1);
       ctx.fill(path2D);
       ctx.restore();
     }
