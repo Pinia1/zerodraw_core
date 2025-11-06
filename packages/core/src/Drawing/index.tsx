@@ -1,6 +1,6 @@
 import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -23,6 +23,8 @@ import Mosic from './components/Mosic';
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size } = props;
   const stageRef = useBindStageRef();
+
+  const wheelingRef = useRef(false);
 
   const [stageDraggable, setStageDraggable] = useState(false);
 
@@ -96,6 +98,17 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = e.target.getStage();
+
+    if (!wheelingRef.current) {
+      wheelingRef.current = true;
+      const layers = stage?.getChildren();
+      layers?.forEach((layer) => {
+        const group = layer.getChildren((item) => item.getType() === 'Group')[0];
+        if (group) {
+          group.cache({ pixelRatio: 0.6 });
+        }
+      });
+    }
 
     const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
     const deltaY = e.evt.deltaY;
