@@ -37,9 +37,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
 
   const handleCache = () => {
     if (!ref.current?.isCached()) {
-      ref.current?.cache({
-        imageSmoothingEnabled: true,
-      });
+      ref.current?.cache();
     }
   };
 
