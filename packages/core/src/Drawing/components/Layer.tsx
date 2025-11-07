@@ -10,10 +10,9 @@ interface LayerProps {}
 
 const Layer: React.FC<LayerProps> = ({}) => {
   const ref = useRef<Konva.Layer>(null);
-  const { layerConfig, stageConfig } = useDrawingStore(
+  const { layerConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
-      stageConfig: state.stageConfig,
     }))
   );
 
@@ -23,7 +22,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
     ctx.fillStyle = 'red';
 
     const path2D = new Path2D(testPath);
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 10; i++) {
       ctx.save();
       ctx.translate(i * 1, i * 1);
       ctx.fill(path2D);
@@ -32,7 +31,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
 
     setTimeout(() => {
       handleCache();
-    }, 16);
+    }, 2);
   }, []);
 
   const handleCache = () => {
@@ -40,6 +39,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ref.current?.cache();
     }
   };
+  console.log('?');
 
   return (
     <KonvaLayer

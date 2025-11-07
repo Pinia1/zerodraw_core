@@ -70,3 +70,13 @@ export interface LayerConfigTypes extends Point2D {
   width: number;
   height: number;
 }
+
+export enum Actions {
+  ADD = 'add',
+  ROPE = 'rope',
+  PEN = 'pen',
+  ERASER = 'eraser',
+  COLOR = 'color',
+  LASSO = 'lasso',
+  GRAPH = 'graph',
+}

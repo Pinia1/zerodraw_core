@@ -4,9 +4,13 @@ import React, { useMemo, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
+import { Tools } from '..';
+import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import { useDrawingStore } from '../store/useDrawing';
+import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
+import { Actions } from '../types/Drawing';
 import {
   ASIDE_WIDTH,
   INCREASE_SCALE,
@@ -21,17 +25,20 @@ import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 
 const Drawing: React.FC<DrawingProps> = (props) => {
-  const { size } = props;
+  const { size, tools = Tools.TOOL } = props;
   const stageRef = useBindStageRef();
-
   const [stageDraggable, setStageDraggable] = useState(false);
-
   const { stageConfig, setStageConfig, setLayerConfig, layerConfig } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
       setStageConfig: state.setStageConfig,
       setLayerConfig: state.setLayerConfig,
       layerConfig: state.layerConfig,
+    }))
+  );
+  const { activeKey } = useToolsStore(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
     }))
   );
 
@@ -48,8 +55,15 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const cursorStyle = useMemo(() => {
     if (stageDraggable) return 'grab';
+    switch (activeKey) {
+      case Actions.PEN:
+        return 'crosshair';
+
+      default:
+        break;
+    }
     return 'default';
-  }, [stageDraggable]);
+  }, [stageDraggable, activeKey]);
 
   useMount(() => {
     init();
@@ -132,25 +146,28 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   return (
-    <Stage
-      ref={stageRef}
-      style={{
-        cursor: cursorStyle,
-      }}
-      width={size.width}
-      height={size.height}
-      x={stageConfig.x}
-      y={stageConfig.y}
-      scaleX={stageConfig.scale}
-      scaleY={stageConfig.scale}
-      onContextMenu={(e) => e.evt.preventDefault()}
-      draggable={stageDraggable}
-      onWheel={onStageWheel}
-      onDragEnd={onDragEnd}
-    >
-      <Mosic />
-      <Layer />
-    </Stage>
+    <>
+      <Stage
+        ref={stageRef}
+        style={{
+          cursor: cursorStyle,
+        }}
+        width={size.width}
+        height={size.height}
+        x={stageConfig.x}
+        y={stageConfig.y}
+        scaleX={stageConfig.scale}
+        scaleY={stageConfig.scale}
+        onContextMenu={(e) => e.evt.preventDefault()}
+        draggable={stageDraggable}
+        onWheel={onStageWheel}
+        onDragEnd={onDragEnd}
+      >
+        <Mosic />
+        <Layer />
+      </Stage>
+      {tools?.includes(Tools.TOOL) && <Tool />}
+    </>
   );
 };
 
