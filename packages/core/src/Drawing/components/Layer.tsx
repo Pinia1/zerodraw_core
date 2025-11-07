@@ -1,7 +1,6 @@
 // 优化后的 Layer.tsx
 import Konva from 'konva';
-import { Layer as KonvaLayerType } from 'konva/lib/Layer';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { Group, Layer as KonvaLayer, Rect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -10,7 +9,6 @@ import testPath from '../../utils/path';
 interface LayerProps {}
 
 const Layer: React.FC<LayerProps> = ({}) => {
-  const ref = useRef<KonvaLayerType | null>(null);
   const { layerConfig, stageConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
@@ -24,7 +22,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
     ctx.fillStyle = 'red';
 
     const path2D = new Path2D(testPath);
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 50; i++) {
       ctx.save();
       ctx.translate(i * 1, i * 1);
       ctx.fill(path2D);
@@ -38,6 +36,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
       y={layerConfig.y}
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
+      cache={true}
     >
       <Group>
         <Rect
