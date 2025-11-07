@@ -1,6 +1,6 @@
-import { useDebounceFn, useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
+import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -23,8 +23,6 @@ import Mosic from './components/Mosic';
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size } = props;
   const stageRef = useBindStageRef();
-
-  const cacheRef = useRef(false);
 
   const [stageDraggable, setStageDraggable] = useState(false);
 
@@ -76,18 +74,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   );
   //windows chrome
   useKeyPress('alt', (e) => e.preventDefault());
-  const { run: clearLayersCache } = useDebounceFn(
-    () => {
-      const layers = stageRef?.current?.getChildren() || [];
-      layers?.forEach((layer) => {
-        layer.clearCache();
-      });
-      cacheRef.current = false;
-    },
-    {
-      wait: 300,
-    }
-  );
 
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
@@ -101,14 +87,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     };
   });
 
-  const cacheLayers = useMemoizedFn(() => {
-    const layers = stageRef?.current?.getChildren() || [];
-    layers?.forEach((layer) => {
-      if (!layer.attrs.cache) return;
-      layer.cache({ pixelRatio: 0.6 });
-    });
-  });
-
   const scaling = useMemoizedFn((newScale: number, newPos: Point2D) => {
     const ratio = Math.round(((layerConfig.width * newScale) / WIDTH) * 100);
     if (ratio < MIN_SCALE || ratio > MAX_SCALE) return;
@@ -118,13 +96,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = e.target.getStage();
-
-    //cache test
-    if (!cacheRef.current) {
-      cacheRef.current = true;
-      cacheLayers();
-    }
-    clearLayersCache();
 
     const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
     const deltaY = e.evt.deltaY;
@@ -152,14 +123,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
   });
 
-  const onDragMove = useMemoizedFn(() => {
-    if (!cacheRef.current) {
-      cacheRef.current = true;
-      cacheLayers();
-    }
-    clearLayersCache();
-  });
-
   const onDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
     setStageConfig({
       ...stageConfig,
@@ -184,7 +147,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       draggable={stageDraggable}
       onWheel={onStageWheel}
       onDragEnd={onDragEnd}
-      onDragMove={onDragMove}
     >
       <Mosic />
       <Layer />
