@@ -55,10 +55,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
           sceneFunc={(ctx) => renderAllPaths(ctx, pint2DToPath(line.points, line))}
         />
       ))}
-
-      {/* {drawingLayer?.lines.map((line) => (
-        <Path key={line.id} fill={'red'} data={pint2DToPath(line.points, line)} />
-      ))} */}
     </KonvaLayer>
   );
 };
