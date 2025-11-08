@@ -1,0 +1,33 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Layers } from '../types/Layers';
+
+interface LayerState {
+  layers: Layers[];
+  getLayers: () => Layers[];
+  setLayers: (layers: Layers[]) => void;
+
+  //drawingLayer
+  drawingLayer: Layers | null;
+  getDrawingLayer: () => Layers | null;
+  setDrawingLayer: (drawingLayer: Layers) => void;
+}
+
+const useLayerStore = create<LayerState>()(
+  persist(
+    (set, get) => ({
+      layers: [],
+      getLayers: () => get().layers,
+      setLayers: (layers) => set({ layers }),
+      //
+      drawingLayer: null,
+      getDrawingLayer: () => get().drawingLayer,
+      setDrawingLayer: (drawingLayer) => set({ drawingLayer }),
+    }),
+    {
+      name: 'drawing-layers-storage',
+      partialize: (state) => ({}),
+    }
+  )
+);
+export default useLayerStore;

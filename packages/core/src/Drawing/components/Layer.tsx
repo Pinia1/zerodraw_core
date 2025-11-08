@@ -1,7 +1,7 @@
 // 优化后的 Layer.tsx
 import Konva from 'konva';
 import React, { useCallback, useRef } from 'react';
-import { Group, Layer as KonvaLayer, Rect } from 'react-konva';
+import { Layer as KonvaLayer, Rect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import testPath from '../../utils/path';
@@ -16,7 +16,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
     }))
   );
 
-  // 使用单个 sceneFunc 绘制所有内容，而不是 100 个 Path 组件
   const renderAllPaths = useCallback((ctx: Konva.Context) => {
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = 'red';
@@ -28,10 +27,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ctx.fill(path2D);
       ctx.restore();
     }
-
-    setTimeout(() => {
-      handleCache();
-    }, 2);
   }, []);
 
   const handleCache = () => {
@@ -39,7 +34,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ref.current?.cache();
     }
   };
-  console.log('?');
 
   return (
     <KonvaLayer
@@ -48,16 +42,19 @@ const Layer: React.FC<LayerProps> = ({}) => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       ref={ref}
+      listening
     >
-      <Group>
-        <Rect
-          x={0}
-          y={0}
-          width={layerConfig.width}
-          height={layerConfig.height}
-          sceneFunc={renderAllPaths}
-        />
-      </Group>
+      <Rect
+        onMouseDown={(e) => {
+          console.log('?');
+        }}
+        listening
+        x={0}
+        y={0}
+        width={layerConfig.width}
+        height={layerConfig.height}
+        sceneFunc={renderAllPaths}
+      />
     </KonvaLayer>
   );
 };

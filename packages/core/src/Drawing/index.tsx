@@ -27,6 +27,7 @@ import Mosic from './components/Mosic';
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL } = props;
   const stageRef = useBindStageRef();
+
   const [stageDraggable, setStageDraggable] = useState(false);
   const { stageConfig, setStageConfig, setLayerConfig, layerConfig } = useDrawingStore(
     useShallow((state) => ({
@@ -41,7 +42,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-
+  // const { setDrawingLayer, getDrawingLayer } = useLayerStore(
+  //   useShallow((state) => ({
+  //     setDrawingLayer: state.setDrawingLayer,
+  //     getDrawingLayer: state.getDrawingLayer,
+  //   }))
+  // );
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
@@ -145,6 +151,18 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
+  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {};
+
+  //drawing layer
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    switch (activeKey) {
+      case Actions.PEN:
+        return onLineMouseDown(e);
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       <Stage
@@ -162,6 +180,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         draggable={stageDraggable}
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}
+        onMouseDown={handleMouseDown}
       >
         <Mosic />
         <Layer />
