@@ -79,4 +79,11 @@ export enum Actions {
   COLOR = 'color',
   LASSO = 'lasso',
   GRAPH = 'graph',
+  None = 'none',
+}
+
+export enum ToolTypes {
+  ACTION = 'action',
+  STATE = 'state',
+  DIVIDER = 'divider',
 }

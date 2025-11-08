@@ -17,8 +17,6 @@ const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
     '--container-active': colorInfoActive,
   } as React.CSSProperties;
 
-  console.log(token, '?');
-
   return (
     <div style={{ ...cssVariables, ...style }} {...rest}>
       {children}

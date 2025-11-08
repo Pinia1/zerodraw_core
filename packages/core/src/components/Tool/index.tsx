@@ -1,10 +1,21 @@
 import Icon from '@ant-design/icons';
+import { Divider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
-import { IconPen } from '../../icons';
+import {
+  IconAdd,
+  IconColor,
+  IconEraser,
+  IconLasso,
+  IconPen,
+  IconPoint,
+  IconRect,
+  IconRedo,
+  IconUndo,
+} from '../../icons';
 import useToolsStore from '../../store/useTools';
-import { Actions } from '../../types/Drawing';
+import { Actions, ToolTypes } from '../../types/Drawing';
 import C from '../Container';
 
 const Container = styled(C)`
@@ -53,50 +64,98 @@ const Tool: React.FC = () => {
   );
   const toolMenus: {
     key: Actions;
-    icon: React.ReactNode;
+    icon?: React.ReactNode;
+    type: ToolTypes;
+    onClick?: () => Promise<void> | void;
   }[] = [
     {
       key: Actions.ADD,
-      icon: <Icon component={IconPen} />,
+      icon: <Icon component={IconAdd} />,
+      type: ToolTypes.ACTION,
+      onClick: () => {},
+    },
+    {
+      key: Actions.None,
+      icon: <Icon component={IconAdd} />,
+      type: ToolTypes.DIVIDER,
     },
     {
       key: Actions.ROPE,
-      icon: <Icon component={IconPen} />,
+      icon: <Icon component={IconPoint} />,
+      type: ToolTypes.STATE,
     },
     {
       key: Actions.PEN,
       icon: <Icon component={IconPen} />,
+      type: ToolTypes.STATE,
     },
     {
       key: Actions.ERASER,
-      icon: <Icon component={IconPen} />,
+      icon: <Icon component={IconEraser} />,
+      type: ToolTypes.STATE,
     },
     {
       key: Actions.COLOR,
-      icon: <Icon component={IconPen} />,
+      icon: <IconColor fillColor="#000" />,
+      type: ToolTypes.ACTION,
+      onClick: () => {},
     },
     {
       key: Actions.GRAPH,
-      icon: <Icon component={IconPen} />,
+      icon: <Icon component={IconRect} />,
+      type: ToolTypes.STATE,
     },
+    // {
+    //   key: Actions.GRAPH,
+    //   icon: <Icon component={IconElli} />,
+    //   type: ToolTypes.STATE,
+    // },
+    // {
+    //   key: Actions.GRAPH,
+    //   icon: <Icon component={IconLine} />,
+    //   type: ToolTypes.STATE,
+    // },
     {
       key: Actions.LASSO,
-      icon: <Icon component={IconPen} />,
+      icon: <Icon component={IconLasso} />,
+      type: ToolTypes.STATE,
+    },
+    {
+      key: Actions.None,
+      icon: <Icon component={IconAdd} />,
+      type: ToolTypes.DIVIDER,
+    },
+    {
+      key: Actions.None,
+      icon: <Icon component={IconUndo} />,
+      type: ToolTypes.ACTION,
+      onClick: () => {},
+    },
+    {
+      key: Actions.None,
+      icon: <Icon component={IconRedo} />,
+      type: ToolTypes.ACTION,
+      onClick: () => {},
     },
   ];
 
-  const handleSetActiveKey = (key: Actions) => {
-    setActiveKey(key);
+  const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
+    await item.onClick?.();
+    if (item.type !== ToolTypes.STATE) return;
+    setActiveKey(item.key);
   };
 
   return (
     <Container>
-      {toolMenus.map((item) => {
+      {toolMenus.map((item, idx) => {
+        const key = `${item.key}+${idx}`;
+        if (item.type === ToolTypes.DIVIDER)
+          return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
         return (
           <ToolItem
-            onClick={() => handleSetActiveKey(item.key)}
+            onClick={() => handleSetActiveKey(item)}
             $active={item.key === activeKey}
-            key={item.key}
+            key={key}
           >
             {item.icon}
           </ToolItem>
