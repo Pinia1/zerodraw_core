@@ -1,6 +1,7 @@
 import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useMemo, useState } from 'react';
+import type { Vector2d } from 'konva/lib/types';
+import React, { useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -8,11 +9,14 @@ import { Tools } from '..';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import { useDrawingStore } from '../store/useDrawing';
+import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
 import { Actions } from '../types/Drawing';
+import type { Line } from '../types/Layers';
 import {
   ASIDE_WIDTH,
+  generateUUID,
   INCREASE_SCALE,
   MAX_SCALE,
   MIN_SCALE,
@@ -27,14 +31,16 @@ import Mosic from './components/Mosic';
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL } = props;
   const stageRef = useBindStageRef();
+  const isDrawing = useRef<boolean>(false);
 
   const [stageDraggable, setStageDraggable] = useState(false);
-  const { stageConfig, setStageConfig, setLayerConfig, layerConfig } = useDrawingStore(
+  const { stageConfig, setStageConfig, setLayerConfig, layerConfig, lineConfig } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
       setStageConfig: state.setStageConfig,
       setLayerConfig: state.setLayerConfig,
       layerConfig: state.layerConfig,
+      lineConfig: state.lineConfig,
     }))
   );
   const { activeKey } = useToolsStore(
@@ -42,12 +48,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  // const { setDrawingLayer, getDrawingLayer } = useLayerStore(
-  //   useShallow((state) => ({
-  //     setDrawingLayer: state.setDrawingLayer,
-  //     getDrawingLayer: state.getDrawingLayer,
-  //   }))
-  // );
+  const { setDrawingLayer, getDrawingLayer } = useLayerStore(
+    useShallow((state) => ({
+      setDrawingLayer: state.setDrawingLayer,
+      getDrawingLayer: state.getDrawingLayer,
+    }))
+  );
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
@@ -150,8 +156,59 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: e.target.y(),
     });
   });
+  const getDrawingInfo = useMemoizedFn((e: Konva.KonvaEventObject<Event>) => {
+    const pos = e?.target?.getStage()?.getRelativePointerPosition() as Vector2d;
+    const config = lineConfig;
+    return {
+      pos,
+      config,
+    };
+  });
 
-  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {};
+  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    isDrawing.current = true;
+    const currentLayer = getDrawingLayer();
+    if (!currentLayer) return;
+    const { pos, config } = getDrawingInfo(e);
+    const { x, y } = layerConfig;
+    const { scale } = stageConfig;
+    const line: Line = {
+      points: [pos.x - x, pos.y - y],
+      strokeWidth: config.strokeWidth,
+      stroke: config.stroke,
+      opacity: config.opacity,
+      tension: Math.max(config.stabilizer ? config.stabilizer / 4 : 0, 0.7),
+      eraser: false,
+      id: generateUUID(),
+      hardness: 1,
+      pressure: [0],
+      suppress: false,
+      stabilizer: 0,
+      scale: scale,
+    };
+    currentLayer.lines.push(line);
+    setDrawingLayer({ ...currentLayer, lines: [...currentLayer.lines, line] });
+  };
+
+  const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const currentLayer = getDrawingLayer();
+    if (!currentLayer || !isDrawing.current || !currentLayer?.lines?.length) return;
+    const { pos: point } = getDrawingInfo(e);
+    const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
+    let lastLine = currentLayer.lines[currentLayer.lines.length - 1];
+    lastLine.points = (lastLine.points as number[]).concat([
+      point.x - layerConfig.x,
+      point.y - layerConfig.y,
+    ]);
+    lastLine.pressure.push(pressure);
+    const value = [...currentLayer.lines];
+    setDrawingLayer({ ...currentLayer, lines: value });
+  };
+
+  const onLineMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    isDrawing.current = false;
+    // pushHistory();
+  };
 
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -163,6 +220,23 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    switch (activeKey) {
+      case Actions.PEN:
+        return onLineMouseMove(e);
+      default:
+        break;
+    }
+  };
+
+  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    switch (activeKey) {
+      case Actions.PEN:
+        return onLineMouseUp(e);
+      default:
+        break;
+    }
+  };
   return (
     <>
       <Stage
@@ -181,6 +255,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}
         onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
       >
         <Mosic />
         <Layer />

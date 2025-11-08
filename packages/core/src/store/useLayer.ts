@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Layers } from '../types/Layers';
+import { generateUUID } from '../utils/drawing';
 
 interface LayerState {
   layers: Layers[];
@@ -20,9 +21,13 @@ const useLayerStore = create<LayerState>()(
       getLayers: () => get().layers,
       setLayers: (layers) => set({ layers }),
       //
-      drawingLayer: null,
+      drawingLayer: {
+        id: generateUUID(),
+        diagrams: [],
+        lines: [],
+      },
       getDrawingLayer: () => get().drawingLayer,
-      setDrawingLayer: (drawingLayer) => set({ drawingLayer }),
+      setDrawingLayer: (drawingLayer) => set({ drawingLayer: drawingLayer }),
     }),
     {
       name: 'drawing-layers-storage',

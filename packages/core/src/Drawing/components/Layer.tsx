@@ -1,10 +1,11 @@
 // 优化后的 Layer.tsx
 import Konva from 'konva';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { Layer as KonvaLayer, Rect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
-import testPath from '../../utils/path';
+import useLayerStore from '../../store/useLayer';
+import { pint2DToPath } from '../../utils/drawing';
 
 interface LayerProps {}
 
@@ -15,19 +16,32 @@ const Layer: React.FC<LayerProps> = ({}) => {
       layerConfig: state.layerConfig,
     }))
   );
+  const { drawingLayer } = useLayerStore(
+    useShallow((state) => ({
+      drawingLayer: state.drawingLayer,
+    }))
+  );
 
-  const renderAllPaths = useCallback((ctx: Konva.Context) => {
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = 'red';
+  const path = useMemo(() => {
+    const paths = drawingLayer?.lines?.map((line) => pint2DToPath(line.points, line));
+    return paths?.join('');
+  }, [drawingLayer?.lines]);
 
-    const path2D = new Path2D(testPath);
-    for (let i = 0; i < 10; i++) {
-      ctx.save();
-      ctx.translate(i * 1, i * 1);
-      ctx.fill(path2D);
-      ctx.restore();
-    }
-  }, []);
+  const renderAllPaths = useCallback(
+    (ctx: Konva.Context) => {
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = 'red';
+
+      const path2D = new Path2D(path);
+      for (let i = 0; i < 10; i++) {
+        ctx.save();
+        ctx.translate(i * 1, i * 1);
+        ctx.fill(path2D);
+        ctx.restore();
+      }
+    },
+    [path]
+  );
 
   const handleCache = () => {
     if (!ref.current?.isCached()) {
@@ -45,9 +59,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
       listening
     >
       <Rect
-        onMouseDown={(e) => {
-          console.log('?');
-        }}
         listening
         x={0}
         y={0}

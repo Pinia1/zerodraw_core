@@ -1,3 +1,16 @@
+import type { Line } from './Layers';
+export type LineConfigTypes = Pick<
+  Line,
+  | 'strokeWidth'
+  | 'stroke'
+  | 'opacity'
+  | 'tension'
+  | 'eraser'
+  | 'hardness'
+  | 'pressure'
+  | 'suppress'
+  | 'stabilizer'
+>;
 export interface Point2D {
   x: number;
   y: number;

@@ -21,6 +21,7 @@
     "test": "echo \"No tests yet\""
   },
   "peerDependencies": {
+    "@ant-design/icons": "^6.1.0",
     "antd": "^5.0.0",
     "konva": "^9.2.0",
     "react": "^18.0.0",
@@ -30,7 +31,7 @@
     "styled-components": "^6.1.19",
     "use-image": "^1.1.4",
     "zustand": "^5.0.8",
-    "@ant-design/icons": "^6.1.0"
+    "perfect-freehand": "^1.2.2"
   },
   "dependencies": {
     "@monorepo/common": "workspace:*"
@@ -42,6 +43,7 @@
     "@types/styled-components": "^5.1.35",
     "antd": "^5.27.6",
     "konva": "^9.2.0",
+    "perfect-freehand": "^1.2.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "styled-components": "^6.1.19",
