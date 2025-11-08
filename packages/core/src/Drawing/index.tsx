@@ -48,10 +48,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { setDrawingLayer, getDrawingLayer } = useLayerStore(
+  const { setDrawingLayer, drawingLayer } = useLayerStore(
     useShallow((state) => ({
       setDrawingLayer: state.setDrawingLayer,
-      getDrawingLayer: state.getDrawingLayer,
+      drawingLayer: state.drawingLayer,
     }))
   );
   const init = useMemoizedFn(() => {
@@ -167,8 +167,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     isDrawing.current = true;
-    const currentLayer = getDrawingLayer();
-    if (!currentLayer) return;
+    if (!drawingLayer) return;
     const { pos, config } = getDrawingInfo(e);
     const { x, y } = layerConfig;
     const { scale } = stageConfig;
@@ -186,23 +185,21 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       stabilizer: 0,
       scale: scale,
     };
-    currentLayer.lines.push(line);
-    setDrawingLayer({ ...currentLayer, lines: [...currentLayer.lines, line] });
+    setDrawingLayer({ ...drawingLayer, lines: [...drawingLayer.lines, line] });
   };
 
   const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    const currentLayer = getDrawingLayer();
-    if (!currentLayer || !isDrawing.current || !currentLayer?.lines?.length) return;
+    if (!drawingLayer || !isDrawing.current || !drawingLayer?.lines?.length) return;
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
-    let lastLine = currentLayer.lines[currentLayer.lines.length - 1];
+    let lastLine = drawingLayer.lines[drawingLayer.lines.length - 1];
     lastLine.points = (lastLine.points as number[]).concat([
       point.x - layerConfig.x,
       point.y - layerConfig.y,
     ]);
     lastLine.pressure.push(pressure);
-    const value = [...currentLayer.lines];
-    setDrawingLayer({ ...currentLayer, lines: value });
+    const value = [...drawingLayer.lines];
+    setDrawingLayer({ ...drawingLayer, lines: value });
   };
 
   const onLineMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {

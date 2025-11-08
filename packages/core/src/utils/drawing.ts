@@ -74,7 +74,7 @@ export const pint2DToPath = (points: number[], line: Line) => {
       easing: (t: number) => Math.sin((t * Math.PI) / 2),
       start: { taper },
       end: { taper },
-      last: true,
+      last: false,
     })
   );
   return path;
