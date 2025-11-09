@@ -44,13 +44,12 @@ export const useDrawingStore = create<DrawingState>()(
         opacity: 1,
         tension: 0,
         eraser: false,
-        hardness: 1,
+        hardness: 0, //0 - 1
         pressure: [0],
         suppress: false,
-        stabilizer: 0,
+        stabilizer: 2, //0 - 4
       },
-      setLineConfig: (config: Partial<LineConfigTypes>) =>
-        set({ lineConfig: { ...get().lineConfig, ...config } }),
+      setLineConfig: (config: LineConfigTypes) => set({ lineConfig: config }),
     }),
     {
       name: 'drawing-storage',

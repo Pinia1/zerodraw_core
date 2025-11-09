@@ -63,10 +63,11 @@ export const pint2DToPath = (points: number[], line: Line) => {
   for (let i = 0; i < points.length; i += 2) {
     pathPoint.push([points[i], points[i + 1]]);
   }
+
   const taper = 1 - (line.hardness ?? 0) < 0.1 ? false : 1 - (line.hardness ?? 0);
   const path = getSvgPathFromStroke(
     getStroke(pathPoint as number[][], {
-      simulatePressure: false,
+      simulatePressure: true,
       size: line.strokeWidth,
       thinning: line.suppress ? 0.6 : 0,
       smoothing: line.stabilizer,

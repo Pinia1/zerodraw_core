@@ -33,10 +33,10 @@ export interface Line {
   opacity: number;
   tension: number;
   eraser: boolean;
-  hardness: number;
   pressure: number[];
   suppress: boolean;
-  stabilizer: number;
+  hardness: number; //硬度 0 - 1
+  stabilizer: number; //平滑度 0 - 4
   scale: number;
 }
 export interface Rect extends Point2D {}

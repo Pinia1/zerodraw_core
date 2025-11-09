@@ -176,13 +176,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       strokeWidth: config.strokeWidth,
       stroke: config.stroke,
       opacity: config.opacity,
+      stabilizer: config.stabilizer,
+      hardness: config.hardness,
       tension: Math.max(config.stabilizer ? config.stabilizer / 4 : 0, 0.7),
       eraser: false,
       id: generateUUID(),
-      hardness: 1,
       pressure: [0],
       suppress: false,
-      stabilizer: 0,
       scale: scale,
     };
     setDrawingLayer({ ...drawingLayer, lines: [...drawingLayer.lines, line] });
