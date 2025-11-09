@@ -51,6 +51,10 @@ const ToolItem = styled.div<{ $active: boolean }>`
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: var(--container-hover-bg);
+  }
 `;
 
 const Tool: React.FC = () => {

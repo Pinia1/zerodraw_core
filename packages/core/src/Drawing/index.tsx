@@ -202,7 +202,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingLayer({ ...drawingLayer, lines: value });
   };
 
-  const onLineMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onLineMouseUp = () => {
     isDrawing.current = false;
     // pushHistory();
   };
@@ -226,10 +226,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
-  const handleMouseUp = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseUp = () => {
     switch (activeKey) {
       case Actions.PEN:
-        return onLineMouseUp(e);
+        return onLineMouseUp();
       default:
         break;
     }
