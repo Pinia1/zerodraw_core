@@ -1,6 +1,6 @@
 import Icon from '@ant-design/icons';
-import { Divider } from 'antd';
-import React from 'react';
+import { Divider, Popover } from 'antd';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import {
@@ -16,32 +16,32 @@ import {
 } from '../../icons';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
-import C from '../Container';
+import Container from '../Container';
+import ActionConf from './components/ActionConf';
 
-const Container = styled(C)`
-  background-color: var(--container-bg);
-  color: var(--container-color);
-  position: fixed;
-  width: fit-content;
-  top: 1rem;
-  left: 0px;
-  right: 0px;
-  margin: 0 auto;
-  z-index: 10;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  height: 48px;
-  padding: 8px;
-  overflow: hidden;
-  border-radius: 16px;
-  box-shadow:
-    rgba(0, 0, 0, 0.25) 0px 2px 4px 0px,
-    rgba(180, 180, 180, 0.25) 0px 0.5px 1px 0px inset;
-`;
+const FloatingStyle: React.CSSProperties = {
+  backgroundColor: 'var(--container-bg)',
+  color: 'var(--container-color)',
+  boxShadow: 'var(--container-box-shadow)',
+  position: 'fixed',
+  width: 'fit-content',
+  top: '1rem',
+  left: '0px',
+  right: '0px',
+  margin: '0 auto',
+  zIndex: '10',
+  display: 'flex',
+  gap: '8px',
+  alignItems: 'center',
+  height: '48px',
+  padding: '8px',
+  overflow: 'hidden',
+  borderRadius: '16px',
+};
 
-const ToolItem = styled.div<{ $active: boolean }>`
-  background-color: ${({ $active }) => ($active ? 'var(--container-active)' : 'transparent')};
+export const ToolItem = styled.div<{ $active: boolean }>`
+  background-color: ${({ $active }) =>
+    $active ? 'var(--container-active) !important' : 'transparent'};
 
   display: flex;
   align-items: center;
@@ -58,6 +58,7 @@ const ToolItem = styled.div<{ $active: boolean }>`
 `;
 
 const Tool: React.FC = () => {
+  const [open, setOpen] = useState(false);
   const { activeKey, setActiveKey } = useToolsStore(
     useShallow((state) => {
       return {
@@ -70,7 +71,8 @@ const Tool: React.FC = () => {
     key: Actions;
     icon?: React.ReactNode;
     type: ToolTypes;
-    onClick?: () => Promise<void> | void;
+    onClick?: (item: (typeof toolMenus)[0]) => Promise<void> | void;
+    dropdown?: React.ReactNode;
   }[] = [
     {
       key: Actions.ADD,
@@ -92,11 +94,14 @@ const Tool: React.FC = () => {
       key: Actions.PEN,
       icon: <Icon component={IconPen} />,
       type: ToolTypes.STATE,
+      dropdown: <ActionConf />,
+      onClick: () => {},
     },
     {
       key: Actions.ERASER,
       icon: <Icon component={IconEraser} />,
       type: ToolTypes.STATE,
+      dropdown: <div>ERASER</div>,
     },
     {
       key: Actions.COLOR,
@@ -108,6 +113,7 @@ const Tool: React.FC = () => {
       key: Actions.GRAPH,
       icon: <Icon component={IconRect} />,
       type: ToolTypes.STATE,
+      dropdown: <div>GRAPH</div>,
     },
     // {
     //   key: Actions.GRAPH,
@@ -123,6 +129,7 @@ const Tool: React.FC = () => {
       key: Actions.LASSO,
       icon: <Icon component={IconLasso} />,
       type: ToolTypes.STATE,
+      dropdown: <div>LASSO</div>,
     },
     {
       key: Actions.None,
@@ -144,28 +151,47 @@ const Tool: React.FC = () => {
   ];
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
-    await item.onClick?.();
+    await item.onClick?.(item);
     if (item.type !== ToolTypes.STATE) return;
     setActiveKey(item.key);
+    if (!item.dropdown) return;
+    setOpen((prev) => (item.key === activeKey ? !prev : true));
   };
 
+  const PopoverContent = useMemo(() => {
+    const item = toolMenus.find((item) => item.key === activeKey);
+    return item?.dropdown;
+  }, [activeKey]);
+
   return (
-    <Container>
-      {toolMenus.map((item, idx) => {
-        const key = `${item.key}+${idx}`;
-        if (item.type === ToolTypes.DIVIDER)
-          return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
-        return (
-          <ToolItem
-            onClick={() => handleSetActiveKey(item)}
-            $active={item.key === activeKey}
-            key={key}
-          >
-            {item.icon}
-          </ToolItem>
-        );
-      })}
-    </Container>
+    <Popover
+      arrow={false}
+      trigger="click"
+      content={PopoverContent}
+      open={PopoverContent ? open : false}
+      styles={{
+        body: {
+          padding: 4,
+        },
+      }}
+    >
+      <Container style={FloatingStyle}>
+        {toolMenus.map((item, idx) => {
+          const key = `${item.key}+${idx}`;
+          if (item.type === ToolTypes.DIVIDER)
+            return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
+          return (
+            <ToolItem
+              onClick={() => handleSetActiveKey(item)}
+              $active={item.key === activeKey}
+              key={key}
+            >
+              {item.icon}
+            </ToolItem>
+          );
+        })}
+      </Container>
+    </Popover>
   );
 };
 

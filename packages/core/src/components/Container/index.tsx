@@ -18,9 +18,19 @@ const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
     '--container-bg': colorBgContainer,
     '--container-color': colorText,
     '--container-active': colorInfoActive,
-    //custo,
+    //custom,
     '--container-hover-bg':
       windowTheme === 'dark' ? 'rgba(60, 60, 62, 1)' : 'rgba(240, 240, 240, 1)',
+    '--container-box-shadow':
+      windowTheme === 'dark'
+        ? `
+          rgba(0, 0, 0, 0.25) 0px 2px 4px 0px, rgba(180, 180, 180, 0.25) 0px 0.5px 1px 0px inset
+        `
+        : `
+       rgba(0, 0, 0, 0.25) 0px 2px 4px 0px, rgba(180, 180, 180, 0.25) 0px 0.5px 1px 0px inset
+    `,
+    '--container-border-color':
+      windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
   } as React.CSSProperties;
 
   return (
