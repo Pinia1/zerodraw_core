@@ -17,7 +17,10 @@ import {
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import Container from '../Container';
-import ActionConf from './components/ActionConf';
+import EarserConf from './components/EarserConf';
+import LassoConf from './components/LassoConf';
+import PenConf from './components/PenConf';
+import RectConf from './components/RectConf';
 
 const FloatingStyle: React.CSSProperties = {
   backgroundColor: 'var(--container-bg)',
@@ -51,6 +54,7 @@ export const ToolItem = styled.div<{ $active: boolean }>`
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  position: relative;
 
   &:hover {
     background-color: var(--container-hover-bg);
@@ -58,7 +62,7 @@ export const ToolItem = styled.div<{ $active: boolean }>`
 `;
 
 const Tool: React.FC = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const { activeKey, setActiveKey } = useToolsStore(
     useShallow((state) => {
       return {
@@ -73,82 +77,99 @@ const Tool: React.FC = () => {
     type: ToolTypes;
     onClick?: (item: (typeof toolMenus)[0]) => Promise<void> | void;
     dropdown?: React.ReactNode;
-  }[] = [
-    {
-      key: Actions.ADD,
-      icon: <Icon component={IconAdd} />,
-      type: ToolTypes.ACTION,
-      onClick: () => {},
-    },
-    {
-      key: Actions.None,
-      icon: <Icon component={IconAdd} />,
-      type: ToolTypes.DIVIDER,
-    },
-    {
-      key: Actions.ROPE,
-      icon: <Icon component={IconPoint} />,
-      type: ToolTypes.STATE,
-    },
-    {
-      key: Actions.PEN,
-      icon: <Icon component={IconPen} />,
-      type: ToolTypes.STATE,
-      dropdown: <ActionConf />,
-      onClick: () => {},
-    },
-    {
-      key: Actions.ERASER,
-      icon: <Icon component={IconEraser} />,
-      type: ToolTypes.STATE,
-      dropdown: <div>ERASER</div>,
-    },
-    {
-      key: Actions.COLOR,
-      icon: <IconColor fillColor="#000" />,
-      type: ToolTypes.ACTION,
-      onClick: () => {},
-    },
-    {
-      key: Actions.GRAPH,
-      icon: <Icon component={IconRect} />,
-      type: ToolTypes.STATE,
-      dropdown: <div>GRAPH</div>,
-    },
-    // {
-    //   key: Actions.GRAPH,
-    //   icon: <Icon component={IconElli} />,
-    //   type: ToolTypes.STATE,
-    // },
-    // {
-    //   key: Actions.GRAPH,
-    //   icon: <Icon component={IconLine} />,
-    //   type: ToolTypes.STATE,
-    // },
-    {
-      key: Actions.LASSO,
-      icon: <Icon component={IconLasso} />,
-      type: ToolTypes.STATE,
-      dropdown: <div>LASSO</div>,
-    },
-    {
-      key: Actions.None,
-      icon: <Icon component={IconAdd} />,
-      type: ToolTypes.DIVIDER,
-    },
-    {
-      key: Actions.None,
-      icon: <Icon component={IconUndo} />,
-      type: ToolTypes.ACTION,
-      onClick: () => {},
-    },
-    {
-      key: Actions.None,
-      icon: <Icon component={IconRedo} />,
-      type: ToolTypes.ACTION,
-      onClick: () => {},
-    },
-  ];
+    isActive?: boolean;
+    dropdownKeys?: Actions[];
+  }[] = useMemo(() => {
+    return [
+      {
+        key: Actions.ADD,
+        icon: <Icon component={IconAdd} />,
+        type: ToolTypes.ACTION,
+        onClick: () => {},
+      },
+      {
+        key: Actions.None,
+        icon: <Icon component={IconAdd} />,
+        type: ToolTypes.DIVIDER,
+      },
+      {
+        key: Actions.ROPE,
+        icon: <Icon component={IconPoint} />,
+        type: ToolTypes.STATE,
+        get isActive(): boolean {
+          return activeKey === Actions.ROPE;
+        },
+      },
+      {
+        key: Actions.PEN,
+        icon: <Icon component={IconPen} />,
+        type: ToolTypes.STATE,
+        dropdown: <PenConf />,
+        dropdownKeys: [Actions.PEN, Actions.FILL],
+        onClick: () => {},
+        get isActive(): boolean {
+          return [Actions.PEN, Actions.FILL].includes(activeKey);
+        },
+      },
+      {
+        key: Actions.ERASER,
+        icon: <Icon component={IconEraser} />,
+        type: ToolTypes.STATE,
+        dropdown: <EarserConf />,
+        dropdownKeys: [Actions.ERASER],
+        get isActive(): boolean {
+          return activeKey === Actions.ERASER;
+        },
+      },
+      {
+        key: Actions.COLOR,
+        icon: <IconColor />,
+        type: ToolTypes.ACTION,
+        onClick: () => {},
+        get isActive(): boolean {
+          return activeKey === Actions.COLOR;
+        },
+      },
+      {
+        key: Actions.RECT,
+        icon: <Icon component={IconRect} />,
+        type: ToolTypes.STATE,
+        dropdown: <RectConf />,
+        dropdownKeys: [Actions.RECT, Actions.ELLIPSE, Actions.LINE],
+        get isActive(): boolean {
+          return [Actions.RECT, Actions.ELLIPSE, Actions.LINE].includes(activeKey);
+        },
+      },
+
+      {
+        key: Actions.LASSO,
+        icon: <Icon component={IconLasso} />,
+        type: ToolTypes.STATE,
+        dropdown: <LassoConf />,
+        dropdownKeys: [Actions.LASSO],
+        get isActive(): boolean {
+          return activeKey === Actions.LASSO;
+        },
+      },
+      {
+        key: Actions.None,
+        icon: <Icon component={IconAdd} />,
+        type: ToolTypes.DIVIDER,
+      },
+      {
+        key: Actions.None,
+        icon: <Icon component={IconUndo} />,
+        type: ToolTypes.ACTION,
+        onClick: () => {},
+      },
+      {
+        key: Actions.None,
+        icon: <Icon component={IconRedo} />,
+        type: ToolTypes.ACTION,
+        onClick: () => {},
+      },
+    ];
+  }, [activeKey]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
     await item.onClick?.(item);
@@ -159,7 +180,7 @@ const Tool: React.FC = () => {
   };
 
   const PopoverContent = useMemo(() => {
-    const item = toolMenus.find((item) => item.key === activeKey);
+    const item = toolMenus.find((item) => item.dropdownKeys?.includes(activeKey));
     return item?.dropdown;
   }, [activeKey]);
 
@@ -178,14 +199,11 @@ const Tool: React.FC = () => {
       <Container style={FloatingStyle}>
         {toolMenus.map((item, idx) => {
           const key = `${item.key}+${idx}`;
-          if (item.type === ToolTypes.DIVIDER)
+          if (item.type === ToolTypes.DIVIDER) {
             return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
+          }
           return (
-            <ToolItem
-              onClick={() => handleSetActiveKey(item)}
-              $active={item.key === activeKey}
-              key={key}
-            >
+            <ToolItem onClick={() => handleSetActiveKey(item)} $active={!!item.isActive} key={key}>
               {item.icon}
             </ToolItem>
           );

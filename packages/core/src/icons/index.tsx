@@ -1,4 +1,7 @@
+import React from 'react';
 import styled from 'styled-components';
+import { useShallow } from 'zustand/react/shallow';
+import { useDrawingStore } from '../store/useDrawing';
 
 export const IconAdd = () => {
   return (
@@ -74,7 +77,13 @@ const ColorWrapperCo = styled.div`
   -webkit-box-pack: center;
   justify-content: center;
 `;
-export const IconColor = ({ fillColor }: { fillColor: string }) => {
+export const IconColor = React.memo(() => {
+  const { setFillColor, fillColor } = useDrawingStore(
+    useShallow((state) => ({
+      setFillColor: state.setFillColor,
+      fillColor: state.fillColor,
+    }))
+  );
   return (
     <ColorWrapperCo>
       <div
@@ -86,10 +95,24 @@ export const IconColor = ({ fillColor }: { fillColor: string }) => {
           background: fillColor,
           borderRadius: '50%',
         }}
-      ></div>
+      >
+        <input
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '100%',
+            height: '100%',
+            opacity: 0,
+            cursor: 'pointer',
+          }}
+          type="color"
+          onChange={(e) => setFillColor(e.target.value)}
+        />
+      </div>
     </ColorWrapperCo>
   );
-};
+});
 
 export const IconRect = () => (
   <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -99,7 +122,7 @@ export const IconRect = () => (
 
 export const IconElli = () => (
   <svg width="1em" height="1em" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <ellipse cx="8" cy="8" rx="7" ry="7" stroke-width="1" stroke="currentColor"></ellipse>
+    <ellipse cx="8" cy="8" rx="7" ry="7" strokeWidth="1" stroke="currentColor"></ellipse>
   </svg>
 );
 
@@ -201,6 +224,76 @@ export const IconConf = () => (
     <path
       fillRule="evenodd"
       d="M8 11.5c1.93 0 3.5-1.57 3.5-3.5S9.93 4.5 8 4.5 4.5 6.07 4.5 8s1.57 3.5 3.5 3.5ZM10.915 8a2.92 2.92 0 0 0-2.917-2.917A2.92 2.92 0 0 0 5.083 8a2.92 2.92 0 0 0 2.916 2.916A2.92 2.92 0 0 0 10.916 8Z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const IconLassoAdd = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1em"
+    height="1em"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M1.5 11a.5.5 0 0 1 .5.5v1.82c0 .375.305.68.68.68H4.5a.5.5 0 0 1 0 1H2.68A1.68 1.68 0 0 1 1 13.32V11.5a.5.5 0 0 1 .5-.5ZM1.5 6.5A.5.5 0 0 1 2 7v2a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5ZM2.68 2a.68.68 0 0 0-.68.68V4.5a.5.5 0 0 1-1 0V2.68C1 1.754 1.752 1 2.68 1H4.5a.5.5 0 0 1 0 1H2.68ZM6.5 1.5A.5.5 0 0 1 7 1h2a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5ZM11 1.5a.5.5 0 0 1 .5-.5h1.82c.928 0 1.68.752 1.68 1.68V4.5a.5.5 0 1 1-1 0V2.68a.68.68 0 0 0-.68-.68H11.5a.5.5 0 0 1-.5-.5ZM6.5 14.5A.5.5 0 0 1 7 14h2a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5ZM14.5 6.5a.5.5 0 0 1 .5.5v2a.5.5 0 1 1-1 0V7a.5.5 0 0 1 .5-.5ZM14.5 11a.5.5 0 0 1 .5.5v2a1.5 1.5 0 0 1-1.5 1.5h-2a.5.5 0 1 1 0-1h2a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 .5-.5ZM8 5a.5.5 0 0 1 .5.5v5a.5.5 0 1 1-1 0v-5A.5.5 0 0 1 8 5Z"
+      clipRule="evenodd"
+    ></path>
+    <path
+      fillRule="evenodd"
+      d="M5 8a.5.5 0 0 1 .5-.5h5a.5.5 0 1 1 0 1h-5A.5.5 0 0 1 5 8Z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const IconLassoRemove = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1em"
+    height="1em"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M1.5 11a.5.5 0 0 1 .5.5v1.82c0 .375.305.68.68.68H4.5a.5.5 0 0 1 0 1H2.68A1.68 1.68 0 0 1 1 13.32V11.5a.5.5 0 0 1 .5-.5ZM1.5 6.5A.5.5 0 0 1 2 7v2a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5ZM2.68 2a.68.68 0 0 0-.68.68V4.5a.5.5 0 0 1-1 0V2.68C1 1.754 1.752 1 2.68 1H4.5a.5.5 0 0 1 0 1H2.68ZM6.5 1.5A.5.5 0 0 1 7 1h2a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5ZM11 1.5a.5.5 0 0 1 .5-.5h1.82c.928 0 1.68.752 1.68 1.68V4.5a.5.5 0 1 1-1 0V2.68a.68.68 0 0 0-.68-.68H11.5a.5.5 0 0 1-.5-.5ZM6.5 14.5A.5.5 0 0 1 7 14h2a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5ZM14.5 6.5a.5.5 0 0 1 .5.5v2a.5.5 0 1 1-1 0V7a.5.5 0 0 1 .5-.5ZM14.5 11a.5.5 0 0 1 .5.5v2a1.5 1.5 0 0 1-1.5 1.5h-2a.5.5 0 1 1 0-1h2a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 1 .5-.5ZM5 8a.5.5 0 0 1 .5-.5h5a.5.5 0 1 1 0 1h-5A.5.5 0 0 1 5 8Z"
+      clipRule="evenodd"
+    ></path>
+  </svg>
+);
+
+export const IconLassoCopy = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1em"
+    height="1em"
+    viewBox="0 0 14 16"
+    fill="currentColor"
+  >
+    <path d="M5.121 1c-.35 0-.626.116-.874.364a1.17 1.17 0 0 0-.364.876v8.64a.2.2 0 0 1 0 .003c-.006.323.127.645.36.87a.2.2 0 0 1 .004.002c.248.249.524.364.874.364h6.48a.2.2 0 0 1 .003 0 1.2 1.2 0 0 0 .87-.36.2.2 0 0 1 .002-.004c.248-.248.363-.525.363-.875V2.24c0-.349-.115-.628-.363-.876A1.164 1.164 0 0 0 11.602 1Zm0 1.04h6.48a.2.2 0 0 1 .201.2v8.64a.2.2 0 0 1-.2.202h-6.48a.2.2 0 0 1-.203-.2V2.24a.2.2 0 0 1 .201-.202ZM1.514 3.881a.504.504 0 0 0-.365.147.2.2 0 0 1 0 .002A.477.477 0 0 0 1 4.4v9.36a.2.2 0 0 1 0 .004c-.005.323.128.645.36.87a.2.2 0 0 1 .004.002c.248.249.527.364.876.364h7.2a.2.2 0 0 1 .005 0 .504.504 0 0 0 .366-.147.2.2 0 0 1 .002-.002.504.504 0 0 0 .146-.365.2.2 0 0 1 0-.005.48.48 0 0 0-.148-.372.477.477 0 0 0-.37-.148H2.24a.2.2 0 0 1-.2-.2V4.4a.474.474 0 0 0-.149-.37.483.483 0 0 0-.372-.148.2.2 0 0 1-.005 0z"></path>
+  </svg>
+);
+
+export const IconLassoInvert = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="1em"
+    height="1em"
+    viewBox="0 0 16 16"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M10 7a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 15 8v5.5a1.5 1.5 0 0 1-1.5 1.5H8a1.5 1.5 0 0 1-1.5-1.5v-3a.5.5 0 0 1 1 0v3a.5.5 0 0 0 .5.5h5.5a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5h-3A.5.5 0 0 1 10 7Z"
+      clipRule="evenodd"
+    ></path>
+    <path
+      fillRule="evenodd"
+      d="M4 4.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-.793L11 10.293V9.5a.5.5 0 0 1 1 0v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h.793L5 5.707V6.5a.5.5 0 1 1-1 0v-2ZM1.5 11a.5.5 0 0 1 .5.5v1.82c0 .375.305.68.68.68H4.5a.5.5 0 0 1 0 1H2.68A1.68 1.68 0 0 1 1 13.32V11.5a.5.5 0 0 1 .5-.5ZM1.5 6.5A.5.5 0 0 1 2 7v2a.5.5 0 0 1-1 0V7a.5.5 0 0 1 .5-.5ZM2.68 2a.68.68 0 0 0-.68.68V4.5a.5.5 0 0 1-1 0V2.68C1 1.754 1.752 1 2.68 1H4.5a.5.5 0 0 1 0 1H2.68ZM6.5 1.5A.5.5 0 0 1 7 1h2a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5ZM11 1.5a.5.5 0 0 1 .5-.5h1.82c.928 0 1.68.752 1.68 1.68V4.5a.5.5 0 1 1-1 0V2.68a.68.68 0 0 0-.68-.68H11.5a.5.5 0 0 1-.5-.5Z"
       clipRule="evenodd"
     ></path>
   </svg>

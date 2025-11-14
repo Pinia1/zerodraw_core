@@ -35,6 +35,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ref.current?.cache();
     }
   };
+  console.log('render layer');
 
   return (
     <KonvaLayer

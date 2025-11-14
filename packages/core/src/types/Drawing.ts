@@ -11,6 +11,18 @@ export type LineConfigTypes = Pick<
   | 'suppress'
   | 'stabilizer'
 >;
+
+export type EraserConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'> & {
+  fill: boolean;
+  freehand: boolean;
+};
+
+export type GraphConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'>;
+
+export type LassoConfigTypes = {
+  type: LassoMode;
+};
+
 export interface Point2D {
   x: number;
   y: number;
@@ -25,6 +37,11 @@ export interface LayerConfigTypes extends Point2D {
   height: number;
 }
 
+export enum LassoMode {
+  ADD = 'add',
+  REMOVE = 'remove',
+}
+
 export enum Actions {
   ADD = 'add',
   ROPE = 'rope',
@@ -35,6 +52,9 @@ export enum Actions {
   LASSO = 'lasso',
   GRAPH = 'graph',
   None = 'none',
+  RECT = 'rect',
+  ELLIPSE = 'ellipse',
+  LINE = 'line',
 }
 
 export enum ToolTypes {

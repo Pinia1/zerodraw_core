@@ -1,7 +1,15 @@
 import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { LayerConfigTypes, LineConfigTypes, StageConfigTypes } from '../types/Drawing';
+import {
+  EraserConfigTypes,
+  GraphConfigTypes,
+  LassoConfigTypes,
+  LassoMode,
+  LayerConfigTypes,
+  LineConfigTypes,
+  StageConfigTypes,
+} from '../types/Drawing';
 
 interface DrawingState {
   stageRef: React.RefObject<Konva.Stage> | null;
@@ -12,6 +20,14 @@ interface DrawingState {
   setLayerConfig: (config: LayerConfigTypes) => void;
   lineConfig: LineConfigTypes;
   setLineConfig: (config: LineConfigTypes) => void;
+  eraserConfig: EraserConfigTypes;
+  setEraserConfig: (config: EraserConfigTypes) => void;
+  graphConfig: GraphConfigTypes;
+  setGraphConfig: (config: GraphConfigTypes) => void;
+  lassoConfig: LassoConfigTypes;
+  setLassoConfig: (config: LassoConfigTypes) => void;
+  fillColor: string;
+  setFillColor: (color: string) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -50,6 +66,28 @@ export const useDrawingStore = create<DrawingState>()(
         stabilizer: 2, //0 - 4
       },
       setLineConfig: (config: LineConfigTypes) => set({ lineConfig: config }),
+      //eraser config
+      eraserConfig: {
+        strokeWidth: 10,
+        opacity: 1,
+        fill: false,
+        freehand: false,
+      },
+      setEraserConfig: (config: EraserConfigTypes) => set({ eraserConfig: config }),
+      //fill color
+      fillColor: '#000',
+      setFillColor: (color: string) => set({ fillColor: color }),
+      //graph config
+      graphConfig: {
+        strokeWidth: 8,
+        opacity: 1,
+      },
+      setGraphConfig: (config: GraphConfigTypes) => set({ graphConfig: config }),
+      //lasso config
+      lassoConfig: {
+        type: LassoMode.ADD,
+      },
+      setLassoConfig: (config: LassoConfigTypes) => set({ lassoConfig: config }),
     }),
     {
       name: 'drawing-storage',
