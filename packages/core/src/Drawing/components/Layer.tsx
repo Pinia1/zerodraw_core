@@ -1,10 +1,10 @@
-// 优化后的 Layer.tsx
 import Konva from 'konva';
 import React, { useCallback, useRef } from 'react';
 import { Layer as KonvaLayer, Rect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
+import { Line } from '../../types/Layers';
 import { pint2DToPath } from '../../utils/drawing';
 
 interface LayerProps {}
@@ -22,10 +22,15 @@ const Layer: React.FC<LayerProps> = ({}) => {
     }))
   );
 
-  const renderAllPaths = useCallback((ctx: Konva.Context, path: string) => {
+  const renderAllPaths = useCallback((ctx: Konva.Context, path: string, line: Line) => {
     ctx.imageSmoothingEnabled = false;
     const path2D = new Path2D(path);
     ctx.save();
+
+    ctx.globalAlpha = line.opacity;
+    // ctx.strokeStyle = line.stroke;
+    // ctx.stroke(path2D);
+    ctx.fillStyle = line.stroke;
     ctx.fill(path2D);
     ctx.restore();
   }, []);
@@ -35,7 +40,6 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ref.current?.cache();
     }
   };
-  console.log('render layer');
 
   return (
     <KonvaLayer
@@ -53,7 +57,7 @@ const Layer: React.FC<LayerProps> = ({}) => {
           y={0}
           width={layerConfig.width}
           height={layerConfig.height}
-          sceneFunc={(ctx) => renderAllPaths(ctx, pint2DToPath(line.points, line))}
+          sceneFunc={(ctx) => renderAllPaths(ctx, pint2DToPath(line.points, line), line)}
         />
       ))}
     </KonvaLayer>

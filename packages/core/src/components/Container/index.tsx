@@ -31,6 +31,7 @@ const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
     `,
     '--container-border-color':
       windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
+    '--border-color': windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
   } as React.CSSProperties;
 
   return (

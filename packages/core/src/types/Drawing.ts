@@ -10,7 +10,9 @@ export type LineConfigTypes = Pick<
   | 'pressure'
   | 'suppress'
   | 'stabilizer'
->;
+> & {
+  fill?: boolean;
+};
 
 export type EraserConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'> & {
   fill: boolean;

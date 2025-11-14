@@ -34,15 +34,26 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const isDrawing = useRef<boolean>(false);
 
   const [stageDraggable, setStageDraggable] = useState(false);
-  const { stageConfig, setStageConfig, setLayerConfig, layerConfig, lineConfig } = useDrawingStore(
+  const {
+    stageConfig,
+    setStageConfig,
+    setLayerConfig,
+    layerConfig,
+    lineConfig,
+    fillColor,
+    setBrushDetailConfPosition,
+  } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
       setStageConfig: state.setStageConfig,
       setLayerConfig: state.setLayerConfig,
       layerConfig: state.layerConfig,
       lineConfig: state.lineConfig,
+      fillColor: state.fillColor,
+      setBrushDetailConfPosition: state.setBrushDetailConfPosition,
     }))
   );
+
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
@@ -174,7 +185,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const line: Line = {
       points: [pos.x - x, pos.y - y],
       strokeWidth: config.strokeWidth,
-      stroke: config.stroke,
+      stroke: fillColor,
       opacity: config.opacity,
       stabilizer: config.stabilizer,
       hardness: config.hardness,
@@ -209,6 +220,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (e.evt.button !== 0) return;
     switch (activeKey) {
       case Actions.PEN:
         return onLineMouseDown(e);
@@ -218,6 +230,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (e.evt.button !== 0) return;
     switch (activeKey) {
       case Actions.PEN:
         return onLineMouseMove(e);
@@ -234,6 +247,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         break;
     }
   };
+
+  const handleContextMenu = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
+    e.evt.stopPropagation();
+    if (![Actions.PEN, Actions.ERASER].includes(activeKey)) return;
+    setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
+  });
   return (
     <>
       <Stage
@@ -247,7 +267,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         y={stageConfig.y}
         scaleX={stageConfig.scale}
         scaleY={stageConfig.scale}
-        onContextMenu={(e) => e.evt.preventDefault()}
+        onContextMenu={handleContextMenu}
         draggable={stageDraggable}
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}

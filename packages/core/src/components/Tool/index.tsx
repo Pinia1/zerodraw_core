@@ -14,12 +14,15 @@ import {
   IconRedo,
   IconUndo,
 } from '../../icons';
+import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import Container from '../Container';
+import BrushDetail from './components/BrushDetail';
 import EarserConf from './components/EarserConf';
 import LassoConf from './components/LassoConf';
 import PenConf from './components/PenConf';
+import Portal from './components/Portal';
 import RectConf from './components/RectConf';
 
 const FloatingStyle: React.CSSProperties = {
@@ -71,6 +74,13 @@ const Tool: React.FC = () => {
       };
     })
   );
+
+  const { brushDetailConfPosition, setBrushDetailConfPosition } = useDrawingStore(
+    useShallow((state) => ({
+      brushDetailConfPosition: state.brushDetailConfPosition,
+      setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+    }))
+  );
   const toolMenus: {
     key: Actions;
     icon?: React.ReactNode;
@@ -96,7 +106,7 @@ const Tool: React.FC = () => {
         key: Actions.ROPE,
         icon: <Icon component={IconPoint} />,
         type: ToolTypes.STATE,
-        get isActive(): boolean {
+        get isActive() {
           return activeKey === Actions.ROPE;
         },
       },
@@ -107,7 +117,7 @@ const Tool: React.FC = () => {
         dropdown: <PenConf />,
         dropdownKeys: [Actions.PEN, Actions.FILL],
         onClick: () => {},
-        get isActive(): boolean {
+        get isActive() {
           return [Actions.PEN, Actions.FILL].includes(activeKey);
         },
       },
@@ -117,7 +127,7 @@ const Tool: React.FC = () => {
         type: ToolTypes.STATE,
         dropdown: <EarserConf />,
         dropdownKeys: [Actions.ERASER],
-        get isActive(): boolean {
+        get isActive() {
           return activeKey === Actions.ERASER;
         },
       },
@@ -126,7 +136,7 @@ const Tool: React.FC = () => {
         icon: <IconColor />,
         type: ToolTypes.ACTION,
         onClick: () => {},
-        get isActive(): boolean {
+        get isActive() {
           return activeKey === Actions.COLOR;
         },
       },
@@ -136,7 +146,7 @@ const Tool: React.FC = () => {
         type: ToolTypes.STATE,
         dropdown: <RectConf />,
         dropdownKeys: [Actions.RECT, Actions.ELLIPSE, Actions.LINE],
-        get isActive(): boolean {
+        get isActive() {
           return [Actions.RECT, Actions.ELLIPSE, Actions.LINE].includes(activeKey);
         },
       },
@@ -147,7 +157,7 @@ const Tool: React.FC = () => {
         type: ToolTypes.STATE,
         dropdown: <LassoConf />,
         dropdownKeys: [Actions.LASSO],
-        get isActive(): boolean {
+        get isActive() {
           return activeKey === Actions.LASSO;
         },
       },
@@ -208,6 +218,18 @@ const Tool: React.FC = () => {
             </ToolItem>
           );
         })}
+        <Portal
+          visible={brushDetailConfPosition.visible}
+          setVisible={() =>
+            setBrushDetailConfPosition({ visible: false, position: { x: 0, y: 0 } })
+          }
+          position={brushDetailConfPosition.position}
+          content={<BrushDetail />}
+          popoverStyles={{
+            width: 280,
+            padding: 0,
+          }}
+        />
       </Container>
     </Popover>
   );

@@ -41,12 +41,15 @@ const PenConf = () => {
       setActiveKey: state.setActiveKey,
     }))
   );
-  const { lineConfig, setLineConfig } = useDrawingStore(
-    useShallow((state) => ({
-      lineConfig: state.lineConfig,
-      setLineConfig: state.setLineConfig,
-    }))
-  );
+  const { lineConfig, setLineConfig, brushDetailConfPosition, setBrushDetailConfPosition } =
+    useDrawingStore(
+      useShallow((state) => ({
+        lineConfig: state.lineConfig,
+        setLineConfig: state.setLineConfig,
+        brushDetailConfPosition: state.brushDetailConfPosition,
+        setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+      }))
+    );
 
   const handleSetLineConfig = (key: keyof LineConfigTypes, value: number) => {
     setLineConfig({ ...lineConfig, [key]: value });
@@ -108,7 +111,19 @@ const PenConf = () => {
         />
       </ActionFlex>
       <Divider style={{ fontSize: 18 }} type="vertical" />
-      <ToolItem style={ToolItemStyle} $active={false}>
+      <ToolItem
+        style={ToolItemStyle}
+        $active={brushDetailConfPosition.visible}
+        onClick={(e: React.MouseEvent) => {
+          const rect = (e.target as HTMLElement).getBoundingClientRect();
+          setBrushDetailConfPosition({
+            visible: !brushDetailConfPosition.visible,
+            position: brushDetailConfPosition.visible
+              ? { x: 0, y: 0 }
+              : { x: rect.x + rect.width / 2, y: rect.y + rect.height },
+          });
+        }}
+      >
         <Icon component={IconConf} />
       </ToolItem>
     </Container>

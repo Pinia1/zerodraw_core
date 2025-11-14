@@ -8,6 +8,7 @@ import {
   LassoMode,
   LayerConfigTypes,
   LineConfigTypes,
+  Point2D,
   StageConfigTypes,
 } from '../types/Drawing';
 
@@ -26,6 +27,11 @@ interface DrawingState {
   setGraphConfig: (config: GraphConfigTypes) => void;
   lassoConfig: LassoConfigTypes;
   setLassoConfig: (config: LassoConfigTypes) => void;
+  brushDetailConfPosition: { visible: boolean; position: Point2D };
+  setBrushDetailConfPosition: (brushDetailConfPosition: {
+    visible: boolean;
+    position: Point2D;
+  }) => void;
   fillColor: string;
   setFillColor: (color: string) => void;
 }
@@ -64,6 +70,7 @@ export const useDrawingStore = create<DrawingState>()(
         pressure: [0],
         suppress: false,
         stabilizer: 2, //0 - 4
+        fill: true,
       },
       setLineConfig: (config: LineConfigTypes) => set({ lineConfig: config }),
       //eraser config
@@ -88,6 +95,12 @@ export const useDrawingStore = create<DrawingState>()(
         type: LassoMode.ADD,
       },
       setLassoConfig: (config: LassoConfigTypes) => set({ lassoConfig: config }),
+      //brush detail conf position
+      brushDetailConfPosition: { visible: false, position: { x: 0, y: 0 } },
+      setBrushDetailConfPosition: (brushDetailConfPosition: {
+        visible: boolean;
+        position: Point2D;
+      }) => set({ brushDetailConfPosition: brushDetailConfPosition }),
     }),
     {
       name: 'drawing-storage',
