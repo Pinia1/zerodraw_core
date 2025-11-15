@@ -195,6 +195,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       pressure: [0],
       suppress: false,
       scale: scale,
+      fill: !!config.fill,
     };
     setDrawingLayer({ ...drawingLayer, lines: [...drawingLayer.lines, line] });
   };

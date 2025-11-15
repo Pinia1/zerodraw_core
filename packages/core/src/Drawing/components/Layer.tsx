@@ -28,10 +28,14 @@ const Layer: React.FC<LayerProps> = ({}) => {
     ctx.save();
 
     ctx.globalAlpha = line.opacity;
-    // ctx.strokeStyle = line.stroke;
-    // ctx.stroke(path2D);
-    ctx.fillStyle = line.stroke;
-    ctx.fill(path2D);
+    if (line.fill) {
+      ctx.fillStyle = line.stroke;
+      ctx.fill(path2D);
+    } else {
+      ctx.strokeStyle = line.stroke;
+      ctx.stroke(path2D);
+    }
+
     ctx.restore();
   }, []);
 

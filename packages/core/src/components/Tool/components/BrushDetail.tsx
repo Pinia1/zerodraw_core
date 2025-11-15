@@ -1,5 +1,5 @@
 import Icon from '@ant-design/icons';
-import { Flex, Slider, Space } from 'antd';
+import { Flex, Slider, Space, Switch } from 'antd';
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { IconRefer } from '../../../icons';
@@ -33,7 +33,7 @@ const BrushDetail = () => {
     return lineConfig;
   }, [activeKey, eraserConfig, lineConfig]);
 
-  const handleSetConfig = (key: keyof LineConfigTypes | keyof EraserConfigTypes, value: number) => {
+  const handleSetConfig = (key: keyof LineConfigTypes | keyof EraserConfigTypes, value: any) => {
     if (activeKey === Actions.ERASER) {
       setEraserConfig({ ...eraserConfig, [key]: value });
     } else {
@@ -57,7 +57,7 @@ const BrushDetail = () => {
         <Icon style={{ cursor: 'pointer' }} component={IconRefer} />
       </Flex>
       <Flex gap={16} style={{ width: '100%', padding: '8px 12px' }}>
-        <Flex flex={1} vertical gap={4}>
+        <Flex flex={1} vertical gap={6}>
           <Space direction="vertical" style={{ width: '100%' }}>
             <Flex flex={1} justify="space-between">
               <span>Size</span>
@@ -191,6 +191,32 @@ const BrushDetail = () => {
             />
           </div>
         </Flex>
+      </Flex>
+      <Flex style={{ width: '100%', padding: 12, gap: 12 }}>
+        <Flex align="center" gap={6}>
+          <span>Fill</span>
+          <Switch
+            size="small"
+            checked={lineConfig.fill}
+            onChange={(value: boolean) => handleSetConfig('fill', value)}
+          />
+        </Flex>
+        <Flex align="center" gap={6}>
+          <span>Pressure</span>
+          <Switch
+            size="small"
+            checked={lineConfig.suppress}
+            onChange={(value: boolean) => handleSetConfig('suppress', value)}
+          />
+        </Flex>
+        {/* <Flex align="center" gap={6}>
+          <span>Correction</span>
+          <Switch
+            size="small"
+            checked={lineConfig.fill}
+            onChange={(value: boolean) => handleSetConfig('fill', value ? 1 : 0)}
+          />
+        </Flex> */}
       </Flex>
     </Container>
   );

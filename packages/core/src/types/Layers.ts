@@ -38,6 +38,7 @@ export interface Line {
   hardness: number; //硬度 0 - 1
   stabilizer: number; //平滑度 0 - 4
   scale: number;
+  fill: boolean;
 }
 export interface Rect extends Point2D {}
 export interface Ellipse extends Point2D {}

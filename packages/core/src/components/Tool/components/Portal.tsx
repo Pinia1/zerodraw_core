@@ -20,7 +20,7 @@ const Portal: React.FC<PortalConfProps> = ({
 }) => {
   const style: React.CSSProperties = {
     position: 'fixed',
-    visibility: visible ? 'visible' : 'hidden',
+    display: visible ? 'block' : 'none',
     color: 'red',
     left: position?.x,
     top: position?.y,
