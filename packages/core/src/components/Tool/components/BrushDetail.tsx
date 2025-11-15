@@ -99,7 +99,7 @@ const BrushDetail = () => {
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Flex flex={1} justify="space-between">
                   <span>Smoothness</span>
-                  <span>{lineConfig.tension}x</span>
+                  <span>{lineConfig.stabilizer}x</span>
                 </Flex>
                 <Flex flex={1} justify="space-between">
                   <Slider
@@ -108,9 +108,9 @@ const BrushDetail = () => {
                     max={2}
                     step={0.5}
                     onChange={(value) => {
-                      handleSetConfig('tension', value);
+                      handleSetConfig('stabilizer', value);
                     }}
-                    value={lineConfig.tension}
+                    value={lineConfig.stabilizer}
                   />
                 </Flex>
               </Space>
@@ -132,10 +132,10 @@ const BrushDetail = () => {
                   />
                 </Flex>
               </Space>
-              <Space direction="vertical" style={{ width: '100%' }}>
+              {/* <Space direction="vertical" style={{ width: '100%' }}>
                 <Flex flex={1} justify="space-between">
                   <span>Shake correction</span>
-                  <span>{lineConfig.stabilizer}</span>
+                  <span>{lineConfig.amendmentValue}</span>
                 </Flex>
                 <Flex flex={1} justify="space-between">
                   <Slider
@@ -144,12 +144,12 @@ const BrushDetail = () => {
                     max={1}
                     step={0.01}
                     onChange={(value) => {
-                      handleSetConfig('stabilizer', value);
+                      handleSetConfig('amendmentValue', value);
                     }}
-                    value={lineConfig.stabilizer}
+                    value={lineConfig.amendmentValue}
                   />
                 </Flex>
-              </Space>
+              </Space> */}
             </>
           )}
         </Flex>

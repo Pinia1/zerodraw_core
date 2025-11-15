@@ -20,6 +20,8 @@ export const REDUCE_SCALE = 0.18;
 /**增加缩放比例 */
 export const INCREASE_SCALE = 0.02;
 
+export const CANVAS_CONTAINER_ID = 'canvas_container';
+
 export const generateUUID = () => {
   if (window.crypto) {
     return window.crypto.randomUUID();

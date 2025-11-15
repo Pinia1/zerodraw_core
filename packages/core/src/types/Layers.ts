@@ -5,12 +5,14 @@ export interface Layers {
   name?: string;
   diagrams: Diagram[];
   lines: Line[];
+  eraserLines: Line[];
 }
 
 export interface Diagram {
   id: string;
   type:
     | 'line'
+    | 'eraserLine'
     | 'rect'
     | 'ellipse'
     | 'circle'

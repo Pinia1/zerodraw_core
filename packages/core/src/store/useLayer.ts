@@ -25,6 +25,7 @@ const useLayerStore = create<LayerState>()(
         id: generateUUID(),
         diagrams: [],
         lines: [],
+        eraserLines: [],
       },
       getDrawingLayer: () => get().drawingLayer,
       setDrawingLayer: (drawingLayer) => set({ drawingLayer: drawingLayer }),

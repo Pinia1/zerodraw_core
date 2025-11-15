@@ -10,11 +10,10 @@ const Eraser = styled.div`
   z-index: 1;
 `;
 const BucketCursor: React.FC<{
-  r: number;
   x: number;
   y: number;
   style?: React.CSSProperties;
-}> = ({ r, x, y, style }) => {
+}> = ({ x, y, style }) => {
   return (
     <Eraser
       style={{

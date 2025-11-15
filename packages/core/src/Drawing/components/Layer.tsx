@@ -1,16 +1,52 @@
+import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useCallback, useRef } from 'react';
-import { Layer as KonvaLayer, Rect } from 'react-konva';
+import React, { useRef } from 'react';
+import { Layer as KonvaLayer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
-import { Line } from '../../types/Layers';
-import { pint2DToPath } from '../../utils/drawing';
+import {
+  Arrow,
+  Circle,
+  Diagram,
+  Diamond,
+  Ellipse,
+  Heart,
+  Image,
+  Line,
+  Polygon,
+  Rect,
+  Shape,
+  Star,
+  Text,
+  Triangle,
+} from '../../types/Layers';
+import Eraser from './Diagram/Eraser';
+import Lines from './Diagram/Lines';
 
-interface LayerProps {}
+type DiagramPropsMap = {
+  line: Line;
+  eraserLine: Line;
+  rect: Rect;
+  ellipse: Ellipse;
+  circle: Circle;
+  triangle: Triangle;
+  polygon: Polygon;
+  star: Star;
+  heart: Heart;
+  diamond: Diamond;
+  arrow: Arrow;
+  text: Text;
+  image: Image;
+  shape: Shape;
+};
 
-const Layer: React.FC<LayerProps> = ({}) => {
+type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
+
+const Layer = ({}) => {
   const ref = useRef<Konva.Layer>(null);
+  const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
+
   const { layerConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
@@ -22,26 +58,31 @@ const Layer: React.FC<LayerProps> = ({}) => {
     }))
   );
 
-  const renderAllPaths = useCallback((ctx: Konva.Context, path: string, line: Line) => {
-    ctx.imageSmoothingEnabled = false;
-    const path2D = new Path2D(path);
-    ctx.save();
+  //切换drawing layer时，拉伸变化时
+  const clearCache = useMemoizedFn(() => {
+    diagramMap.current.clear();
+  });
 
-    ctx.globalAlpha = line.opacity;
-    if (line.fill) {
-      ctx.fillStyle = line.stroke;
-      ctx.fill(path2D);
-    } else {
-      ctx.strokeStyle = line.stroke;
-      ctx.stroke(path2D);
+  const getDiagramProps = <T extends Diagram['type']>(
+    id: string,
+    type: T
+  ): DiagramProps<T> | null => {
+    if (diagramMap.current.has(id)) {
+      return diagramMap.current.get(id) as DiagramProps<T>;
     }
-
-    ctx.restore();
-  }, []);
-
-  const handleCache = () => {
-    if (!ref.current?.isCached()) {
-      ref.current?.cache();
+    switch (type) {
+      case 'line': {
+        const props = drawingLayer?.lines.find((line) => line.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
+      case 'eraserLine': {
+        const props = drawingLayer?.eraserLines.find((line) => line.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
+      default:
+        return null;
     }
   };
 
@@ -54,17 +95,23 @@ const Layer: React.FC<LayerProps> = ({}) => {
       ref={ref}
       listening
     >
-      {drawingLayer?.lines.map((line) => (
-        <Rect
-          key={line.id}
-          x={0}
-          y={0}
-          width={layerConfig.width}
-          height={layerConfig.height}
-          sceneFunc={(ctx) => renderAllPaths(ctx, pint2DToPath(line.points, line), line)}
-        />
-      ))}
+      {drawingLayer?.diagrams.map((diagram) => {
+        switch (diagram.type) {
+          case 'line': {
+            const props = getDiagramProps(diagram.id, diagram.type)!;
+            return <Lines key={diagram.id} {...props} />;
+          }
+          case 'eraserLine': {
+            const props = getDiagramProps(diagram.id, diagram.type)!;
+            return <Eraser key={diagram.id} {...props} />;
+          }
+
+          default:
+            return null;
+        }
+      })}
     </KonvaLayer>
   );
 };
+
 export default React.memo(Layer);

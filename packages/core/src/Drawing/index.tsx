@@ -6,16 +6,18 @@ import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
 import { Tools } from '..';
+import Cursor from '../components/Cursor';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
-import { Actions } from '../types/Drawing';
-import type { Line } from '../types/Layers';
+import { Actions, EraserConfigTypes, LineConfigTypes } from '../types/Drawing';
+import type { Diagram, Layers, Line } from '../types/Layers';
 import {
   ASIDE_WIDTH,
+  CANVAS_CONTAINER_ID,
   generateUUID,
   INCREASE_SCALE,
   MAX_SCALE,
@@ -40,6 +42,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setLayerConfig,
     layerConfig,
     lineConfig,
+    eraserConfig,
     fillColor,
     setBrushDetailConfPosition,
   } = useDrawingStore(
@@ -51,6 +54,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lineConfig: state.lineConfig,
       fillColor: state.fillColor,
       setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+      eraserConfig: state.eraserConfig,
     }))
   );
 
@@ -81,7 +85,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     switch (activeKey) {
       case Actions.PEN:
         return 'crosshair';
-
+      case Actions.FILL:
+      case Actions.ERASER:
+        return 'none';
       default:
         break;
     }
@@ -111,6 +117,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   );
   //windows chrome
   useKeyPress('alt', (e) => e.preventDefault());
+
+  const isLeftMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    return e.evt.button === 0;
+  });
 
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
@@ -167,14 +177,47 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: e.target.y(),
     });
   });
-  const getDrawingInfo = useMemoizedFn((e: Konva.KonvaEventObject<Event>) => {
+  const getDrawingInfo = (e: Konva.KonvaEventObject<MouseEvent>) => {
     const pos = e?.target?.getStage()?.getRelativePointerPosition() as Vector2d;
-    const config = lineConfig;
+    let config: LineConfigTypes | EraserConfigTypes = lineConfig;
+    const isEraser = activeKey === Actions.ERASER;
+    if (isEraser) {
+      config = eraserConfig;
+    }
     return {
       pos,
-      config,
+      config: {
+        ...config,
+        stabilizer: isEraser ? undefined : lineConfig.stabilizer,
+        hardness: isEraser ? undefined : lineConfig.hardness,
+        fill: isEraser ? undefined : lineConfig.fill,
+        eraser: isEraser,
+      },
     };
-  });
+  };
+  const getDrawingTypes = (): {
+    diagrams: Diagram['type'];
+    type: keyof Pick<Layers, 'lines' | 'eraserLines'>;
+  } => {
+    switch (activeKey) {
+      case Actions.ERASER:
+        return {
+          diagrams: 'eraserLine',
+          type: 'eraserLines',
+        };
+      case Actions.PEN:
+        return {
+          diagrams: 'line',
+          type: 'lines',
+        };
+
+      default:
+        return {
+          diagrams: 'line',
+          type: 'lines',
+        };
+    }
+  };
 
   const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     isDrawing.current = true;
@@ -182,36 +225,44 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const { pos, config } = getDrawingInfo(e);
     const { x, y } = layerConfig;
     const { scale } = stageConfig;
+    const id = generateUUID();
     const line: Line = {
       points: [pos.x - x, pos.y - y],
       strokeWidth: config.strokeWidth,
       stroke: fillColor,
       opacity: config.opacity,
-      stabilizer: config.stabilizer,
-      hardness: config.hardness,
+      stabilizer: config.stabilizer || 0,
+      hardness: config.hardness || 1,
       tension: Math.max(config.stabilizer ? config.stabilizer / 4 : 0, 0.7),
-      eraser: false,
-      id: generateUUID(),
+      eraser: config.eraser,
+      id,
       pressure: [0],
       suppress: false,
       scale: scale,
       fill: !!config.fill,
     };
-    setDrawingLayer({ ...drawingLayer, lines: [...drawingLayer.lines, line] });
+    const { type, diagrams } = getDrawingTypes();
+
+    setDrawingLayer({
+      ...drawingLayer,
+      [type]: [...drawingLayer[type], line],
+      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    });
   };
 
   const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!drawingLayer || !isDrawing.current || !drawingLayer?.lines?.length) return;
+    if (!drawingLayer || !isDrawing.current) return;
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
-    let lastLine = drawingLayer.lines[drawingLayer.lines.length - 1];
+    const { type } = getDrawingTypes();
+    let lastLine = drawingLayer[type][drawingLayer[type].length - 1];
     lastLine.points = (lastLine.points as number[]).concat([
       point.x - layerConfig.x,
       point.y - layerConfig.y,
     ]);
     lastLine.pressure.push(pressure);
-    const value = [...drawingLayer.lines];
-    setDrawingLayer({ ...drawingLayer, lines: value });
+    const value = [...drawingLayer[type]];
+    setDrawingLayer({ ...drawingLayer, [type]: value });
   };
 
   const onLineMouseUp = () => {
@@ -221,8 +272,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (e.evt.button !== 0) return;
+    if (!isLeftMouseDown(e)) return;
     switch (activeKey) {
+      case Actions.ERASER:
       case Actions.PEN:
         return onLineMouseDown(e);
       default:
@@ -231,9 +283,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (e.evt.button !== 0) return;
     switch (activeKey) {
       case Actions.PEN:
+      case Actions.ERASER:
         return onLineMouseMove(e);
       default:
         break;
@@ -243,6 +295,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const handleMouseUp = () => {
     switch (activeKey) {
       case Actions.PEN:
+      case Actions.ERASER:
         return onLineMouseUp();
       default:
         break;
@@ -255,6 +308,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (![Actions.PEN, Actions.ERASER].includes(activeKey)) return;
     setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
   });
+
   return (
     <>
       <Stage
@@ -262,6 +316,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         style={{
           cursor: cursorStyle,
         }}
+        id={CANVAS_CONTAINER_ID}
         width={size.width}
         height={size.height}
         x={stageConfig.x}
@@ -279,6 +334,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         <Mosic />
         <Layer />
       </Stage>
+      <Cursor />
       {tools?.includes(Tools.TOOL) && <Tool />}
     </>
   );

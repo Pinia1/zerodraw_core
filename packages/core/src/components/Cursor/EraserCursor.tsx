@@ -1,3 +1,4 @@
+import React from 'react';
 import styled from 'styled-components';
 
 const Eraser = styled.div`
@@ -9,6 +10,7 @@ const Eraser = styled.div`
   transform: translate(-50%, -50%);
   border: solid 2px #fff;
   z-index: 1;
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
 `;
 const EraserCursor: React.FC<{
   r: number;
@@ -29,4 +31,4 @@ const EraserCursor: React.FC<{
   );
 };
 
-export default EraserCursor;
+export default React.memo(EraserCursor);
