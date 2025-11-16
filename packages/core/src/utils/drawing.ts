@@ -70,7 +70,7 @@ export const pint2DToPath = (points: number[], line: Line) => {
   const path = getSvgPathFromStroke(
     getStroke(pathPoint as number[][], {
       simulatePressure: true,
-      size: line.strokeWidth,
+      size: line.strokeWidth / 2,
       thinning: line.suppress ? 0.6 : 0,
       smoothing: line.stabilizer,
       streamline: 0.5,

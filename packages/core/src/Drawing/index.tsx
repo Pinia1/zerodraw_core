@@ -270,6 +270,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     // pushHistory();
   };
 
+  const onRectMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    console.log('onRectMouseDown', e);
+  };
+
+  const onRectMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    console.log('onRectMouseMove', e);
+  };
+
+  const onRectMouseUp = () => {
+    isDrawing.current = false;
+    // pushHistory();
+  };
+
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!isLeftMouseDown(e)) return;
@@ -277,6 +290,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.ERASER:
       case Actions.PEN:
         return onLineMouseDown(e);
+      case Actions.RECT:
+        return onRectMouseDown(e);
       default:
         break;
     }
@@ -287,6 +302,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.PEN:
       case Actions.ERASER:
         return onLineMouseMove(e);
+      case Actions.RECT:
+        return onRectMouseMove(e);
       default:
         break;
     }
@@ -297,6 +314,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.PEN:
       case Actions.ERASER:
         return onLineMouseUp();
+      case Actions.RECT:
+        return onRectMouseUp();
       default:
         break;
     }

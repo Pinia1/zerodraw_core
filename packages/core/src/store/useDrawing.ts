@@ -12,6 +12,8 @@ import {
   StageConfigTypes,
 } from '../types/Drawing';
 
+const defaultBrushDetailConfPosition = { visible: false, position: { x: 0, y: 0 } };
+
 interface DrawingState {
   stageRef: React.RefObject<Konva.Stage> | null;
   bindRef: (ref: React.RefObject<Konva.Stage>) => void;
@@ -96,7 +98,7 @@ export const useDrawingStore = create<DrawingState>()(
       },
       setLassoConfig: (config: LassoConfigTypes) => set({ lassoConfig: config }),
       //brush detail conf position
-      brushDetailConfPosition: { visible: false, position: { x: 0, y: 0 } },
+      brushDetailConfPosition: defaultBrushDetailConfPosition,
       setBrushDetailConfPosition: (brushDetailConfPosition: {
         visible: boolean;
         position: Point2D;
@@ -104,7 +106,10 @@ export const useDrawingStore = create<DrawingState>()(
     }),
     {
       name: 'drawing-storage',
-      partialize: (state) => ({}),
+      partialize: (state) => ({
+        ...state,
+        brushDetailConfPosition: defaultBrushDetailConfPosition,
+      }),
     }
   )
 );

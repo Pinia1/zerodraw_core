@@ -5,41 +5,9 @@ import { Layer as KonvaLayer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
-import {
-  Arrow,
-  Circle,
-  Diagram,
-  Diamond,
-  Ellipse,
-  Heart,
-  Image,
-  Line,
-  Polygon,
-  Rect,
-  Shape,
-  Star,
-  Text,
-  Triangle,
-} from '../../types/Layers';
+import { Diagram, DiagramPropsMap } from '../../types/Layers';
 import Eraser from './Diagram/Eraser';
 import Lines from './Diagram/Lines';
-
-type DiagramPropsMap = {
-  line: Line;
-  eraserLine: Line;
-  rect: Rect;
-  ellipse: Ellipse;
-  circle: Circle;
-  triangle: Triangle;
-  polygon: Polygon;
-  star: Star;
-  heart: Heart;
-  diamond: Diamond;
-  arrow: Arrow;
-  text: Text;
-  image: Image;
-  shape: Shape;
-};
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 

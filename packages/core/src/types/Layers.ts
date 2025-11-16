@@ -42,6 +42,23 @@ export interface Line {
   scale: number;
   fill: boolean;
 }
+
+export type DiagramPropsMap = {
+  line: Line;
+  eraserLine: Line;
+  rect: Rect;
+  ellipse: Ellipse;
+  circle: Circle;
+  triangle: Triangle;
+  polygon: Polygon;
+  star: Star;
+  heart: Heart;
+  diamond: Diamond;
+  arrow: Arrow;
+  text: Text;
+  image: Image;
+  shape: Shape;
+};
 export interface Rect extends Point2D {}
 export interface Ellipse extends Point2D {}
 export interface Circle extends Point2D {}
