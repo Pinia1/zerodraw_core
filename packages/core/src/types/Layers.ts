@@ -6,6 +6,8 @@ export interface Layers {
   diagrams: Diagram[];
   lines: Line[];
   eraserLines: Line[];
+  rects: Rect[];
+  ellipses: Ellipse[];
 }
 
 export interface Diagram {
@@ -59,8 +61,28 @@ export type DiagramPropsMap = {
   image: Image;
   shape: Shape;
 };
-export interface Rect extends Point2D {}
-export interface Ellipse extends Point2D {}
+export interface Rect extends Point2D {
+  width: number;
+  height: number;
+  id: string;
+  strokeWidth: number;
+  stroke: string;
+  opacity: number;
+  fill: string;
+}
+export interface Ellipse extends Point2D {
+  id: string;
+  stroke?: string;
+  strokeWidth: number;
+  rotation?: number;
+  width: number;
+  height: number;
+  opacity?: number;
+  listening?: boolean;
+  mouseX: number;
+  mouseY: number;
+  fill: string;
+}
 export interface Circle extends Point2D {}
 export interface Triangle extends Point2D {}
 export interface Polygon extends Point2D {}

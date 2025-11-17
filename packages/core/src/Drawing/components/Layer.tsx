@@ -5,9 +5,17 @@ import { Layer as KonvaLayer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
-import { Diagram, DiagramPropsMap } from '../../types/Layers';
+import {
+  Diagram,
+  DiagramPropsMap,
+  Ellipse as EllipseType,
+  Line,
+  Rect as RectType,
+} from '../../types/Layers';
+import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Lines from './Diagram/Lines';
+import Rect from './Diagram/Rect';
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
@@ -15,9 +23,10 @@ const Layer = ({}) => {
   const ref = useRef<Konva.Layer>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
 
-  const { layerConfig } = useDrawingStore(
+  const { layerConfig, drawingId } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
+      drawingId: state.drawingId,
     }))
   );
   const { drawingLayer } = useLayerStore(
@@ -35,7 +44,7 @@ const Layer = ({}) => {
     id: string,
     type: T
   ): DiagramProps<T> | null => {
-    if (diagramMap.current.has(id)) {
+    if (diagramMap.current.has(id) && drawingId !== id) {
       return diagramMap.current.get(id) as DiagramProps<T>;
     }
     switch (type) {
@@ -46,6 +55,16 @@ const Layer = ({}) => {
       }
       case 'eraserLine': {
         const props = drawingLayer?.eraserLines.find((line) => line.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
+      case 'rect': {
+        const props = drawingLayer?.rects.find((rect) => rect.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
+      case 'ellipse': {
+        const props = drawingLayer?.ellipses.find((ellipse) => ellipse.id === id)!;
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
@@ -64,16 +83,21 @@ const Layer = ({}) => {
       listening
     >
       {drawingLayer?.diagrams.map((diagram) => {
+        const props = getDiagramProps(diagram.id, diagram.type)!;
+
         switch (diagram.type) {
           case 'line': {
-            const props = getDiagramProps(diagram.id, diagram.type)!;
-            return <Lines key={diagram.id} {...props} />;
+            return <Lines key={diagram.id} {...(props as Line)} />;
           }
           case 'eraserLine': {
-            const props = getDiagramProps(diagram.id, diagram.type)!;
-            return <Eraser key={diagram.id} {...props} />;
+            return <Eraser key={diagram.id} {...(props as Line)} />;
           }
-
+          case 'rect': {
+            return <Rect key={diagram.id} {...(props as RectType)} />;
+          }
+          case 'ellipse': {
+            return <Ellipse key={diagram.id} {...(props as EllipseType)} />;
+          }
           default:
             return null;
         }

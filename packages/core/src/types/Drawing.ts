@@ -19,7 +19,7 @@ export type EraserConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'> & {
   freehand: boolean;
 };
 
-export type GraphConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'>;
+export type GraphConfigTypes = Pick<Line, 'strokeWidth' | 'opacity' | 'fill'> & {};
 
 export type LassoConfigTypes = {
   type: LassoMode;

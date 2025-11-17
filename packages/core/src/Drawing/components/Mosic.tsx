@@ -22,7 +22,6 @@ const Mosic: React.FC = () => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       listening={false}
-      cache={false}
     >
       <Rect
         x={0}

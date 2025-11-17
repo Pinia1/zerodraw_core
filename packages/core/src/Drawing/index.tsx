@@ -44,7 +44,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     lineConfig,
     eraserConfig,
     fillColor,
+    graphConfig,
     setBrushDetailConfPosition,
+    setDrawingId,
   } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
@@ -55,6 +57,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       fillColor: state.fillColor,
       setBrushDetailConfPosition: state.setBrushDetailConfPosition,
       eraserConfig: state.eraserConfig,
+      graphConfig: state.graphConfig,
+      setDrawingId: state.setDrawingId,
     }))
   );
 
@@ -100,6 +104,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   useKeyPress(
     'space',
     () => {
+      if (isDrawing.current) return;
       setStageDraggable(true);
     },
     {
@@ -109,6 +114,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   useKeyPress(
     'space',
     () => {
+      if (isDrawing.current) return;
       setStageDraggable(false);
     },
     {
@@ -197,7 +203,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
   const getDrawingTypes = (): {
     diagrams: Diagram['type'];
-    type: keyof Pick<Layers, 'lines' | 'eraserLines'>;
+    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses'>;
   } => {
     switch (activeKey) {
       case Actions.ERASER:
@@ -210,7 +216,16 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           diagrams: 'line',
           type: 'lines',
         };
-
+      case Actions.RECT:
+        return {
+          diagrams: 'rect',
+          type: 'rects',
+        };
+      case Actions.ELLIPSE:
+        return {
+          diagrams: 'ellipse',
+          type: 'ellipses',
+        };
       default:
         return {
           diagrams: 'line',
@@ -220,12 +235,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    isDrawing.current = true;
     if (!drawingLayer) return;
+    isDrawing.current = true;
     const { pos, config } = getDrawingInfo(e);
     const { x, y } = layerConfig;
     const { scale } = stageConfig;
     const id = generateUUID();
+    setDrawingId(id);
     const line: Line = {
       points: [pos.x - x, pos.y - y],
       strokeWidth: config.strokeWidth,
@@ -255,7 +271,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
     const { type } = getDrawingTypes();
-    let lastLine = drawingLayer[type][drawingLayer[type].length - 1];
+    let lastLine = drawingLayer[type][drawingLayer[type].length - 1] as Line;
     lastLine.points = (lastLine.points as number[]).concat([
       point.x - layerConfig.x,
       point.y - layerConfig.y,
@@ -267,43 +283,142 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const onLineMouseUp = () => {
     isDrawing.current = false;
+    setDrawingId(null);
     // pushHistory();
   };
 
   const onRectMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    console.log('onRectMouseDown', e);
+    if (!drawingLayer) return;
+    isDrawing.current = true;
+    const { pos } = getDrawingInfo(e);
+    const { x, y } = layerConfig;
+    const { scale } = stageConfig;
+    const id = generateUUID();
+    setDrawingId(id);
+    const rect = {
+      x: pos.x - x,
+      y: pos.y - y,
+      width: 0,
+      height: 0,
+      strokeWidth: graphConfig.strokeWidth,
+      stroke: fillColor,
+      opacity: graphConfig.opacity,
+      fill: graphConfig.fill ? fillColor : '',
+      scale: scale,
+      id,
+    };
+    const { type, diagrams } = getDrawingTypes();
+    setDrawingLayer({
+      ...drawingLayer,
+      [type]: [...drawingLayer[type], rect],
+      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    });
   };
 
   const onRectMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    console.log('onRectMouseMove', e);
+    if (!isDrawing.current) return;
+    const rects = drawingLayer?.rects || [];
+    let rect = rects[rects.length - 1];
+    if (!rect) return;
+    const { x, y } = layerConfig;
+    const { pos } = getDrawingInfo(e);
+    rect = {
+      ...rect,
+      width: pos.x - x - rect.x!,
+      height: pos.y - y - rect.y!,
+    };
+    rects.splice(rects.length - 1, 1, rect);
+    setDrawingLayer({ ...drawingLayer!, rects: rects });
   };
 
   const onRectMouseUp = () => {
     isDrawing.current = false;
+    setDrawingId(null);
+    // pushHistory();
+  };
+
+  const onEllipseMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!drawingLayer) return;
+    isDrawing.current = true;
+    const { pos } = getDrawingInfo(e);
+    const { x, y } = layerConfig;
+    const { scale } = stageConfig;
+    const id = generateUUID();
+    setDrawingId(id);
+    const ellipse = {
+      x: pos.x - x,
+      y: pos.y - y,
+      width: 0,
+      height: 0,
+      strokeWidth: graphConfig.strokeWidth,
+      stroke: fillColor,
+      opacity: graphConfig.opacity,
+      fill: graphConfig.fill ? fillColor : '',
+      scale: scale,
+      id: id,
+      mouseX: pos.x - x,
+      mouseY: pos.y - y,
+    };
+    const { type, diagrams } = getDrawingTypes();
+    setDrawingLayer({
+      ...drawingLayer,
+      [type]: [...drawingLayer[type], ellipse],
+      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    });
+  };
+  const onEllipseMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!isDrawing.current) return;
+    const ellipses = drawingLayer?.ellipses || [];
+    let ellipse = ellipses[ellipses.length - 1];
+    if (!ellipse) return;
+    const { x, y } = layerConfig;
+    const { pos } = getDrawingInfo(e);
+    const width = pos.x - x - ellipse.mouseX;
+    const height = pos.y - y - ellipse.mouseY;
+    const newX = ellipse.mouseX + width / 2;
+    const newY = ellipse.mouseY + height / 2;
+    ellipse = {
+      ...ellipse,
+      width: Math.abs(width),
+      height: Math.abs(height),
+      x: newX,
+      y: newY,
+    };
+    ellipses.splice(ellipses.length - 1, 1, ellipse);
+    setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
+  };
+  const onEllipseMouseUp = () => {
+    isDrawing.current = false;
+    setDrawingId(null);
     // pushHistory();
   };
 
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!isLeftMouseDown(e)) return;
+    if (!isLeftMouseDown(e) || stageDraggable) return;
     switch (activeKey) {
       case Actions.ERASER:
       case Actions.PEN:
         return onLineMouseDown(e);
       case Actions.RECT:
         return onRectMouseDown(e);
+      case Actions.ELLIPSE:
+        return onEllipseMouseDown(e);
       default:
         break;
     }
   };
 
   const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (stageDraggable) return;
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
         return onLineMouseMove(e);
       case Actions.RECT:
         return onRectMouseMove(e);
+      case Actions.ELLIPSE:
+        return onEllipseMouseMove(e);
       default:
         break;
     }
@@ -316,6 +431,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onLineMouseUp();
       case Actions.RECT:
         return onRectMouseUp();
+      case Actions.ELLIPSE:
+        return onEllipseMouseUp();
       default:
         break;
     }

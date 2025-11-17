@@ -13,6 +13,11 @@ import {
 } from '../types/Drawing';
 
 const defaultBrushDetailConfPosition = { visible: false, position: { x: 0, y: 0 } };
+const defaultStageConfig: StageConfigTypes = {
+  scale: 1,
+  x: 0,
+  y: 0,
+};
 
 interface DrawingState {
   stageRef: React.RefObject<Konva.Stage> | null;
@@ -36,6 +41,8 @@ interface DrawingState {
   }) => void;
   fillColor: string;
   setFillColor: (color: string) => void;
+  drawingId: string | null;
+  setDrawingId: (id: string | null) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -45,11 +52,7 @@ export const useDrawingStore = create<DrawingState>()(
       bindRef: (ref: DrawingState['stageRef']) => set({ stageRef: ref }),
 
       //stage config
-      stageConfig: {
-        scale: 1,
-        x: 0,
-        y: 0,
-      },
+      stageConfig: defaultStageConfig,
       setStageConfig: (config: StageConfigTypes) => set({ stageConfig: config }),
 
       //layer config
@@ -90,6 +93,9 @@ export const useDrawingStore = create<DrawingState>()(
       graphConfig: {
         strokeWidth: 8,
         opacity: 1,
+        fill: false,
+        width: 0,
+        height: 0,
       },
       setGraphConfig: (config: GraphConfigTypes) => set({ graphConfig: config }),
       //lasso config
@@ -103,12 +109,17 @@ export const useDrawingStore = create<DrawingState>()(
         visible: boolean;
         position: Point2D;
       }) => set({ brushDetailConfPosition: brushDetailConfPosition }),
+      //drawing id
+      drawingId: null,
+      setDrawingId: (id: string | null) => set({ drawingId: id }),
     }),
     {
       name: 'drawing-storage',
       partialize: (state) => ({
         ...state,
         brushDetailConfPosition: defaultBrushDetailConfPosition,
+        stageConfig: defaultStageConfig,
+        stageRef: null,
       }),
     }
   )
