@@ -48,8 +48,8 @@ const Layer = ({}) => {
       return diagramMap.current.get(id) as DiagramProps<T>;
     }
     switch (type) {
-      case 'line': {
-        const props = drawingLayer?.lines.find((line) => line.id === id)!;
+      case 'path': {
+        const props = drawingLayer?.paths.find((line) => line.id === id)!;
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
@@ -86,7 +86,7 @@ const Layer = ({}) => {
         const props = getDiagramProps(diagram.id, diagram.type)!;
 
         switch (diagram.type) {
-          case 'line': {
+          case 'path': {
             return <Lines key={diagram.id} {...(props as Line)} />;
           }
           case 'eraserLine': {

@@ -8,6 +8,7 @@ export interface Layers {
   eraserLines: Line[];
   rects: Rect[];
   ellipses: Ellipse[];
+  paths: Line[];
 }
 
 export interface Diagram {
@@ -26,7 +27,8 @@ export interface Diagram {
     | 'arrow'
     | 'text'
     | 'image'
-    | 'shape';
+    | 'shape'
+    | 'path';
 }
 
 export interface Line {
@@ -60,6 +62,7 @@ export type DiagramPropsMap = {
   text: Text;
   image: Image;
   shape: Shape;
+  path: Line;
 };
 export interface Rect extends Point2D {
   width: number;

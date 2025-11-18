@@ -28,6 +28,7 @@ const useLayerStore = create<LayerState>()(
         eraserLines: [],
         rects: [],
         ellipses: [],
+        paths: [],
       },
       getDrawingLayer: () => get().drawingLayer,
       setDrawingLayer: (drawingLayer) => set({ drawingLayer: drawingLayer }),

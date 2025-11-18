@@ -87,6 +87,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const cursorStyle = useMemo(() => {
     if (stageDraggable) return 'grab';
     switch (activeKey) {
+      case Actions.RECT:
+      case Actions.ELLIPSE:
+      case Actions.LINE:
       case Actions.PEN:
         return 'crosshair';
       case Actions.FILL:
@@ -203,7 +206,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
   const getDrawingTypes = (): {
     diagrams: Diagram['type'];
-    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses'>;
+    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths'>;
   } => {
     switch (activeKey) {
       case Actions.ERASER:
@@ -213,13 +216,18 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         };
       case Actions.PEN:
         return {
-          diagrams: 'line',
-          type: 'lines',
+          diagrams: 'path',
+          type: 'paths',
         };
       case Actions.RECT:
         return {
           diagrams: 'rect',
           type: 'rects',
+        };
+      case Actions.LINE:
+        return {
+          diagrams: 'line',
+          type: 'lines',
         };
       case Actions.ELLIPSE:
         return {
@@ -234,7 +242,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
-  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!drawingLayer) return;
     isDrawing.current = true;
     const { pos, config } = getDrawingInfo(e);
@@ -266,7 +274,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   };
 
-  const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!drawingLayer || !isDrawing.current) return;
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
@@ -281,7 +289,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingLayer({ ...drawingLayer, [type]: value });
   };
 
-  const onLineMouseUp = () => {
+  const onPenMouseUp = () => {
     isDrawing.current = false;
     setDrawingId(null);
     // pushHistory();
@@ -393,13 +401,23 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     // pushHistory();
   };
 
+  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!drawingLayer) return;
+  };
+  const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!isDrawing.current) return;
+  };
+  const onLineMouseUp = () => {
+    // pushHistory();
+  };
+
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!isLeftMouseDown(e) || stageDraggable) return;
     switch (activeKey) {
       case Actions.ERASER:
       case Actions.PEN:
-        return onLineMouseDown(e);
+        return onPenMouseDown(e);
       case Actions.RECT:
         return onRectMouseDown(e);
       case Actions.ELLIPSE:
@@ -414,11 +432,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
-        return onLineMouseMove(e);
+        return onPenMouseMove(e);
       case Actions.RECT:
         return onRectMouseMove(e);
       case Actions.ELLIPSE:
         return onEllipseMouseMove(e);
+      case Actions.LINE:
+        return onLineMouseMove(e);
       default:
         break;
     }
@@ -428,7 +448,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
-        return onLineMouseUp();
+        return onPenMouseUp();
       case Actions.RECT:
         return onRectMouseUp();
       case Actions.ELLIPSE:
