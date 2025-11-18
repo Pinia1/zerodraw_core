@@ -9,12 +9,13 @@ import {
   Diagram,
   DiagramPropsMap,
   Ellipse as EllipseType,
-  Line,
+  Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
-import Lines from './Diagram/Lines';
+import Line from './Diagram/Lines';
+import Paths from './Diagram/Paths';
 import Rect from './Diagram/Rect';
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
@@ -68,6 +69,11 @@ const Layer = ({}) => {
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
+      case 'line': {
+        const props = drawingLayer?.lines.find((line) => line.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
       default:
         return null;
     }
@@ -87,16 +93,19 @@ const Layer = ({}) => {
 
         switch (diagram.type) {
           case 'path': {
-            return <Lines key={diagram.id} {...(props as Line)} />;
+            return <Paths key={diagram.id} {...(props as LineType)} />;
           }
           case 'eraserLine': {
-            return <Eraser key={diagram.id} {...(props as Line)} />;
+            return <Eraser key={diagram.id} {...(props as LineType)} />;
           }
           case 'rect': {
             return <Rect key={diagram.id} {...(props as RectType)} />;
           }
           case 'ellipse': {
             return <Ellipse key={diagram.id} {...(props as EllipseType)} />;
+          }
+          case 'line': {
+            return <Line key={diagram.id} {...(props as any)} />;
           }
           default:
             return null;

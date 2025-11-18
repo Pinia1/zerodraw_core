@@ -13,6 +13,8 @@ const Rect: React.FC<RectType> = (props) => {
       strokeWidth={props.strokeWidth / 2}
       opacity={props.opacity}
       fill={props.fill}
+      lineCap="round"
+      lineJoin="round"
     />
   );
 };

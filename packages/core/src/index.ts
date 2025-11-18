@@ -8,5 +8,5 @@ export enum Tools {
 
 export interface DrawingProps {
   size: { width: number; height: number };
-  tools: Tools;
+  tools: Tools[];
 }

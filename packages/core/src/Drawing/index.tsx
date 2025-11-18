@@ -127,6 +127,32 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   //windows chrome
   useKeyPress('alt', (e) => e.preventDefault());
 
+  // ESC键处理，用于结束连笔
+  useKeyPress(
+    'esc',
+    () => {
+      finishLine();
+    },
+    {
+      events: ['keydown'],
+    }
+  );
+  useKeyPress('Escape', () => {}, {
+    events: ['keyup'],
+  });
+
+  //todo
+  // useKeyPress(
+  //   'ctrl.z',
+  //   (e) => {
+  //     e.preventDefault();
+  //     // finishLine();
+  //   },
+  //   {
+  //     events: ['keydown'],
+  //   }
+  // );
+
   const isLeftMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     return e.evt.button === 0;
   });
@@ -403,13 +429,73 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!drawingLayer) return;
+    const { pos } = getDrawingInfo(e);
+    const { x, y } = layerConfig;
+    const { scale } = stageConfig;
+    let startX = pos.x - x;
+    let startY = pos.y - y;
+    if (isDrawing.current && activeKey === Actions.LINE) {
+      const lines = drawingLayer.lines || [];
+      const lastLine = lines[lines.length - 1];
+      if (lastLine && lastLine.points.length >= 4) {
+        startX = lastLine.points[2];
+        startY = lastLine.points[3];
+      }
+    }
+    isDrawing.current = true;
+    const id = generateUUID();
+    setDrawingId(id);
+    const line: Line = {
+      points: [startX, startY, startX, startY],
+      strokeWidth: graphConfig.strokeWidth,
+      stroke: fillColor,
+      opacity: graphConfig.opacity,
+      stabilizer: 0,
+      hardness: 1,
+      tension: 0,
+      eraser: false,
+      id,
+      pressure: [0],
+      suppress: false,
+      scale: scale,
+      fill: false,
+    };
+    const { type, diagrams } = getDrawingTypes();
+    setDrawingLayer({
+      ...drawingLayer,
+      [type]: [...drawingLayer[type], line],
+      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    });
   };
+
   const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!isDrawing.current) return;
+    if (!isDrawing.current || !drawingLayer) return;
+    const lines = drawingLayer?.lines || [];
+    let line = lines[lines.length - 1];
+    if (!line) return;
+    const { x, y } = layerConfig;
+    const { pos } = getDrawingInfo(e);
+    line = {
+      ...line,
+      points: [line.points[0], line.points[1], pos.x - x, pos.y - y],
+    };
+    lines.splice(lines.length - 1, 1, line);
+    setDrawingLayer({ ...drawingLayer!, lines: lines });
   };
-  const onLineMouseUp = () => {
-    // pushHistory();
+
+  const finishLine = () => {
+    if (isDrawing.current && activeKey === Actions.LINE) {
+      isDrawing.current = false;
+      setDrawingId(null);
+      const lines = drawingLayer?.lines || [];
+      let line = lines[lines.length - 1];
+      line.points = line.points.slice(0, -2);
+      lines.splice(lines.length - 1, 1, line);
+      setDrawingLayer({ ...drawingLayer!, lines: lines });
+    }
   };
+
+  const onLineMouseUp = () => {};
 
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -422,6 +508,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onRectMouseDown(e);
       case Actions.ELLIPSE:
         return onEllipseMouseDown(e);
+      case Actions.LINE:
+        return onLineMouseDown(e);
       default:
         break;
     }
@@ -453,6 +541,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onRectMouseUp();
       case Actions.ELLIPSE:
         return onEllipseMouseUp();
+      case Actions.LINE:
+        return onLineMouseUp();
       default:
         break;
     }
@@ -461,6 +551,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const handleContextMenu = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
     e.evt.stopPropagation();
+    finishLine();
     if (![Actions.PEN, Actions.ERASER].includes(activeKey)) return;
     setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
   });
