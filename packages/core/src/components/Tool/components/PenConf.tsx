@@ -1,4 +1,5 @@
 import Icon from '@ant-design/icons';
+import { WebWorker } from '@monorepo/common';
 import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
@@ -41,15 +42,21 @@ const PenConf = () => {
       setActiveKey: state.setActiveKey,
     }))
   );
-  const { lineConfig, setLineConfig, brushDetailConfPosition, setBrushDetailConfPosition } =
-    useDrawingStore(
-      useShallow((state) => ({
-        lineConfig: state.lineConfig,
-        setLineConfig: state.setLineConfig,
-        brushDetailConfPosition: state.brushDetailConfPosition,
-        setBrushDetailConfPosition: state.setBrushDetailConfPosition,
-      }))
-    );
+  const {
+    lineConfig,
+    setLineConfig,
+    brushDetailConfPosition,
+    setBrushDetailConfPosition,
+    bindWorkerRef,
+  } = useDrawingStore(
+    useShallow((state) => ({
+      lineConfig: state.lineConfig,
+      setLineConfig: state.setLineConfig,
+      brushDetailConfPosition: state.brushDetailConfPosition,
+      setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+      bindWorkerRef: state.bindWorkerRef,
+    }))
+  );
 
   const handleSetLineConfig = (key: keyof LineConfigTypes, value: number) => {
     setLineConfig({ ...lineConfig, [key]: value });
@@ -65,7 +72,10 @@ const PenConf = () => {
         <Icon component={IconPen} />
       </ToolItem>
       <ToolItem
-        onClick={() => setActiveKey(Actions.FILL)}
+        onClick={() => {
+          setActiveKey(Actions.FILL);
+          bindWorkerRef(new WebWorker(new URL('../../../../worker/fill.ts', import.meta.url)));
+        }}
         style={ToolItemStyle}
         $active={activeKey === Actions.FILL}
       >

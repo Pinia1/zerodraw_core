@@ -1,3 +1,4 @@
+import { WebWorker } from '@monorepo/common';
 import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -43,6 +44,8 @@ interface DrawingState {
   setFillColor: (color: string) => void;
   drawingId: string | null;
   setDrawingId: (id: string | null) => void;
+  workerRef: WebWorker | null;
+  bindWorkerRef: (ref: WebWorker | null) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -63,6 +66,9 @@ export const useDrawingStore = create<DrawingState>()(
         y: 0,
       },
       setLayerConfig: (config: LayerConfigTypes) => set({ layerConfig: config }),
+      //worker ref
+      workerRef: null,
+      bindWorkerRef: (ref: WebWorker | null) => set({ workerRef: ref }),
 
       //line config
       lineConfig: {

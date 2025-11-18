@@ -5,3 +5,4 @@ export * from './utils';
 
 export { default as useMediaQuery } from './hooks/useMediaQuery';
 export * from './listNode';
+export * from './webWoker';

@@ -47,6 +47,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     graphConfig,
     setBrushDetailConfPosition,
     setDrawingId,
+    workerRef,
   } = useDrawingStore(
     useShallow((state) => ({
       stageConfig: state.stageConfig,
@@ -59,6 +60,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       eraserConfig: state.eraserConfig,
       graphConfig: state.graphConfig,
       setDrawingId: state.setDrawingId,
+      workerRef: state.workerRef,
     }))
   );
 
@@ -497,6 +499,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const onLineMouseUp = () => {};
 
+  const onFillMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    console.log(workerRef, e);
+  };
+
   //drawing layer
   const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!isLeftMouseDown(e) || stageDraggable) return;
@@ -510,6 +516,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onEllipseMouseDown(e);
       case Actions.LINE:
         return onLineMouseDown(e);
+      case Actions.FILL:
+        return onFillMouseDown(e);
       default:
         break;
     }
