@@ -105,7 +105,7 @@ const Layer = ({}) => {
             return <Ellipse key={diagram.id} {...(props as EllipseType)} />;
           }
           case 'line': {
-            return <Line key={diagram.id} {...(props as any)} />;
+            return <Line key={diagram.id} {...(props as Konva.LineConfig)} />;
           }
           default:
             return null;
