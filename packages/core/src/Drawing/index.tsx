@@ -159,24 +159,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     let pos: any = null;
     const layersDom = stage.children;
 
-    const lastLayer = layersDom.find((i: any) => i.attrs.isDrawing);
+    const lastLayer = layersDom.find((i: Konva.Node) => i.attrs.isDrawing);
 
-    lastLayer?.children.forEach((i: any) => {
+    lastLayer?.children.forEach((i: Konva.Node) => {
       if (i.getType() === 'Group') {
         const pointerPos = stage.getPointerPosition() as Vector2d;
         const group = i.getClientRect();
-        console.log(pointerPos, group, 'group');
-
         const layerRect = lastLayer.getClientRect();
 
-        // 计算相对 Group 的物理坐标
         const x = pointerPos.x - group.x;
         const y = pointerPos.y - group.y;
         const relativePos = {
           x: Math.round(x),
           y: Math.round(y),
         };
-
         //画布保持1920，保持group.width占用的画布比例
         const pixelRatio = WIDTH / layerConfig.width / stageConfig.scale;
 
