@@ -1,5 +1,4 @@
 import Icon from '@ant-design/icons';
-import { WebWorker } from '@monorepo/common';
 import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
@@ -9,6 +8,7 @@ import { IconConf, IconFill, IconPen } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
+import { createFillWorker } from '../../../utils/worker';
 import Container from '../../Container';
 
 export const ToolItemStyle: React.CSSProperties = {
@@ -74,7 +74,7 @@ const PenConf = () => {
       <ToolItem
         onClick={() => {
           setActiveKey(Actions.FILL);
-          bindWorkerRef(new WebWorker(new URL('../../../../worker/fill.ts', import.meta.url)));
+          bindWorkerRef(createFillWorker());
         }}
         style={ToolItemStyle}
         $active={activeKey === Actions.FILL}

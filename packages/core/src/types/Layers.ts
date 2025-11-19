@@ -3,6 +3,7 @@ import type { Point2D } from './Drawing';
 export interface Layers {
   id: string;
   name?: string;
+  opacity: number;
   diagrams: Diagram[];
   lines: Line[];
   eraserLines: Line[];

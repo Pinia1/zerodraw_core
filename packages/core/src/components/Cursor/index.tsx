@@ -1,5 +1,6 @@
 import { useMouse } from '@monorepo/common';
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
@@ -21,10 +22,13 @@ const Cursor = () => {
     }))
   );
   if (activeKey === Actions.ERASER) {
-    return <EraserCursor r={eraserConfig.strokeWidth} x={mouse.elementX} y={mouse.elementY} />;
+    return createPortal(
+      <EraserCursor r={eraserConfig.strokeWidth} x={mouse.elementX} y={mouse.elementY} />,
+      document.body
+    );
   }
   if (activeKey === Actions.FILL) {
-    return <BucketCursor x={mouse.elementX} y={mouse.elementY} />;
+    return createPortal(<BucketCursor x={mouse.elementX} y={mouse.elementY} />, document.body);
   }
 
   return null;

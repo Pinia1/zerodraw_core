@@ -6,6 +6,16 @@ type Message = {
   data: any;
 };
 
+interface PostMessageData {
+  imageData: ImageData;
+  posX: number;
+  posY: number;
+  tolerance: number;
+  fillColor: [number, number, number, number];
+  canvasConfig: any;
+  groupPos: any;
+}
+
 enum Status {
   IDLE = 'idle',
   PENDING = 'pending',
@@ -28,12 +38,14 @@ export class WebWorker {
     this.onError(errorHandler ? (event) => errorHandler(event.error) : () => {});
   }
 
-  postMessage(message: Exclude<Message, 'id'>) {
+  postMessage(message: PostMessageData) {
     return new Promise((resolve, reject) => {
       try {
         if (this.status === Status.PENDING) {
           return reject(new Error('Worker is busy'));
         }
+        console.log('post message', message);
+
         this.status = Status.PENDING;
         this.resolve = resolve;
         this.reject = reject;
@@ -55,13 +67,17 @@ export class WebWorker {
       if (id === this.instanceId) {
         this.status = Status.IDLE;
         this.instanceId = '';
+
         this.resolve(event.data);
       }
     });
   }
 
   onError(callback: (event: ErrorEvent) => void) {
-    this.worker?.addEventListener('error', callback);
+    this.worker?.addEventListener('error', (e) => {
+      console.log(e, 'fill worker error');
+      callback(e);
+    });
   }
 
   destroy() {

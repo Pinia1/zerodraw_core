@@ -1,4 +1,4 @@
-import { useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
+import { hexToRgba, useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
 import React, { useMemo, useRef, useState } from 'react';
@@ -154,6 +154,72 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   //     events: ['keydown'],
   //   }
   // );
+
+  const getGroupPos = (stage: Konva.Stage) => {
+    let pos: any = null;
+    const layersDom = stage.children;
+
+    const lastLayer = layersDom.find((i: any) => i.attrs.isDrawing);
+
+    lastLayer?.children.forEach((i: any) => {
+      if (i.getType() === 'Group') {
+        const pointerPos = stage.getPointerPosition() as Vector2d;
+        const group = i.getClientRect();
+        console.log(pointerPos, group, 'group');
+
+        const layerRect = lastLayer.getClientRect();
+
+        // 计算相对 Group 的物理坐标
+        const x = pointerPos.x - group.x;
+        const y = pointerPos.y - group.y;
+        const relativePos = {
+          x: Math.round(x),
+          y: Math.round(y),
+        };
+
+        //画布保持1920，保持group.width占用的画布比例
+        const pixelRatio = WIDTH / layerConfig.width / stageConfig.scale;
+
+        pos = {
+          x: group.x - layerRect.x,
+          y: group.y - layerRect.y,
+          width: group.width,
+          height: group.height,
+          relativePos,
+          pixelRatio,
+        };
+        const absPos = lastLayer.getAbsolutePosition();
+        if (pos.y <= 0) {
+          pos.y = group.y - absPos.y;
+        }
+        if (pos.x <= 0) {
+          pos.x = group.x - absPos.x;
+        }
+        const canvas = lastLayer.toCanvas({
+          pixelRatio: pixelRatio,
+          x: group.x,
+          y: group.y,
+          width: group.width,
+          height: group.height,
+        });
+
+        const ctx = canvas.getContext('2d')!;
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        pos.imageData = imageData;
+
+        const src = i.toDataURL({
+          pixelRatio: pixelRatio,
+          x: group.x,
+          y: group.y,
+          width: group.width,
+          height: group.height,
+        });
+        console.log(src, 'fill original src');
+      }
+    });
+
+    return pos;
+  };
 
   const isLeftMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     return e.evt.button === 0;
@@ -499,8 +565,34 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const onLineMouseUp = () => {};
 
-  const onFillMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    console.log(workerRef, e);
+  const onFillMouseDown = async (e: Konva.KonvaEventObject<MouseEvent>) => {
+    try {
+      const stage = e.target.getStage()!;
+      const groupPos = getGroupPos(stage);
+      const {
+        imageData,
+        relativePos: { x: posX, y: posY },
+        pixelRatio,
+      } = groupPos;
+      const magnificationPosX = Math.round(posX * pixelRatio);
+      const magnificationPosY = Math.round(posY * pixelRatio);
+      const tolerance = 10;
+
+      const result = await workerRef?.postMessage({
+        imageData,
+        posX: magnificationPosX,
+        posY: magnificationPosY,
+        tolerance,
+        fillColor: hexToRgba(fillColor, lineConfig.opacity),
+        canvasConfig: {
+          layerBackground: '#ffffff',
+        },
+        groupPos,
+      });
+      console.log(result, 'result');
+    } catch (error) {
+      console.log(error, 'fill error');
+    }
   };
 
   //drawing layer

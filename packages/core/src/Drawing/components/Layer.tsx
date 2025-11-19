@@ -1,7 +1,7 @@
 import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
 import React, { useRef } from 'react';
-import { Layer as KonvaLayer } from 'react-konva';
+import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
@@ -87,30 +87,50 @@ const Layer = ({}) => {
       clipHeight={layerConfig.height}
       ref={ref}
       listening
+      isDrawing
     >
-      {drawingLayer?.diagrams.map((diagram) => {
-        const props = getDiagramProps(diagram.id, diagram.type)!;
+      <Group
+        draggable={false}
+        clipWidth={layerConfig.width}
+        clipHeight={layerConfig.height}
+        listening={false}
+      >
+        {drawingLayer?.diagrams.map((diagram) => {
+          const props = getDiagramProps(diagram.id, diagram.type)!;
 
-        switch (diagram.type) {
-          case 'path': {
-            return <Paths key={diagram.id} {...(props as LineType)} />;
+          switch (diagram.type) {
+            case 'path': {
+              return <Paths key={diagram.id} {...(props as LineType)} />;
+            }
+            case 'eraserLine': {
+              return <Eraser key={diagram.id} {...(props as LineType)} />;
+            }
+            case 'rect': {
+              return <Rect key={diagram.id} {...(props as RectType)} />;
+            }
+            case 'ellipse': {
+              return <Ellipse key={diagram.id} {...(props as EllipseType)} />;
+            }
+            case 'line': {
+              return <Line key={diagram.id} {...(props as Konva.LineConfig)} />;
+            }
+            default:
+              return null;
           }
-          case 'eraserLine': {
-            return <Eraser key={diagram.id} {...(props as LineType)} />;
-          }
-          case 'rect': {
-            return <Rect key={diagram.id} {...(props as RectType)} />;
-          }
-          case 'ellipse': {
-            return <Ellipse key={diagram.id} {...(props as EllipseType)} />;
-          }
-          case 'line': {
-            return <Line key={diagram.id} {...(props as Konva.LineConfig)} />;
-          }
-          default:
-            return null;
-        }
-      })}
+        })}
+      </Group>
+
+      <KonvaRect
+        x={0}
+        y={0}
+        listening={false}
+        width={layerConfig.width}
+        height={layerConfig.height}
+        id="rect_for_placeholder"
+        fill={'#000'}
+        globalCompositeOperation={'destination-out'}
+        opacity={1 - (drawingLayer?.opacity ?? 100) / 100}
+      />
     </KonvaLayer>
   );
 };
