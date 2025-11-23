@@ -1,33 +1,47 @@
-import React, { useMemo } from 'react';
-import { Path } from 'react-konva';
+import Konva from 'konva';
+import React, { useCallback, useMemo } from 'react';
+import { Path, Shape } from 'react-konva';
+import { useShallow } from 'zustand/react/shallow';
+import useToolsStore from '../../../store/useTools';
+import { Actions } from '../../../types/Drawing';
 import type { Line } from '../../../types/Layers';
 import { pint2DToPath } from '../../../utils/drawing';
 
 //todo Performance comparison
 const Paths: React.FC<Line> = (props) => {
-  const { points, stroke, opacity, fill } = props;
+  const { points, stroke, opacity } = props;
+
+  const { activeKey } = useToolsStore(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+    }))
+  );
+
   const path = useMemo(() => {
     return pint2DToPath(points, props);
   }, [points]);
-  // const renderAllPaths = useCallback((ctx: Konva.Context, path: string, line: Line) => {
-  //   ctx.imageSmoothingEnabled = false;
-  //   const path2D = new Path2D(path);
-  //   ctx.save();
 
-  //   ctx.globalAlpha = line.opacity;
-  //   if (line.fill) {
-  //     ctx.fillStyle = line.stroke;
-  //     ctx.fill(path2D);
-  //   } else {
-  //     ctx.strokeStyle = line.stroke;
-  //     ctx.stroke(path2D);
-  //   }
+  const renderAllPaths = useCallback((ctx: Konva.Context, path: string, line: Line) => {
+    ctx.imageSmoothingEnabled = false;
+    const path2D = new Path2D(path);
+    ctx.save();
 
-  //   ctx.restore();
-  // }, []);
+    ctx.globalAlpha = line.opacity;
+    if (line.fill) {
+      ctx.fillStyle = line.stroke;
+      ctx.fill(path2D);
+    } else {
+      ctx.strokeStyle = line.stroke;
+      ctx.stroke(path2D);
+    }
 
-  return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;
-  // return <Shape sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path, props)} />;
+    ctx.restore();
+  }, []);
+
+  if (activeKey === Actions.FILL) {
+    return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;
+  }
+  return <Shape sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path, props)} />;
 };
 
 export default React.memo(Paths);

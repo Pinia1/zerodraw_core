@@ -204,7 +204,7 @@ export function createFillWorker(errorHandler?: (error: Error) => void): WebWork
       // 转换为 Blob 并创建 URL
       return canvas
         .convertToBlob({
-          type: "image/png",
+          type: "image/webp",
           quality: 1,
         })
         .then((blob) => {
