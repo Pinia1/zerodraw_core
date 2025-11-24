@@ -1,6 +1,6 @@
 import Icon from '@ant-design/icons';
 import { Divider, Popover } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import {
@@ -75,12 +75,15 @@ const Tool: React.FC = () => {
     })
   );
 
-  const { brushDetailConfPosition, setBrushDetailConfPosition } = useDrawingStore(
-    useShallow((state) => ({
-      brushDetailConfPosition: state.brushDetailConfPosition,
-      setBrushDetailConfPosition: state.setBrushDetailConfPosition,
-    }))
-  );
+  const { brushDetailConfPosition, setBrushDetailConfPosition, bindWorkerRef, workerRef } =
+    useDrawingStore(
+      useShallow((state) => ({
+        brushDetailConfPosition: state.brushDetailConfPosition,
+        setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+        bindWorkerRef: state.bindWorkerRef,
+        workerRef: state.workerRef,
+      }))
+    );
   const toolMenus: {
     key: Actions;
     icon?: React.ReactNode;
@@ -192,6 +195,13 @@ const Tool: React.FC = () => {
   const PopoverContent = useMemo(() => {
     const item = toolMenus.find((item) => item.dropdownKeys?.includes(activeKey));
     return item?.dropdown;
+  }, [activeKey]);
+
+  useEffect(() => {
+    if (activeKey !== Actions.FILL && workerRef) {
+      workerRef.destroy();
+      bindWorkerRef(null);
+    }
   }, [activeKey]);
 
   return (
