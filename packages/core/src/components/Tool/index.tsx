@@ -199,7 +199,7 @@ const Tool: React.FC = () => {
 
   useEffect(() => {
     if (activeKey !== Actions.FILL && workerRef) {
-      workerRef.destroy();
+      workerRef.destroy?.();
       bindWorkerRef(null);
     }
   }, [activeKey]);
