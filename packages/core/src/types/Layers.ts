@@ -10,6 +10,7 @@ export interface Layers {
   rects: Rect[];
   ellipses: Ellipse[];
   paths: Line[];
+  fills: Fill[];
 }
 
 export interface Diagram {
@@ -29,7 +30,8 @@ export interface Diagram {
     | 'text'
     | 'image'
     | 'shape'
-    | 'path';
+    | 'path'
+    | 'fill';
 }
 
 export interface Line {
@@ -48,6 +50,16 @@ export interface Line {
   fill: boolean;
 }
 
+export interface Fill {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  src: string;
+  image: HTMLImageElement;
+  id: string;
+}
+
 export type DiagramPropsMap = {
   line: Line;
   eraserLine: Line;
@@ -64,6 +76,7 @@ export type DiagramPropsMap = {
   image: Image;
   shape: Shape;
   path: Line;
+  fill: Fill;
 };
 export interface Rect extends Point2D {
   width: number;

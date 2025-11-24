@@ -30,6 +30,7 @@ const useLayerStore = create<LayerState>()(
         rects: [],
         ellipses: [],
         paths: [],
+        fills: [],
       },
       getDrawingLayer: () => get().drawingLayer,
       setDrawingLayer: (drawingLayer) => set({ drawingLayer: drawingLayer }),

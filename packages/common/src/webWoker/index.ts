@@ -44,8 +44,6 @@ export class WebWorker {
         if (this.status === Status.PENDING) {
           return reject(new Error('Worker is busy'));
         }
-        console.log('post message', message);
-
         this.status = Status.PENDING;
         this.resolve = resolve;
         this.reject = reject;

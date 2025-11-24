@@ -202,15 +202,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         const ctx = canvas.getContext('2d')!;
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         pos.imageData = imageData;
-
-        const src = i.toDataURL({
-          pixelRatio: pixelRatio,
-          x: group.x,
-          y: group.y,
-          width: group.width,
-          height: group.height,
-        });
-        console.log(src, 'fill original src');
       }
     });
 
@@ -562,6 +553,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const onLineMouseUp = () => {};
 
   const onFillMouseDown = async (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!drawingLayer) return;
     try {
       const stage = e.target.getStage()!;
       const groupPos = getGroupPos(stage);
@@ -574,7 +566,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       const magnificationPosY = Math.round(posY * pixelRatio);
       const tolerance = 10;
 
-      const result = await workerRef?.postMessage({
+      const { pathData } = (await workerRef?.postMessage({
         imageData,
         posX: magnificationPosX,
         posY: magnificationPosY,
@@ -584,15 +576,32 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           layerBackground: '#ffffff',
         },
         groupPos,
+      })) as { pathData: string };
+      const { scale } = stageConfig;
+      const img = new window.Image();
+      img.src = pathData;
+      const id = generateUUID();
+      const image = {
+        x: groupPos.x / scale,
+        y: groupPos.y / scale,
+        width: groupPos.width / scale,
+        height: groupPos.height / scale,
+        src: pathData,
+        image: img,
+        id,
+      };
+      setDrawingLayer({
+        ...drawingLayer,
+        fills: [...drawingLayer.fills, image],
+        diagrams: [...drawingLayer.diagrams, { id, type: 'fill' }],
       });
-      console.log(result, 'result');
     } catch (error) {
       console.log(error, 'fill error');
     }
   };
 
   //drawing layer
-  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!isLeftMouseDown(e) || stageDraggable) return;
     switch (activeKey) {
       case Actions.ERASER:
@@ -609,9 +618,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       default:
         break;
     }
-  };
+  });
 
-  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (stageDraggable) return;
     switch (activeKey) {
       case Actions.PEN:
@@ -626,9 +635,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       default:
         break;
     }
-  };
+  });
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useMemoizedFn(() => {
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
@@ -642,7 +651,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       default:
         break;
     }
-  };
+  });
 
   const handleContextMenu = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();

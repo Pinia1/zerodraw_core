@@ -9,11 +9,13 @@ import {
   Diagram,
   DiagramPropsMap,
   Ellipse as EllipseType,
+  Fill as FillType,
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
+import Fill from './Diagram/Fill';
 import Line from './Diagram/Lines';
 import Paths from './Diagram/Paths';
 import Rect from './Diagram/Rect';
@@ -74,6 +76,11 @@ const Layer = ({}) => {
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
+      case 'fill': {
+        const props = drawingLayer?.fills.find((fill) => fill.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
       default:
         return null;
     }
@@ -101,6 +108,9 @@ const Layer = ({}) => {
           switch (diagram.type) {
             case 'path': {
               return <Paths key={diagram.id} {...(props as LineType)} />;
+            }
+            case 'fill': {
+              return <Fill key={diagram.id} {...(props as FillType)} />;
             }
             case 'eraserLine': {
               return <Eraser key={diagram.id} {...(props as LineType)} />;
