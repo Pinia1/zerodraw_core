@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
 import { Tools } from '..';
 import Cursor from '../components/Cursor';
+import LayersControl from '../components/Layers';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import { useDrawingStore } from '../store/useDrawing';
@@ -668,6 +669,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         ref={stageRef}
         style={{
           cursor: cursorStyle,
+          position: 'relative',
         }}
         id={CANVAS_CONTAINER_ID}
         width={size.width}
@@ -689,6 +691,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       </Stage>
       <Cursor />
       {tools?.includes(Tools.TOOL) && <Tool />}
+      {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
     </>
   );
 };

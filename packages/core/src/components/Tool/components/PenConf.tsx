@@ -21,6 +21,8 @@ export const ContainerStyle: React.CSSProperties = {
   gap: 6,
   fontSize: 16,
   alignItems: 'center',
+  boxShadow: 'none',
+  backgroundColor: 'none',
 };
 
 export const ActionFlex = styled(Flex)`

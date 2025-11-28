@@ -11,9 +11,10 @@ interface PostMessageData {
   posX: number;
   posY: number;
   tolerance: number;
-  fillColor: [number, number, number, number];
+  fillColor: Array<[number, number, number, number]>;
   canvasConfig: any;
   groupPos: any;
+  direction: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 }
 
 enum Status {

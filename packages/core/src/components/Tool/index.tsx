@@ -25,26 +25,6 @@ import PenConf from './components/PenConf';
 import Portal from './components/Portal';
 import RectConf from './components/RectConf';
 
-const FloatingStyle: React.CSSProperties = {
-  backgroundColor: 'var(--container-bg)',
-  color: 'var(--container-color)',
-  boxShadow: 'var(--container-box-shadow)',
-  position: 'fixed',
-  width: 'fit-content',
-  top: '1rem',
-  left: '0px',
-  right: '0px',
-  margin: '0 auto',
-  zIndex: '10',
-  display: 'flex',
-  gap: '8px',
-  alignItems: 'center',
-  height: '48px',
-  padding: '8px',
-  overflow: 'hidden',
-  borderRadius: '16px',
-};
-
 export const ToolItem = styled.div<{ $active: boolean }>`
   background-color: ${({ $active }) =>
     $active ? 'var(--container-active) !important' : 'transparent'};
@@ -216,7 +196,24 @@ const Tool: React.FC = () => {
         },
       }}
     >
-      <Container style={FloatingStyle}>
+      <Container
+        style={{
+          position: 'fixed',
+          width: 'fit-content',
+          top: '1rem',
+          left: '0px',
+          right: '0px',
+          margin: '0 auto',
+          zIndex: 10,
+          display: 'flex',
+          gap: '8px',
+          alignItems: 'center',
+          height: '48px',
+          padding: '8px',
+          overflow: 'hidden',
+          borderRadius: '16px',
+        }}
+      >
         {toolMenus.map((item, idx) => {
           const key = `${item.key}+${idx}`;
           if (item.type === ToolTypes.DIVIDER) {

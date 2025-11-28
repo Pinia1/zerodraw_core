@@ -15,6 +15,8 @@ export default () => {
   const size = useSize(containerRef);
 
   return (
-    <Container ref={containerRef}>{size && <Drawing size={size} tools={[Tools.TOOL]} />}</Container>
+    <Container ref={containerRef}>
+      {size && <Drawing size={size} tools={[Tools.TOOL, Tools.LAYERS_CONTROL]} />}
+    </Container>
   );
 };
