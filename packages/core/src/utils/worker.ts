@@ -4,7 +4,16 @@ export function createFillWorker(errorHandler?: (error: Error) => void): WebWork
   const script = `
 onmessage = function (e) {
   try {
-    const { imageData, posX, posY, tolerance, fillColor, canvasConfig, id } = e.data;
+    const {
+      imageData,
+      posX,
+      posY,
+      tolerance,
+      fillColor,
+      canvasConfig,
+      direction = 0,
+      id,
+    } = e.data;
 
     function hexToRgba(hex) {
       hex = hex.replace(/^#/, "");
@@ -48,6 +57,18 @@ onmessage = function (e) {
       return true;
     }
 
+    // 将 fillColor 规范成渐变色数组：[[r,g,b,a], [r,g,b,a], ...]
+    const colorStops = (() => {
+      if (Array.isArray(fillColor) && Array.isArray(fillColor[0])) {
+        // 已经是 [[r,g,b,a], ...] 形式
+        return fillColor;
+      }
+      // 单色 -> 只有一个 stop，行为与之前保持一致
+      return [fillColor];
+    })();
+
+    const stopsCount = colorStops.length;
+
     // 只填充区域
     function floodFill(startX, startY, fillColor, _tolerance) {
       // 起始点坐标越界检查
@@ -68,14 +89,6 @@ onmessage = function (e) {
       const tb = targetA === 0 ? backgroundRgba[2] : targetB;
       const ta = targetA === 0 ? 0 : targetA;
 
-      // 使用传入的 alpha（0–255）
-      const alpha = Math.max(0, Math.min(255, Math.round(fillColor[3] || 255)));
-      const fillValue =
-        (alpha << 24) |
-        (fillColor[2] << 16) |
-        (fillColor[1] << 8) |
-        fillColor[0];
-
       // 完全透明（alpha = 0）
       const transparentValue = 0;
 
@@ -83,8 +96,14 @@ onmessage = function (e) {
       const resultData = new Uint32Array(totalPixels);
       resultData.fill(transparentValue);
 
-      // 标记已访问的像素
+      // 标记已访问的像素（同时作为填充区域的 mask）
       const visited = new Uint8Array(totalPixels);
+
+      // 记录填充区域的包围盒
+      let minX = width;
+      let maxX = -1;
+      let minY = height;
+      let maxY = -1;
 
       // 栈实现，预先分配足够空间
       const stackSize = Math.min(totalPixels, 10000);
@@ -165,7 +184,12 @@ onmessage = function (e) {
           const index = rowIndex + i;
           if (!visited[index]) {
             visited[index] = 1;
-            resultData[index] = fillValue;
+
+            // 更新包围盒
+            if (i < minX) minX = i;
+            if (i > maxX) maxX = i;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
           }
         }
 
@@ -199,6 +223,120 @@ onmessage = function (e) {
 
         checkAdjacent(y - 1);
         checkAdjacent(y + 1);
+      }
+
+      // 如果没有有效填充区域，直接返回空
+      if (maxX < minX || maxY < minY) {
+        return Promise.resolve("");
+      }
+
+      // 计算渐变方向向量（八个方向）
+      // 0: 左->右, 1: 右->左, 2: 上->下, 3: 下->上,
+      // 4: 左上->右下, 5: 右下->左上, 6: 右上->左下, 7: 左下->右上
+      let dirX = 1;
+      let dirY = 0;
+      switch (direction) {
+        case 1:
+          dirX = -1;
+          dirY = 0;
+          break;
+        case 2:
+          dirX = 0;
+          dirY = 1;
+          break;
+        case 3:
+          dirX = 0;
+          dirY = -1;
+          break;
+        case 4:
+          dirX = 1;
+          dirY = 1;
+          break;
+        case 5:
+          dirX = -1;
+          dirY = -1;
+          break;
+        case 6:
+          dirX = -1;
+          dirY = 1;
+          break;
+        case 7:
+          dirX = 1;
+          dirY = -1;
+          break;
+        case 8:
+          dirX = 1;
+          dirY = 0;
+          break;
+        default:
+          dirX = 1;
+          dirY = 0;
+      }
+
+      // 先在包围盒内扫描一遍，得到投影的最小/最大值
+      let minProj = Infinity;
+      let maxProj = -Infinity;
+      for (let y = minY; y <= maxY; y++) {
+        const rowIndex = y * width;
+        for (let x = minX; x <= maxX; x++) {
+          const index = rowIndex + x;
+          if (!visited[index]) continue;
+          const proj = x * dirX + y * dirY;
+          if (proj < minProj) minProj = proj;
+          if (proj > maxProj) maxProj = proj;
+        }
+      }
+
+      const projRange = maxProj - minProj || 1;
+
+      // 根据方向和渐变 stop，对每个像素设置最终颜色
+      for (let y = minY; y <= maxY; y++) {
+        const rowIndex = y * width;
+        for (let x = minX; x <= maxX; x++) {
+          const index = rowIndex + x;
+          if (!visited[index]) continue;
+
+          const proj = x * dirX + y * dirY;
+          let t = (proj - minProj) / projRange;
+          if (t < 0) t = 0;
+          if (t > 1) t = 1;
+
+          let r, g, b, a;
+          if (stopsCount === 1) {
+            // 单色：与旧逻辑保持一致
+            const c0 = colorStops[0];
+            r = c0[0];
+            g = c0[1];
+            b = c0[2];
+            a = c0[3] != null ? c0[3] : 255;
+          } else {
+            const scaled = t * (stopsCount - 1);
+            const idx0 = Math.floor(scaled);
+            const idx1 = Math.min(stopsCount - 1, idx0 + 1);
+            const localT = scaled - idx0;
+
+            const c0 = colorStops[idx0];
+            const c1 = colorStops[idx1];
+
+            r = c0[0] + (c1[0] - c0[0]) * localT;
+            g = c0[1] + (c1[1] - c0[1]) * localT;
+            b = c0[2] + (c1[2] - c0[2]) * localT;
+            const a0 = c0[3] != null ? c0[3] : 255;
+            const a1 = c1[3] != null ? c1[3] : 255;
+            a = a0 + (a1 - a0) * localT;
+          }
+
+          const alpha = Math.max(0, Math.min(255, Math.round(a)));
+          const rr = Math.max(0, Math.min(255, Math.round(r)));
+          const gg = Math.max(0, Math.min(255, Math.round(g)));
+          const bb = Math.max(0, Math.min(255, Math.round(b)));
+
+          resultData[index] =
+            (alpha << 24) |
+            (bb << 16) |
+            (gg << 8) |
+            rr;
+        }
       }
 
       // 创建新的 ImageData 对象

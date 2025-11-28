@@ -571,7 +571,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         posX: magnificationPosX,
         posY: magnificationPosY,
         tolerance,
-        fillColor: hexToRgba(fillColor, lineConfig.opacity),
+        fillColor: [hexToRgba(fillColor, lineConfig.opacity)],
+        direction: 1,
         canvasConfig: {
           layerBackground: '#ffffff',
         },
