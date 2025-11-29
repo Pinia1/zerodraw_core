@@ -6,9 +6,10 @@ import { useShallow } from 'zustand/react/shallow';
 import { IconEyeClose, IconEyeOpen } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import { LayerConfigTypes } from '../../types/Drawing';
+import Container from '../Container';
 import { ToolItem } from '../index';
 
-const Wrapper = styled.div`
+const Wrapper = styled(Container)`
   width: 100%;
   display: grid;
   grid-template-columns: 32px 62px minmax(0px, 1fr) 32px;

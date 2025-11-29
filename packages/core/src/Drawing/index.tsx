@@ -70,10 +70,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { setDrawingLayer, drawingLayer } = useLayerStore(
+  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } = useLayerStore(
     useShallow((state) => ({
       setDrawingLayer: state.setDrawingLayer,
-      drawingLayer: state.drawingLayer,
+      layers: state.layers,
+      initHistory: state.initHistory,
+      pushHistory: state.pushHistory,
+      getDrawingLayer: state.getDrawingLayer,
     }))
   );
   const init = useMemoizedFn(() => {
@@ -86,7 +89,22 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       x: (size.width - PROMPT_WIDTH - width + ASIDE_WIDTH) / 2,
       y: (size.height - height) / 2,
     });
+    initHistory([]);
   });
+
+  const pushDrawingHistory = () => {
+    const drawingLayer = getDrawingLayer();
+    const drawingIndex = layers.findIndex((layer) => layer.id === drawingLayer?.id);
+    if (drawingIndex === -1 || !drawingLayer) return;
+
+    const newLayers = [...layers];
+    newLayers[drawingIndex] = drawingLayer as Layers;
+
+    isDrawing.current = false;
+    setDrawingId(null);
+
+    pushHistory(newLayers);
+  };
 
   const cursorStyle = useMemo(() => {
     if (stageDraggable) return 'grab';
@@ -131,7 +149,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   //windows chrome
   useKeyPress('alt', (e) => e.preventDefault());
 
-  // ESC键处理，用于结束连笔
   useKeyPress(
     'esc',
     () => {
@@ -326,6 +343,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onPenMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
     const { pos, config } = getDrawingInfo(e);
@@ -358,6 +376,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onPenMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer || !isDrawing.current) return;
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
@@ -372,13 +391,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingLayer({ ...drawingLayer, [type]: value });
   };
 
-  const onPenMouseUp = () => {
-    isDrawing.current = false;
-    setDrawingId(null);
-    // pushHistory();
-  };
-
   const onRectMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
     const { pos } = getDrawingInfo(e);
@@ -407,6 +421,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onRectMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!isDrawing.current) return;
     const rects = drawingLayer?.rects || [];
     let rect = rects[rects.length - 1];
@@ -422,13 +437,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingLayer({ ...drawingLayer!, rects: rects });
   };
 
-  const onRectMouseUp = () => {
-    isDrawing.current = false;
-    setDrawingId(null);
-    // pushHistory();
-  };
-
   const onEllipseMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
     const { pos } = getDrawingInfo(e);
@@ -458,6 +468,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   };
   const onEllipseMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!isDrawing.current) return;
     const ellipses = drawingLayer?.ellipses || [];
     let ellipse = ellipses[ellipses.length - 1];
@@ -478,13 +489,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     ellipses.splice(ellipses.length - 1, 1, ellipse);
     setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
   };
-  const onEllipseMouseUp = () => {
-    isDrawing.current = false;
-    setDrawingId(null);
-    // pushHistory();
-  };
 
   const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     const { pos } = getDrawingInfo(e);
     const { x, y } = layerConfig;
@@ -526,6 +533,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!isDrawing.current || !drawingLayer) return;
     const lines = drawingLayer?.lines || [];
     let line = lines[lines.length - 1];
@@ -541,6 +549,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const finishLine = () => {
+    const drawingLayer = getDrawingLayer();
     if (isDrawing.current && activeKey === Actions.LINE) {
       isDrawing.current = false;
       setDrawingId(null);
@@ -552,9 +561,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
-  const onLineMouseUp = () => {};
-
   const onFillMouseDown = async (e: Konva.KonvaEventObject<MouseEvent>) => {
+    const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     try {
       const stage = e.target.getStage()!;
@@ -593,11 +601,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         image: img,
         id,
       };
+
       setDrawingLayer({
         ...drawingLayer,
         fills: [...drawingLayer.fills, image],
         diagrams: [...drawingLayer.diagrams, { id, type: 'fill' }],
       });
+
+      pushDrawingHistory();
     } catch (error) {
       console.log(error, 'fill error');
     }
@@ -644,13 +655,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
-        return onPenMouseUp();
       case Actions.RECT:
-        return onRectMouseUp();
       case Actions.ELLIPSE:
-        return onEllipseMouseUp();
       case Actions.LINE:
-        return onLineMouseUp();
+        return pushDrawingHistory();
+
       default:
         break;
     }

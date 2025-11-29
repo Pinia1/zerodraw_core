@@ -14,6 +14,7 @@ import {
   IconUndo,
 } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
+import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import Container from '../Container';
@@ -36,6 +37,15 @@ const Tool: React.FC = () => {
     })
   );
 
+  const { canUndo, canRedo, undoHistory, redoHistory } = useLayerStore(
+    useShallow((state) => ({
+      canUndo: state.canUndo,
+      canRedo: state.canRedo,
+      undoHistory: state.undoHistory,
+      redoHistory: state.redoHistory,
+    }))
+  );
+
   const { brushDetailConfPosition, setBrushDetailConfPosition, bindWorkerRef, workerRef } =
     useDrawingStore(
       useShallow((state) => ({
@@ -45,6 +55,7 @@ const Tool: React.FC = () => {
         workerRef: state.workerRef,
       }))
     );
+
   const toolMenus: {
     key: Actions;
     icon?: React.ReactNode;
@@ -52,6 +63,7 @@ const Tool: React.FC = () => {
     onClick?: (item: (typeof toolMenus)[0]) => Promise<void> | void;
     dropdown?: React.ReactNode;
     isActive?: boolean;
+    disabled?: boolean;
     dropdownKeys?: Actions[];
   }[] = useMemo(() => {
     return [
@@ -134,20 +146,29 @@ const Tool: React.FC = () => {
         key: Actions.None,
         icon: <Icon component={IconUndo} />,
         type: ToolTypes.ACTION,
-        onClick: () => {},
+        onClick: () => {
+          undoHistory();
+        },
+        disabled: !canUndo,
       },
       {
         key: Actions.None,
         icon: <Icon component={IconRedo} />,
         type: ToolTypes.ACTION,
-        onClick: () => {},
+        onClick: () => {
+          redoHistory();
+        },
+        disabled: !canRedo,
       },
     ];
-  }, [activeKey]);
+  }, [activeKey, canUndo, canRedo]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
+    if (item.disabled) return;
+
     await item.onClick?.(item);
     if (item.type !== ToolTypes.STATE) return;
+
     setActiveKey(item.key);
     if (!item.dropdown) return;
     setOpen((prev) => (item.key === activeKey ? !prev : true));
@@ -201,7 +222,12 @@ const Tool: React.FC = () => {
             return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
           }
           return (
-            <ToolItem onClick={() => handleSetActiveKey(item)} $active={!!item.isActive} key={key}>
+            <ToolItem
+              $disabled={item.disabled}
+              onClick={() => handleSetActiveKey(item)}
+              $active={!!item.isActive}
+              key={key}
+            >
               {item.icon}
             </ToolItem>
           );

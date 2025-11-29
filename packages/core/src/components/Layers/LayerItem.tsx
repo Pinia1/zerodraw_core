@@ -4,9 +4,10 @@ import React from 'react';
 import styled from 'styled-components';
 import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
 import { Layers } from '../../types/Layers';
+import Container from '../Container';
 import { ToolItem } from '../index';
 
-const Wrapper = styled.div`
+const Wrapper = styled(Container)`
   width: 100%;
   display: grid;
   grid-template-columns: 32px 62px minmax(0px, 1fr) 32px;
@@ -16,9 +17,8 @@ const Wrapper = styled.div`
   gap: 4px;
   user-select: none;
   min-height: 64px;
-  border: 1px solid transparent;
+  border: 1px solid var(--container-border-color);
   border-radius: 8px;
-  background: rgb(36, 36, 37);
   font-size: 14px;
 `;
 

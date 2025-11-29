@@ -27,7 +27,7 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number 
     ...style,
     transform: CSS.Translate.toString(transform),
     transition,
-    cursor: 'move',
+    cursor: isDragging ? 'move' : 'default',
     padding: 2,
     ...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
   };
@@ -42,11 +42,10 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number 
 };
 
 const DragList: React.FC = () => {
-  const { layers, setLayers, drawingLayer } = useLayerStore(
+  const { layers, setLayers } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
       setLayers: state.setLayers,
-      drawingLayer: state.drawingLayer,
     }))
   );
 
@@ -79,7 +78,7 @@ const DragList: React.FC = () => {
     >
       <SortableContext items={layers.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <List
-          dataSource={[...layers, drawingLayer!]}
+          dataSource={layers}
           renderItem={(item) => (
             <SortableListItem key={item.id} itemKey={Number(item.id)}>
               <LayerItem {...item} />
