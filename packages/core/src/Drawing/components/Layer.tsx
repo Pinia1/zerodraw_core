@@ -1,10 +1,12 @@
 import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useRef } from 'react';
-import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
+import React, { useEffect, useRef } from 'react';
+import { Group, Layer as KonvaLayer, Rect as KonvaRect, Transformer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
+import useToolsStore from '../../store/useTools';
+import { Actions } from '../../types/Drawing';
 import {
   Diagram,
   DiagramPropsMap,
@@ -23,8 +25,15 @@ import Rect from './Diagram/Rect';
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 const Layer = ({}) => {
-  const ref = useRef<Konva.Layer>(null);
+  const rectRef = useRef<Konva.Rect>(null);
+  const groupRef = useRef<Konva.Group>(null);
+  const trRef = useRef<Konva.Transformer>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
+  const { activeKey } = useToolsStore(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+    }))
+  );
 
   const { layerConfig, drawingId } = useDrawingStore(
     useShallow((state) => ({
@@ -86,22 +95,58 @@ const Layer = ({}) => {
     }
   };
 
+  //todo 裁剪掉被擦除的透明部分
+  useEffect(() => {
+    if (activeKey === Actions.ROPE) {
+      const group = groupRef.current;
+      const rectNode = rectRef.current;
+
+      if (!group || !rectNode) return;
+
+      const groupRect = group.getClientRect();
+      const layer = group.getLayer()!;
+      const layerRect = layer.getClientRect();
+      let pos: any = null;
+
+      pos = {
+        x: groupRect.x - layerRect.x,
+        y: groupRect.y - layerRect.y,
+        width: groupRect.width,
+        height: groupRect.height,
+      };
+      const absPos = layer.getAbsolutePosition();
+      if (pos.y <= 0) {
+        pos.y = groupRect.y - absPos.y;
+      }
+      if (pos.x <= 0) {
+        pos.x = groupRect.x - absPos.x;
+      }
+
+      rectNode.position({
+        x: pos.x,
+        y: pos.y,
+      });
+      rectNode.size({
+        width: pos.width,
+        height: pos.height,
+      });
+
+      trRef.current?.nodes([rectRef.current as Konva.Node]);
+      trRef.current?.getLayer()?.batchDraw();
+    }
+  }, [activeKey]);
+
   return (
     <KonvaLayer
       x={layerConfig.x}
       y={layerConfig.y}
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
-      ref={ref}
-      listening
       isDrawing
     >
-      <Group
-        draggable={false}
-        clipWidth={layerConfig.width}
-        clipHeight={layerConfig.height}
-        listening={false}
-      >
+      <KonvaRect ref={rectRef} listening={false} fillEnabled={false} strokeEnabled={false} />
+
+      <Group ref={groupRef}>
         {drawingLayer?.diagrams.map((diagram) => {
           const props = getDiagramProps(diagram.id, diagram.type)!;
 
@@ -130,6 +175,26 @@ const Layer = ({}) => {
         })}
       </Group>
 
+      {activeKey === Actions.ROPE && (
+        <Transformer
+          rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
+          enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+          anchorStroke={'#40d8d7'}
+          borderStroke={'#40d8d7'}
+          borderStrokeWidth={2}
+          anchorSize={10}
+          anchorCornerRadius={100}
+          rotateAnchorOffset={20}
+          ref={trRef}
+          flipEnabled={false}
+          anchorFill={'rgb(209, 249, 247)'}
+          id={`transformer_selected`}
+          onTouchEnd={(e) => {}}
+          onTransformStart={() => {}}
+          onTransformEnd={(e) => {}}
+        />
+      )}
+
       <KonvaRect
         x={0}
         y={0}
@@ -137,7 +202,7 @@ const Layer = ({}) => {
         width={layerConfig.width}
         height={layerConfig.height}
         id="rect_for_placeholder"
-        fill={'#000'}
+        fill={layerConfig.backgroundColor}
         globalCompositeOperation={'destination-out'}
         opacity={1 - (drawingLayer?.opacity ?? 100) / 100}
       />

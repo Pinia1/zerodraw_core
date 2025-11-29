@@ -2,6 +2,7 @@ import Konva from 'konva';
 import React, { useCallback, useMemo } from 'react';
 import { Path, Shape } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
+import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions } from '../../../types/Drawing';
 import type { Line } from '../../../types/Layers';
@@ -14,6 +15,11 @@ const Paths: React.FC<Line> = (props) => {
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
+    }))
+  );
+  const { drawingId } = useDrawingStore(
+    useShallow((state) => ({
+      drawingId: state.drawingId,
     }))
   );
 
@@ -38,7 +44,7 @@ const Paths: React.FC<Line> = (props) => {
     ctx.restore();
   }, []);
 
-  if (activeKey === Actions.FILL) {
+  if (activeKey === Actions.FILL || drawingId) {
     return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;
   }
   return <Shape sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path, props)} />;

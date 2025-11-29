@@ -379,7 +379,7 @@ export const IconSuitable = () => (
     <path
       d="M5 3H2.524C1.682 3 1 3.682 1 4.524v7.952C1 13.318 1.682 14 2.524 14H5m6 0h2.476c.842 0 1.524-.682 1.524-1.524V4.524C15 3.682 14.318 3 13.476 3H11"
       stroke="currentColor"
-      stroke-linecap="round"
+      strokeLinecap="round"
     ></path>
     <path
       d="M9.333 8.524H4m0 0L5.333 7M4 8.524l1.333 1.524M8 8.524h4.07m0 0-1.306 1.524m1.306-1.524L10.764 7"
@@ -401,8 +401,8 @@ export const IconReduce = () => (
     <path
       d="M15.0703 8.07129L0.928178 8.07129"
       stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     ></path>
   </svg>
 );
