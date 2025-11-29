@@ -16,7 +16,7 @@ export default () => {
 
   return (
     <Container ref={containerRef}>
-      {size && <Drawing size={size} tools={[Tools.TOOL, Tools.LAYERS_CONTROL]} />}
+      {size && <Drawing size={size} tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]} />}
     </Container>
   );
 };

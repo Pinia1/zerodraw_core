@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-export const ToolItem = styled.div<{ $active: boolean; $disabled?: boolean }>`
+export const ToolItem = styled.div<{ $active?: boolean; $disabled?: boolean }>`
   background-color: ${({ $active }) =>
     $active ? 'var(--container-active) !important' : 'transparent'};
 

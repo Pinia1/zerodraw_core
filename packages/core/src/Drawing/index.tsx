@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
 import { Tools } from '..';
 import Cursor from '../components/Cursor';
+import Flexible from '../components/Flexible';
 import LayersControl from '../components/Layers';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
@@ -79,6 +80,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       getDrawingLayer: state.getDrawingLayer,
     }))
   );
+
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
@@ -89,7 +91,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       x: (size.width - PROMPT_WIDTH - width + ASIDE_WIDTH) / 2,
       y: (size.height - height) / 2,
     });
-    initHistory([]);
+    setStageConfig({
+      scale: 1,
+      x: 0,
+      y: 0,
+    });
   });
 
   const pushDrawingHistory = () => {
@@ -125,6 +131,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   useMount(() => {
     init();
+    initHistory([]);
   });
   useKeyPress(
     'space',
@@ -702,6 +709,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       <Cursor />
       {tools?.includes(Tools.TOOL) && <Tool />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
+      {tools?.includes(Tools.FLEXIBLE) && <Flexible init={init} />}
     </>
   );
 };

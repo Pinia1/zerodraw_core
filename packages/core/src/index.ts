@@ -4,6 +4,7 @@ export enum Tools {
   TOOL = 'tool',
   LAYERS_CONTROL = 'layers-control',
   PROMPT = 'prompt',
+  FLEXIBLE = 'flexible',
 }
 
 export interface DrawingProps {

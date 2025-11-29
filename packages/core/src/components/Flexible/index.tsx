@@ -1,0 +1,131 @@
+import Icon from '@ant-design/icons';
+import { useMount } from '@monorepo/common';
+import { Divider } from 'antd';
+import React, { useMemo, useState } from 'react';
+import ReactDOM from 'react-dom';
+import { useShallow } from 'zustand/react/shallow';
+import { IconAdd, IconFull, IconIncomplete, IconReduce, IconSuitable } from '../../icons';
+import { useDrawingStore } from '../../store/useDrawing';
+import { CANVAS_CONTAINER_ID, WIDTH } from '../../utils/drawing';
+import Container from '../Container';
+import { ToolItem } from '../index';
+
+interface FlexibleProps {
+  init: () => void;
+}
+
+const Flexible: React.FC<FlexibleProps> = ({ init }) => {
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+  const { shrinkTools, setShrinkTools, layerConfig, stageConfig } = useDrawingStore(
+    useShallow((state) => ({
+      shrinkTools: state.shrinkTools,
+      setShrinkTools: state.setShrinkTools,
+      layerConfig: state.layerConfig,
+      stageConfig: state.stageConfig,
+    }))
+  );
+  useMount(() => {
+    const el =
+      (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
+    setContainer(el);
+  });
+
+  const meuns = useMemo(() => {
+    if (shrinkTools) {
+      return [
+        {
+          key: 'full',
+          icon: <Icon component={IconIncomplete} />,
+          type: 'action',
+          onClick: () => {
+            setShrinkTools(false);
+          },
+        },
+      ];
+    }
+    return [
+      {
+        key: 'full',
+        icon: <Icon component={IconFull} />,
+        type: 'action',
+        onClick: () => {
+          setShrinkTools(true);
+        },
+      },
+      {
+        key: 'suitable',
+        icon: <Icon component={IconSuitable} />,
+        type: 'action',
+        onClick: () => {
+          init();
+        },
+      },
+      {
+        key: 'divider',
+        type: 'divider',
+      },
+      {
+        key: 'reduce',
+        icon: <Icon component={IconReduce} />,
+        type: 'action',
+        onClick: () => {},
+      },
+      {
+        key: 'nums',
+        icon: (
+          <span
+            style={{
+              width: 48,
+            }}
+          >
+            {Math.round((layerConfig.width / WIDTH) * stageConfig.scale * 100)}%
+          </span>
+        ),
+        type: 'action',
+        onClick: () => {},
+      },
+      {
+        key: 'add',
+        icon: <Icon component={IconAdd} />,
+        type: 'action',
+        onClick: () => {},
+      },
+    ];
+  }, [shrinkTools, layerConfig, stageConfig]);
+
+  if (!container) return null;
+
+  return ReactDOM.createPortal(
+    <Container
+      style={{
+        position: 'absolute',
+        right: 12,
+        bottom: '1rem',
+        height: 48,
+        width: shrinkTools ? 48 : 250,
+        transition: 'width 0.2s ease-in-out',
+        borderRadius: 16,
+        padding: 8,
+        fontSize: 16,
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+      }}
+    >
+      {meuns.map((item, idx) => {
+        const key = `${item.key}+${idx}`;
+        if (item.type === 'divider') {
+          return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
+        }
+        return (
+          <ToolItem onClick={item.onClick} key={key}>
+            {item.icon}
+          </ToolItem>
+        );
+      })}
+    </Container>,
+    container
+  );
+};
+
+export default React.memo(Flexible);

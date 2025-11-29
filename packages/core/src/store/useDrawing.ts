@@ -55,6 +55,8 @@ interface DrawingState {
   setDrawingId: (id: string | null) => void;
   workerRef: WebWorker | null;
   bindWorkerRef: (ref: WebWorker | null) => void;
+  shrinkTools: boolean;
+  setShrinkTools: (shrinkTools: boolean) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -122,6 +124,9 @@ export const useDrawingStore = create<DrawingState>()(
       //drawing id
       drawingId: null,
       setDrawingId: (id: string | null) => set({ drawingId: id }),
+      //shrink tools
+      shrinkTools: false,
+      setShrinkTools: (shrinkTools: boolean) => set({ shrinkTools: shrinkTools }),
     }),
     {
       name: 'drawing-storage',
