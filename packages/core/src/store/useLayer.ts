@@ -23,6 +23,7 @@ const useLayerStore = create<LayerState>()(
       //
       drawingLayer: {
         id: generateUUID(),
+        visible: true,
         opacity: 100,
         diagrams: [],
         lines: [],

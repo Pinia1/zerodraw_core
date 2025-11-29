@@ -80,6 +80,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
     setLayerConfig({
+      ...layerConfig,
       width,
       height,
       x: (size.width - PROMPT_WIDTH - width + ASIDE_WIDTH) / 2,

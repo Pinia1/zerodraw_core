@@ -41,6 +41,7 @@ const Layers: React.FC = () => {
         width: 250,
         borderRadius: 16,
         padding: 12,
+        fontSize: 14,
       }}
     >
       <Tabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />

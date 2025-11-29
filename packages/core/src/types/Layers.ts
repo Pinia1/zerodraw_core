@@ -4,6 +4,7 @@ export interface Layers {
   id: string;
   name?: string;
   opacity: number;
+  visible: boolean;
   diagrams: Diagram[];
   lines: Line[];
   eraserLines: Line[];

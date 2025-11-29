@@ -2,12 +2,12 @@ import Icon from '@ant-design/icons';
 import { Divider, Input, Slider } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { ToolItem } from '..';
 import { IconConf, IconElli, IconLine, IconRect } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, GraphConfigTypes } from '../../../types/Drawing';
 import Container from '../../Container';
+import { ToolItem } from '../../index';
 import { ActionFlex, ContainerStyle, ToolItemStyle } from './PenConf';
 
 const RectConf = () => {

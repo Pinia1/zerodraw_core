@@ -20,6 +20,15 @@ const defaultStageConfig: StageConfigTypes = {
   y: 0,
 };
 
+const defaultLayerConfig: LayerConfigTypes = {
+  width: 0,
+  height: 0,
+  x: 0,
+  y: 0,
+  backgroundColor: '#ffffff',
+  backgroundVisible: false,
+};
+
 interface DrawingState {
   stageRef: React.RefObject<Konva.Stage> | null;
   bindRef: (ref: React.RefObject<Konva.Stage>) => void;
@@ -59,12 +68,7 @@ export const useDrawingStore = create<DrawingState>()(
       setStageConfig: (config: StageConfigTypes) => set({ stageConfig: config }),
 
       //layer config
-      layerConfig: {
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-      },
+      layerConfig: defaultLayerConfig,
       setLayerConfig: (config: LayerConfigTypes) => set({ layerConfig: config }),
       //worker ref
       workerRef: null,

@@ -37,6 +37,8 @@ export interface StageConfigTypes extends Point2D {
 export interface LayerConfigTypes extends Point2D {
   width: number;
   height: number;
+  backgroundColor: string;
+  backgroundVisible: boolean;
 }
 
 export enum LassoMode {

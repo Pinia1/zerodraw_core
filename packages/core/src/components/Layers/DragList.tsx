@@ -13,6 +13,7 @@ import { List } from 'antd';
 import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useLayerStore from '../../store/useLayer';
+import BackgroundControl from './BackgroundControl';
 import LayerItem from './LayerItem';
 
 const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number }> = (props) => {
@@ -27,12 +28,13 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number 
     transform: CSS.Translate.toString(transform),
     transition,
     cursor: 'move',
+    padding: 2,
     ...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
   };
 
   return (
     <List.Item {...rest} ref={setNodeRef} style={listStyle}>
-      <div {...attributes} {...listeners}>
+      <div style={{ width: '100%' }} {...attributes} {...listeners}>
         {children}
       </div>
     </List.Item>
@@ -40,10 +42,11 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number 
 };
 
 const DragList: React.FC = () => {
-  const { layers, setLayers } = useLayerStore(
+  const { layers, setLayers, drawingLayer } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
       setLayers: state.setLayers,
+      drawingLayer: state.drawingLayer,
     }))
   );
 
@@ -76,7 +79,7 @@ const DragList: React.FC = () => {
     >
       <SortableContext items={layers.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <List
-          dataSource={layers}
+          dataSource={[...layers, drawingLayer!]}
           renderItem={(item) => (
             <SortableListItem key={item.id} itemKey={Number(item.id)}>
               <LayerItem {...item} />
@@ -84,6 +87,7 @@ const DragList: React.FC = () => {
           )}
         />
       </SortableContext>
+      <BackgroundControl />
     </DndContext>
   );
 };

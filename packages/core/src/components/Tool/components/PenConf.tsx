@@ -3,13 +3,13 @@ import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
-import { ToolItem } from '..';
 import { IconConf, IconFill, IconPen } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
 import { createFillWorker } from '../../../utils/worker';
 import Container from '../../Container';
+import { ToolItem } from '../../index';
 
 export const ToolItemStyle: React.CSSProperties = {
   width: '32px',

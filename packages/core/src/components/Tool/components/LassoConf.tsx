@@ -2,11 +2,11 @@ import Icon, { ClearOutlined } from '@ant-design/icons';
 import { Divider } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { ToolItem } from '..';
 import { IconLassoAdd, IconLassoCopy, IconLassoInvert, IconLassoRemove } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import { LassoConfigTypes, LassoMode } from '../../../types/Drawing';
 import Container from '../../Container';
+import { ToolItem } from '../../index';
 import { ContainerStyle, ToolItemStyle } from './PenConf';
 
 const LassoConf = () => {

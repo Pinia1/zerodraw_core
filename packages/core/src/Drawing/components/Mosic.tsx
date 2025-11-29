@@ -29,11 +29,16 @@ const Mosic: React.FC = () => {
         width={layerConfig.width}
         height={layerConfig.height}
         listening={false}
-        fillPatternImage={image}
-        fillPatternScale={{
-          x: 0.16 / stageConfig.scale,
-          y: 0.16 / stageConfig.scale,
-        }}
+        fillPatternImage={layerConfig.backgroundVisible ? undefined : image}
+        fillPatternScale={
+          layerConfig.backgroundVisible
+            ? undefined
+            : {
+                x: 0.16 / stageConfig.scale,
+                y: 0.16 / stageConfig.scale,
+              }
+        }
+        fill={layerConfig.backgroundVisible ? layerConfig.backgroundColor : undefined}
       />
     </Layer>
   );

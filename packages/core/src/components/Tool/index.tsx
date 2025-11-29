@@ -1,7 +1,6 @@
 import Icon from '@ant-design/icons';
 import { Divider, Popover } from 'antd';
 import React, { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import {
   IconAdd,
@@ -18,31 +17,13 @@ import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import Container from '../Container';
+import { ToolItem } from '../index';
 import BrushDetail from './components/BrushDetail';
 import EarserConf from './components/EarserConf';
 import LassoConf from './components/LassoConf';
 import PenConf from './components/PenConf';
 import Portal from './components/Portal';
 import RectConf from './components/RectConf';
-
-export const ToolItem = styled.div<{ $active: boolean }>`
-  background-color: ${({ $active }) =>
-    $active ? 'var(--container-active) !important' : 'transparent'};
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 100%;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  position: relative;
-
-  &:hover {
-    background-color: var(--container-hover-bg);
-  }
-`;
 
 const Tool: React.FC = () => {
   const [open, setOpen] = useState(true);
