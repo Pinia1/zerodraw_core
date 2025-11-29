@@ -1,6 +1,12 @@
 export interface HistoryManagerOptions<T> {
   maxLength?: number;
   clone?: (value: T) => T;
+
+  //clean future callback
+  cleanFutureCallback?: (future: T[]) => void;
+
+  //clean past callback
+  cleanPastCallback?: (past: T[]) => void;
 }
 
 export interface HistorySnapshot<T> {
@@ -16,11 +22,15 @@ export class HistoryManager<T> {
 
   private readonly maxLength: number;
   private readonly clone?: (value: T) => T;
+  private readonly cleanFutureCallback?: (future: T[]) => void;
+  private readonly cleanPastCallback?: (past: T[]) => void;
 
   constructor(options: HistoryManagerOptions<T> = {}) {
-    const { maxLength = Infinity, clone } = options;
+    const { maxLength = Infinity, clone, cleanFutureCallback, cleanPastCallback } = options;
     this.maxLength = maxLength;
     this.clone = clone;
+    this.cleanFutureCallback = cleanFutureCallback;
+    this.cleanPastCallback = cleanPastCallback;
   }
 
   /**
@@ -57,28 +67,37 @@ export class HistoryManager<T> {
   push(value: T): void {
     const next = this.cloneValue(value);
 
-    // 如果当前还没有值，视为初始化
     if (this.presentValue === null) {
       this.presentValue = next;
       return;
     }
 
-    // 如果值完全相等，则不记录新历史，避免重复快照
     if (Object.is(this.presentValue, next)) {
       return;
     }
 
+    // 1) 先把当前 present 收进 past
     this.past.push(this.presentValue);
 
-    // 只限制 past 的长度
+    // 2) 如果过去超出 maxLength，裁剪“最老的一批”并触发 cleanPastCallback
     if (this.maxLength !== Infinity && this.past.length > this.maxLength) {
       const overflow = this.past.length - this.maxLength;
       if (overflow > 0) {
-        this.past.splice(0, overflow);
+        const removedPast = this.past.splice(0, overflow); // 这次被扔掉的 past
+        if (removedPast.length && this.cleanPastCallback) {
+          this.cleanPastCallback(removedPast);
+        }
       }
     }
 
+    // 3) 设置新的 present
     this.presentValue = next;
+
+    // 4) 丢掉整个 future 分支，并触发 cleanFutureCallback
+    if (this.future.length && this.cleanFutureCallback) {
+      const removedFuture = [...this.future]; // 复制一份本次要扔掉的 future
+      this.cleanFutureCallback(removedFuture);
+    }
     this.future = [];
   }
 

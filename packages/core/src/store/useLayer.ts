@@ -5,8 +5,34 @@ import type { Layers } from '../types/Layers';
 import { generateUUID } from '../utils/drawing';
 
 const historyManager = new HistoryManager<Layers[]>({
-  maxLength: 70,
+  maxLength: 50,
   clone: (state) => state,
+  cleanFutureCallback: (future) => {
+    future.forEach((layers) => {
+      layers.forEach((layer) => {
+        layer.fills.forEach((fill) => {
+          if (fill.src.startsWith('blob:')) {
+            URL.revokeObjectURL(fill.src);
+          }
+          //@ts-ignore
+          fill.image = null;
+        });
+      });
+    });
+  },
+  cleanPastCallback: (past) => {
+    past.forEach((layers) => {
+      layers.forEach((layer) => {
+        layer.fills.forEach((fill) => {
+          if (fill.src.startsWith('blob:')) {
+            URL.revokeObjectURL(fill.src);
+          }
+          //@ts-ignore
+          fill.image = null;
+        });
+      });
+    });
+  },
 });
 
 const initialDrawingLayer: () => Layers = () => ({

@@ -16,12 +16,13 @@ interface FlexibleProps {
 
 const Flexible: React.FC<FlexibleProps> = ({ init }) => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  const { shrinkTools, setShrinkTools, layerConfig, stageConfig } = useDrawingStore(
+  const { shrinkTools, setShrinkTools, layerConfig, stageConfig, setStageConfig } = useDrawingStore(
     useShallow((state) => ({
       shrinkTools: state.shrinkTools,
       setShrinkTools: state.setShrinkTools,
       layerConfig: state.layerConfig,
       stageConfig: state.stageConfig,
+      setStageConfig: state.setStageConfig,
     }))
   );
   useMount(() => {
@@ -29,6 +30,21 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
       (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
     setContainer(el);
   });
+
+  const handlerScale = (type: 'add' | 'reduce') => {
+    if (!container) return;
+    const scaleBy = type === 'reduce' ? 0.92 : 1.08;
+    const newScale = stageConfig.scale * scaleBy;
+    const newX = container.clientWidth / 2 - (container.clientWidth / 2 - stageConfig.x) * scaleBy;
+    const newY =
+      container.clientHeight / 2 - (container.clientHeight / 2 - stageConfig.y) * scaleBy;
+    setStageConfig({
+      ...stageConfig,
+      scale: newScale,
+      x: newX,
+      y: newY,
+    });
+  };
 
   const meuns = useMemo(() => {
     if (shrinkTools) {
@@ -68,7 +84,9 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         key: 'reduce',
         icon: <Icon component={IconReduce} />,
         type: 'action',
-        onClick: () => {},
+        onClick: () => {
+          handlerScale('reduce');
+        },
       },
       {
         key: 'nums',
@@ -88,10 +106,12 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         key: 'add',
         icon: <Icon component={IconAdd} />,
         type: 'action',
-        onClick: () => {},
+        onClick: () => {
+          handlerScale('add');
+        },
       },
     ];
-  }, [shrinkTools, layerConfig, stageConfig]);
+  }, [shrinkTools, layerConfig, stageConfig, container]);
 
   if (!container) return null;
 
