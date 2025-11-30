@@ -10,26 +10,14 @@ const historyManager = new HistoryManager<Layers[]>({
   cleanFutureCallback: (future) => {
     future.forEach((layers) => {
       layers.forEach((layer) => {
-        layer.fills.forEach((fill) => {
-          if (fill.src.startsWith('blob:')) {
-            URL.revokeObjectURL(fill.src);
-          }
-          //@ts-ignore
-          fill.image = null;
-        });
+        layer.fills.forEach((fill) => {});
       });
     });
   },
   cleanPastCallback: (past) => {
     past.forEach((layers) => {
       layers.forEach((layer) => {
-        layer.fills.forEach((fill) => {
-          if (fill.src.startsWith('blob:')) {
-            URL.revokeObjectURL(fill.src);
-          }
-          //@ts-ignore
-          fill.image = null;
-        });
+        layer.fills.forEach((fill) => {});
       });
     });
   },

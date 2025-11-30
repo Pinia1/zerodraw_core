@@ -5,5 +5,6 @@ export * from './utils';
 
 export * from './HistoryManager';
 export { default as useMediaQuery } from './hooks/useMediaQuery';
+export * from './IndexDBManager';
 export * from './listNode';
 export * from './webWoker';

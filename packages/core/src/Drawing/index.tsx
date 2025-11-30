@@ -29,6 +29,7 @@ import {
   REDUCE_SCALE,
   WIDTH,
 } from '../utils/drawing';
+import imageManager from '../utils/imageManager';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 
@@ -583,7 +584,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       const magnificationPosY = Math.round(posY * pixelRatio);
       const tolerance = 10;
 
-      const { pathData } = (await workerRef?.postMessage({
+      const { buffer, id } = (await workerRef?.postMessage({
         imageData,
         posX: magnificationPosX,
         posY: magnificationPosY,
@@ -594,18 +595,16 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           layerBackground: '#ffffff',
         },
         groupPos,
-      })) as { pathData: string };
+      })) as { buffer: ArrayBuffer | null; id: string };
       const { scale } = stageConfig;
-      const img = new window.Image();
-      img.src = pathData;
-      const id = generateUUID();
+
+      await imageManager.saveImage(id, buffer!);
+
       const image = {
         x: groupPos.x / scale,
         y: groupPos.y / scale,
         width: groupPos.width / scale,
         height: groupPos.height / scale,
-        src: pathData,
-        image: img,
         id,
       };
 

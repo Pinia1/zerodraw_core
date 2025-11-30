@@ -16,6 +16,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import imageManager from '../../utils/imageManager';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
@@ -162,38 +163,34 @@ const Layer = ({}) => {
       width: Math.abs(bounds.width),
       height: Math.abs(bounds.height),
     })) as Blob;
-    const dataUrl = URL.createObjectURL(blob);
-    const img = new Image();
-    img.src = dataUrl;
+
+    const id = generateUUID();
+    await imageManager.saveImage(id, await blob.arrayBuffer());
     const image: FillType = {
       x: Math.abs((relativeX + bounds.left) / stageConfig.scale),
       y: Math.abs((relativeY + bounds.top) / stageConfig.scale),
       width: Math.abs(bounds.width / stageConfig.scale),
       height: Math.abs(bounds.height / stageConfig.scale),
-      src: dataUrl,
-      image: img,
-      id: generateUUID(),
+      id,
     };
-    img.onload = () => {
-      const newDrawingLayer = {
-        ...drawingLayer!,
-        image: image,
-        lines: [],
-        eraserLines: [],
-        rects: [],
-        ellipses: [],
-        paths: [],
-        fills: [],
-        diagrams: [{ id: image.id, type: 'image' }],
-      };
-      setDrawingLayer(newDrawingLayer as Layers);
-      pushHistory([newDrawingLayer as Layers]);
+    const newDrawingLayer = {
+      ...drawingLayer!,
+      image: image,
+      lines: [],
+      eraserLines: [],
+      rects: [],
+      ellipses: [],
+      paths: [],
+      fills: [],
+      diagrams: [{ id: image.id, type: 'image' }],
+    };
+    setDrawingLayer(newDrawingLayer as Layers);
+    pushHistory([newDrawingLayer as Layers]);
 
-      requestAnimationFrame(() => {
-        trRef.current?.nodes([groupRef.current!]);
-        trRef.current?.getLayer()?.batchDraw();
-      });
-    };
+    requestAnimationFrame(() => {
+      trRef.current?.nodes([groupRef.current!]);
+      trRef.current?.getLayer()?.batchDraw();
+    });
   };
 
   useEffect(() => {

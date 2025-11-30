@@ -58,8 +58,6 @@ export interface Fill {
   y: number;
   width: number;
   height: number;
-  src: string;
-  image: HTMLImageElement;
   id: string;
 }
 

@@ -351,18 +351,22 @@ onmessage = function (e) {
       ctx.clearRect(0, 0, width, height);
       ctx.putImageData(resultImageData, 0, 0);
 
-      // 转换为 Blob 并创建 URL
+      // 转换为 Blob 并返回 ArrayBuffer（用于主线程按需创建 URL 或存入 IndexedDB）
       return canvas
         .convertToBlob({
           type: "image/webp",
           quality: 1,
         })
-        .then((blob) => URL.createObjectURL(blob));
+        .then((blob) => blob.arrayBuffer());
     }
 
-    // 执行填充并发送结果
-    floodFill(posX, posY, fillColor, tolerance).then((pathData) => {
-      postMessage({ pathData, id });
+    // 执行填充并发送结果（返回 ArrayBuffer，可作为 transferable 提升性能）
+    floodFill(posX, posY, fillColor, tolerance).then((buffer) => {
+      if (buffer) {
+        postMessage({ buffer, id }, [buffer]);
+      } else {
+        postMessage({ buffer: null, id });
+      }
     });
   } catch (error) {
     postMessage({ error: error && error.message ? error.message : String(error) });
