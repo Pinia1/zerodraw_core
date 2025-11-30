@@ -35,7 +35,7 @@ const historyManager = new HistoryManager<Layers[]>({
   },
 });
 
-const initialDrawingLayer: () => Layers = () => ({
+export const initialDrawingLayer: () => Layers = () => ({
   id: generateUUID(),
   visible: true,
   opacity: 100,
@@ -46,6 +46,7 @@ const initialDrawingLayer: () => Layers = () => ({
   ellipses: [],
   paths: [],
   fills: [],
+  image: null,
 });
 const init = initialDrawingLayer();
 

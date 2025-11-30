@@ -1,6 +1,6 @@
-import { cropTransparentBorder, useMemoizedFn } from '@monorepo/common';
+import { cropTransparentBorder, generateUUID, useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Group, Layer as KonvaLayer, Rect as KonvaRect, Transformer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -12,6 +12,7 @@ import {
   DiagramPropsMap,
   Ellipse as EllipseType,
   Fill as FillType,
+  Layers,
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
@@ -25,22 +26,9 @@ import Rect from './Diagram/Rect';
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 const Layer = ({}) => {
-  const rectRef = useRef<Konva.Rect>(null);
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
-
-  const [transformerPos, setTransformerPos] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }>({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
 
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
@@ -55,9 +43,11 @@ const Layer = ({}) => {
       stageConfig: state.stageConfig,
     }))
   );
-  const { drawingLayer } = useLayerStore(
+  const { drawingLayer, setDrawingLayer, pushHistory } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,
+      setDrawingLayer: state.setDrawingLayer,
+      pushHistory: state.pushHistory,
     }))
   );
 
@@ -104,6 +94,11 @@ const Layer = ({}) => {
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
+      case 'image': {
+        const props = drawingLayer?.image as FillType;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
       default:
         return null;
     }
@@ -121,6 +116,12 @@ const Layer = ({}) => {
 
     let clipLeft = 0;
     let clipTop = 0;
+
+    const targetWidth = 2560; // 或者 3840
+
+    let pixelRatio = targetWidth / layerConfig.width / stageConfig.scale;
+
+    pixelRatio = Math.max(1, Math.min(pixelRatio, 3));
 
     if (groupRect.x < layerRect.x) {
       relativeX = 0;
@@ -152,16 +153,52 @@ const Layer = ({}) => {
 
     const { bounds } = cropTransparentBorder(imageData!);
 
+    const blob = (await node.toBlob({
+      pixelRatio: pixelRatio,
+      mimeType: 'image/png',
+      quality: 1,
+      x: Math.abs(Math.max(groupRect.x, layerRect.x) + bounds.left),
+      y: Math.abs(Math.max(groupRect.y, layerRect.y) + bounds.top),
+      width: Math.abs(bounds.width),
+      height: Math.abs(bounds.height),
+    })) as Blob;
+    const dataUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    img.src = dataUrl;
+    const image: FillType = {
+      x: Math.abs((relativeX + bounds.left) / stageConfig.scale),
+      y: Math.abs((relativeY + bounds.top) / stageConfig.scale),
+      width: Math.abs(bounds.width / stageConfig.scale),
+      height: Math.abs(bounds.height / stageConfig.scale),
+      src: dataUrl,
+      image: img,
+      id: generateUUID(),
+    };
+    img.onload = () => {
+      const newDrawingLayer = {
+        ...drawingLayer!,
+        image: image,
+        lines: [],
+        eraserLines: [],
+        rects: [],
+        ellipses: [],
+        paths: [],
+        fills: [],
+        diagrams: [{ id: image.id, type: 'image' }],
+      };
+      setDrawingLayer(newDrawingLayer as Layers);
+      pushHistory([newDrawingLayer as Layers]);
+    };
+
     const pos = {
       x: Math.ceil((relativeX + bounds.left) / stageConfig.scale),
       y: Math.ceil((relativeY + bounds.top) / stageConfig.scale),
       width: Math.ceil(bounds.width / stageConfig.scale),
       height: Math.ceil(bounds.height / stageConfig.scale),
     };
-    setTransformerPos(pos);
 
     requestAnimationFrame(() => {
-      trRef.current?.nodes([rectRef.current!]);
+      trRef.current?.nodes([groupRef.current!]);
       trRef.current?.getLayer()?.batchDraw();
     });
   };
@@ -180,14 +217,6 @@ const Layer = ({}) => {
       clipHeight={layerConfig.height}
       isDrawing
     >
-      <KonvaRect
-        ref={rectRef}
-        listening={false}
-        fillEnabled={false}
-        strokeEnabled={false}
-        {...transformerPos}
-      />
-
       <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {drawingLayer?.diagrams.map((diagram) => {
           const props = getDiagramProps(diagram.id, diagram.type)!;
@@ -196,6 +225,7 @@ const Layer = ({}) => {
             case 'path': {
               return <Paths key={diagram.id} {...(props as LineType)} />;
             }
+            case 'image':
             case 'fill': {
               return <Fill key={diagram.id} {...(props as FillType)} />;
             }

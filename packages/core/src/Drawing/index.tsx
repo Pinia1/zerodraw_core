@@ -664,9 +664,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.ERASER:
       case Actions.RECT:
       case Actions.ELLIPSE:
-      case Actions.LINE:
         return pushDrawingHistory();
-
+      case Actions.LINE:
+        return;
       default:
         break;
     }

@@ -12,6 +12,7 @@ export interface Layers {
   ellipses: Ellipse[];
   paths: Line[];
   fills: Fill[];
+  image: Fill | null;
 }
 
 export interface Diagram {
@@ -32,7 +33,8 @@ export interface Diagram {
     | 'image'
     | 'shape'
     | 'path'
-    | 'fill';
+    | 'fill'
+    | 'image';
 }
 
 export interface Line {
