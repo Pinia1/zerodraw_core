@@ -40,6 +40,7 @@ export const initialDrawingLayer: () => Layers = () => ({
   paths: [],
   fills: [],
   image: null,
+  name: 'layer 1',
 });
 const init = initialDrawingLayer();
 
