@@ -59,6 +59,8 @@ export interface Fill {
   width: number;
   height: number;
   id: string;
+  img?: HTMLImageElement;
+  src?: string;
 }
 
 export type DiagramPropsMap = {

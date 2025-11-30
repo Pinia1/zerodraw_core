@@ -79,7 +79,7 @@ export const useDrawingStore = create<DrawingState>()(
       //line config
       lineConfig: {
         strokeWidth: 5,
-        stroke: '#000',
+        stroke: '#000000',
         opacity: 1,
         tension: 0,
         eraser: false,
@@ -99,7 +99,7 @@ export const useDrawingStore = create<DrawingState>()(
       },
       setEraserConfig: (config: EraserConfigTypes) => set({ eraserConfig: config }),
       //fill color
-      fillColor: '#000',
+      fillColor: '#B3B5DF',
       setFillColor: (color: string) => set({ fillColor: color }),
       //graph config
       graphConfig: {

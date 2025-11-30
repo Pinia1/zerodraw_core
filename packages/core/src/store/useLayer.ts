@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Layers } from '../types/Layers';
 import { generateUUID } from '../utils/drawing';
+import imageManager from '../utils/imageManager';
 
 const historyManager = new HistoryManager<Layers[]>({
   maxLength: 50,
@@ -10,14 +11,18 @@ const historyManager = new HistoryManager<Layers[]>({
   cleanFutureCallback: (future) => {
     future.forEach((layers) => {
       layers.forEach((layer) => {
-        layer.fills.forEach((fill) => {});
+        layer.fills.forEach((fill) => {
+          imageManager.deleteImage(fill.id);
+        });
       });
     });
   },
   cleanPastCallback: (past) => {
     past.forEach((layers) => {
       layers.forEach((layer) => {
-        layer.fills.forEach((fill) => {});
+        layer.fills.forEach((fill) => {
+          imageManager.deleteImage(fill.id);
+        });
       });
     });
   },
@@ -133,7 +138,10 @@ const useLayerStore = create<LayerState>()(
     }),
     {
       name: 'drawing-layers-storage',
-      partialize: (state) => ({}),
+      partialize: (state) => ({
+        // layers: state.layers,
+        // drawingLayer: state.drawingLayer,
+      }),
     }
   )
 );

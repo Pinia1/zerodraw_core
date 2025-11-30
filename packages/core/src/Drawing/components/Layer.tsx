@@ -16,10 +16,10 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
-import imageManager from '../../utils/imageManager';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
+import Image from './Diagram/Image';
 import Line from './Diagram/Lines';
 import Paths from './Diagram/Paths';
 import Rect from './Diagram/Rect';
@@ -37,11 +37,12 @@ const Layer = ({}) => {
     }))
   );
 
-  const { layerConfig, drawingId, stageConfig } = useDrawingStore(
+  const { layerConfig, drawingId, stageConfig, stageRef } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       drawingId: state.drawingId,
       stageConfig: state.stageConfig,
+      stageRef: state.stageRef,
     }))
   );
   const { drawingLayer, setDrawingLayer, pushHistory } = useLayerStore(
@@ -108,7 +109,7 @@ const Layer = ({}) => {
   const onGroupNodeChange = async () => {
     const node = groupRef.current!;
     const groupRect = node.getClientRect();
-    const layerRect = node.getLayer()!.getClientRect();
+    const layerRect = stageRef!.current!.children[0].getLayer()!.getClientRect();
 
     let relativeX = 0;
     let relativeY = 0;
@@ -165,32 +166,39 @@ const Layer = ({}) => {
     })) as Blob;
 
     const id = generateUUID();
-    await imageManager.saveImage(id, await blob.arrayBuffer());
-    const image: FillType = {
-      x: Math.abs((relativeX + bounds.left) / stageConfig.scale),
-      y: Math.abs((relativeY + bounds.top) / stageConfig.scale),
-      width: Math.abs(bounds.width / stageConfig.scale),
-      height: Math.abs(bounds.height / stageConfig.scale),
-      id,
-    };
-    const newDrawingLayer = {
-      ...drawingLayer!,
-      image: image,
-      lines: [],
-      eraserLines: [],
-      rects: [],
-      ellipses: [],
-      paths: [],
-      fills: [],
-      diagrams: [{ id: image.id, type: 'image' }],
-    };
-    setDrawingLayer(newDrawingLayer as Layers);
-    pushHistory([newDrawingLayer as Layers]);
 
-    requestAnimationFrame(() => {
-      trRef.current?.nodes([groupRef.current!]);
-      trRef.current?.getLayer()?.batchDraw();
-    });
+    const img = new window.Image();
+    img.src = URL.createObjectURL(blob);
+    img.onload = () => {
+      const image: FillType = {
+        x: Math.abs((relativeX + bounds.left) / stageConfig.scale),
+        y: Math.abs((relativeY + bounds.top) / stageConfig.scale),
+        width: Math.abs(bounds.width / stageConfig.scale),
+        height: Math.abs(bounds.height / stageConfig.scale),
+        id,
+        img,
+        src: img.src,
+      };
+      const newDrawingLayer = {
+        ...drawingLayer!,
+        image: image,
+        lines: [],
+        eraserLines: [],
+        rects: [],
+        ellipses: [],
+        paths: [],
+        fills: [],
+        diagrams: [{ id: image.id, type: 'image' }],
+      };
+      clearCache();
+      setDrawingLayer(newDrawingLayer as Layers);
+      pushHistory([newDrawingLayer as Layers]);
+
+      requestAnimationFrame(() => {
+        trRef.current?.nodes([groupRef.current!]);
+        trRef.current?.getLayer()?.batchDraw();
+      });
+    };
   };
 
   useEffect(() => {
@@ -216,6 +224,7 @@ const Layer = ({}) => {
               return <Paths key={diagram.id} {...(props as LineType)} />;
             }
             case 'image':
+              return <Image key={diagram.id} {...(props as FillType)} />;
             case 'fill': {
               return <Fill key={diagram.id} {...(props as FillType)} />;
             }
