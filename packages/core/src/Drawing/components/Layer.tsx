@@ -109,66 +109,62 @@ const Layer = ({}) => {
     }
   };
 
-  const onGroupNodeChange = useMemoizedFn(() => {
-    const node = groupRef.current;
-    const rectNode = rectRef.current;
-    if (!node || !rectNode || !drawingLayer?.diagrams.length) return;
-
+  const onGroupNodeChange = async () => {
+    const node = groupRef.current!;
     const groupRect = node.getClientRect();
-    const layer = node.getLayer();
-    if (!layer) return;
+    const layerRect = node.getLayer()!.getClientRect();
 
-    const layerRect = layer.getClientRect();
+    let relativeX = 0;
+    let relativeY = 0;
+    let clipWidth = 0;
+    let clipHeight = 0;
 
-    if (groupRect.width <= 0 || groupRect.height <= 0) return;
+    let clipLeft = 0;
+    let clipTop = 0;
 
-    const interLeft = Math.max(groupRect.x, layerRect.x);
-    const interTop = Math.max(groupRect.y, layerRect.y);
-    const interRight = Math.min(groupRect.x + groupRect.width, layerRect.x + layerRect.width);
-    const interBottom = Math.min(groupRect.y + groupRect.height, layerRect.y + layerRect.height);
+    if (groupRect.x < layerRect.x) {
+      relativeX = 0;
+      clipWidth = layerRect.x - groupRect.x;
+      clipLeft = layerRect.x - groupRect.x;
+    } else {
+      relativeX = groupRect.x - layerRect.x;
+    }
 
-    const interWidth = interRight - interLeft;
-    const interHeight = interBottom - interTop;
+    if (groupRect.x + groupRect.width > layerRect.x + layerRect.width) {
+      clipWidth = groupRect.x + groupRect.width - (layerRect.x + layerRect.width);
+    }
 
-    // 无交集直接返回
-    if (interWidth <= 0 || interHeight <= 0) return;
+    if (groupRect.y < layerRect.y) {
+      relativeY = 0;
+      clipHeight = layerRect.y - groupRect.y;
+      clipTop = layerRect.y - groupRect.y;
+    } else {
+      relativeY = groupRect.y - layerRect.y;
+    }
 
-    const pixelRatio = 0.1;
+    if (groupRect.y + groupRect.height > layerRect.y + layerRect.height) {
+      clipHeight = groupRect.y + groupRect.height - (layerRect.y + layerRect.height);
+    }
+    const imageData = node
+      .toCanvas()
+      .getContext('2d')
+      ?.getImageData(clipLeft, clipTop, groupRect.width - clipWidth, groupRect.height - clipHeight);
 
-    const canvas = node.toCanvas({
-      x: interLeft,
-      y: interTop,
-      width: interWidth,
-      height: interHeight,
-      pixelRatio,
+    const { bounds } = cropTransparentBorder(imageData!);
+
+    const pos = {
+      x: Math.ceil((relativeX + bounds.left) / stageConfig.scale),
+      y: Math.ceil((relativeY + bounds.top) / stageConfig.scale),
+      width: Math.ceil(bounds.width / stageConfig.scale),
+      height: Math.ceil(bounds.height / stageConfig.scale),
+    };
+    setTransformerPos(pos);
+
+    requestAnimationFrame(() => {
+      trRef.current?.nodes([rectRef.current!]);
+      trRef.current?.getLayer()?.batchDraw();
     });
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-    const { bounds } = cropTransparentBorder(imageData);
-
-    // 把 bounds 从采样坐标系 + layer 绝对坐标，转换回 layer 局部坐标，再除以缩放
-    const scale = stageConfig.scale || 1;
-    const xInLayer = (interLeft + bounds.left / pixelRatio - layerRect.x) / scale;
-    const yInLayer = (interTop + bounds.top / pixelRatio - layerRect.y) / scale;
-    const wInLayer = bounds.width / pixelRatio / scale;
-    const hInLayer = bounds.height / pixelRatio / scale;
-
-    if (wInLayer <= 0 || hInLayer <= 0) return;
-
-    setTransformerPos({
-      x: xInLayer,
-      y: yInLayer,
-      width: wInLayer,
-      height: hInLayer,
-    });
-
-    trRef.current?.nodes([rectNode]);
-    trRef.current?.getLayer()?.batchDraw();
-  });
+  };
 
   useEffect(() => {
     if (activeKey === Actions.ROPE) {
