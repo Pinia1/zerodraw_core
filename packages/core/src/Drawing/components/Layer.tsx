@@ -58,6 +58,17 @@ const Layer: React.FC = () => {
     diagramMap.current.clear();
   });
 
+  const handleBindTransformer = useMemoizedFn(() => {
+    trRef.current?.nodes([imageRef.current!]);
+    trRef.current?.getLayer()?.batchDraw();
+  });
+
+  useEffect(() => {
+    if (imageRef.current) {
+      handleBindTransformer();
+    }
+  }, [drawingLayer]);
+
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
     type: T
@@ -98,7 +109,7 @@ const Layer: React.FC = () => {
       }
       case 'image': {
         const props = drawingLayer?.image as FillType;
-        diagramMap.current.set(id, props);
+        // diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
       default:
@@ -116,8 +127,7 @@ const Layer: React.FC = () => {
       drawingLayer.image?.rotation === undefined
     ) {
       requestAnimationFrame(() => {
-        trRef.current?.nodes([imageRef.current!]);
-        trRef.current?.getLayer()?.batchDraw();
+        handleBindTransformer();
       });
       return;
     }
@@ -211,8 +221,7 @@ const Layer: React.FC = () => {
       pushHistory([newDrawingLayer as Layers]);
 
       requestAnimationFrame(() => {
-        trRef.current?.nodes([imageRef.current!]);
-        trRef.current?.getLayer()?.batchDraw();
+        handleBindTransformer();
       });
     };
   };
@@ -220,8 +229,7 @@ const Layer: React.FC = () => {
   const handleDragStart = useMemoizedFn(() => {
     const container = document.getElementById('canvas_container');
     container!.style.cursor = 'move';
-    trRef.current?.nodes([imageRef.current!]);
-    trRef.current?.getLayer()?.batchDraw();
+    handleBindTransformer();
   });
 
   const handleDragEnd = useMemoizedFn((e, rotation?: number) => {
@@ -290,6 +298,7 @@ const Layer: React.FC = () => {
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
                   key={diagram.id}
+                  handleBindTransformer={handleBindTransformer}
                   {...(props as FillType)}
                 />
               );

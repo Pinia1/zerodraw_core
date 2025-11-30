@@ -14,6 +14,7 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         activeKey: state.activeKey,
       }))
     );
+
     const handleDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
       e.cancelBubble = true;
       e.target.preventDefault();
