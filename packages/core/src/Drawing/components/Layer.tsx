@@ -188,19 +188,12 @@ const Layer = ({}) => {
       };
       setDrawingLayer(newDrawingLayer as Layers);
       pushHistory([newDrawingLayer as Layers]);
-    };
 
-    const pos = {
-      x: Math.ceil((relativeX + bounds.left) / stageConfig.scale),
-      y: Math.ceil((relativeY + bounds.top) / stageConfig.scale),
-      width: Math.ceil(bounds.width / stageConfig.scale),
-      height: Math.ceil(bounds.height / stageConfig.scale),
+      requestAnimationFrame(() => {
+        trRef.current?.nodes([groupRef.current!]);
+        trRef.current?.getLayer()?.batchDraw();
+      });
     };
-
-    requestAnimationFrame(() => {
-      trRef.current?.nodes([groupRef.current!]);
-      trRef.current?.getLayer()?.batchDraw();
-    });
   };
 
   useEffect(() => {
