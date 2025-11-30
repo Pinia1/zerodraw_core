@@ -140,3 +140,19 @@ export const cropTransparentBorder = (
     },
   };
 };
+
+export const isEmptyObj = (obj: unknown): boolean => {
+  if (obj == null) return true;
+
+  if (typeof obj !== 'object') return false;
+
+  if (Array.isArray(obj)) {
+    return obj.length === 0;
+  }
+
+  if (obj instanceof Map || obj instanceof Set) {
+    return obj.size === 0;
+  }
+
+  return Object.keys(obj).length === 0;
+};

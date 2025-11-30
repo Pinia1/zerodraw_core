@@ -16,6 +16,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import imageManager from '../../utils/imageManager';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
@@ -59,6 +60,7 @@ const Layer: React.FC = () => {
   });
 
   const handleBindTransformer = useMemoizedFn(() => {
+    if (!trRef.current || !imageRef.current) return;
     trRef.current?.nodes([imageRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
   });
@@ -67,7 +69,7 @@ const Layer: React.FC = () => {
     if (imageRef.current) {
       handleBindTransformer();
     }
-  }, [drawingLayer]);
+  }, [drawingLayer?.image]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
@@ -192,6 +194,10 @@ const Layer: React.FC = () => {
     })) as Blob;
 
     const id = generateUUID();
+
+    blob.arrayBuffer().then(async (buffer) => {
+      imageManager.saveImage(id, buffer);
+    });
 
     const img = new window.Image();
     img.src = URL.createObjectURL(blob);
