@@ -288,6 +288,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+    const stage = e.target.getStage();
+
+    if (!stage || e.target !== stage) return;
+    if (!stageDraggable) return;
     setStageConfig({
       ...stageConfig,
       x: e.target.x(),

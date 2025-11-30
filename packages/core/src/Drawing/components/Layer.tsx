@@ -29,6 +29,7 @@ type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 const Layer = ({}) => {
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
+  const imageRef = useRef<Konva.Image>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
 
   const { activeKey } = useToolsStore(
@@ -53,7 +54,6 @@ const Layer = ({}) => {
     }))
   );
 
-  //切换drawing layer时，拉伸变化时
   const clearCache = useMemoizedFn(() => {
     diagramMap.current.clear();
   });
@@ -107,6 +107,19 @@ const Layer = ({}) => {
   };
 
   const onGroupNodeChange = async () => {
+    if (
+      drawingLayer!.diagrams.length === 1 &&
+      drawingLayer!.diagrams[0].type === 'image' &&
+      drawingLayer!.image &&
+      drawingLayer?.image.rotation === undefined
+    ) {
+      requestAnimationFrame(() => {
+        trRef.current?.nodes([imageRef.current!]);
+        trRef.current?.getLayer()?.batchDraw();
+      });
+      return;
+    }
+
     const node = groupRef.current!;
     const groupRect = node.getClientRect();
     const layerRect = stageRef!.current!.children[0].getLayer()!.getClientRect();
@@ -195,11 +208,55 @@ const Layer = ({}) => {
       pushHistory([newDrawingLayer as Layers]);
 
       requestAnimationFrame(() => {
-        trRef.current?.nodes([groupRef.current!]);
+        trRef.current?.nodes([imageRef.current!]);
         trRef.current?.getLayer()?.batchDraw();
       });
     };
   };
+
+  const handleDragStart = useMemoizedFn(() => {
+    const container = document.getElementById('canvas_container');
+    container!.style.cursor = 'move';
+    trRef.current?.nodes([imageRef.current!]);
+    trRef.current?.getLayer()?.batchDraw();
+  });
+
+  const handleDragEnd = useMemoizedFn((e, rotation?: number) => {
+    const node = imageRef.current;
+
+    if (!node) return;
+
+    const currentImage = drawingLayer?.image;
+    if (!currentImage) return;
+
+    const x = node.x();
+    const y = node.y();
+    const width = node.width() * node.scaleX();
+    const height = node.height() * node.scaleY();
+
+    const updatedImage = {
+      ...currentImage,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      rotation: rotation != undefined ? rotation : currentImage.rotation,
+    };
+
+    node.scaleX(1);
+    node.scaleY(1);
+
+    const newDrawingLayer = {
+      ...drawingLayer!,
+      image: updatedImage,
+    };
+
+    setDrawingLayer(newDrawingLayer as Layers);
+    pushHistory([newDrawingLayer as Layers]);
+
+    const container = document.getElementById('canvas_container');
+    container!.style.cursor = '';
+  });
 
   useEffect(() => {
     if (activeKey === Actions.ROPE) {
@@ -224,7 +281,15 @@ const Layer = ({}) => {
               return <Paths key={diagram.id} {...(props as LineType)} />;
             }
             case 'image':
-              return <Image key={diagram.id} {...(props as FillType)} />;
+              return (
+                <Image
+                  ref={imageRef}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  key={diagram.id}
+                  {...(props as FillType)}
+                />
+              );
             case 'fill': {
               return <Fill key={diagram.id} {...(props as FillType)} />;
             }
@@ -260,9 +325,11 @@ const Layer = ({}) => {
           flipEnabled={false}
           anchorFill={'rgb(209, 249, 247)'}
           id={`transformer_selected`}
-          onTouchEnd={(e) => {}}
-          onTransformStart={() => {}}
-          onTransformEnd={(e) => {}}
+          onTransformStart={clearCache}
+          onTransformEnd={(e) => {
+            const rotation = imageRef.current?.rotation();
+            handleDragEnd(e, rotation);
+          }}
         />
       )}
 

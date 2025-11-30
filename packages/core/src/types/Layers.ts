@@ -61,6 +61,7 @@ export interface Fill {
   id: string;
   img?: HTMLImageElement;
   src?: string;
+  rotation?: number;
 }
 
 export type DiagramPropsMap = {
