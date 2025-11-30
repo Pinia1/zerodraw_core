@@ -35,3 +35,108 @@ export const hexToRgba = (color: string, opacity: number): [number, number, numb
 
   return [r, g, b, 255 * opacity];
 };
+
+export const cropTransparentBorder = (
+  sourceImageData: ImageData,
+  alphaThreshold = 0 // >0 时可以略过非常浅的半透明像素
+): {
+  bounds: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  };
+} => {
+  const { width, height, data } = sourceImageData;
+  const stride = width * 4;
+
+  let top = 0;
+  let bottom = height - 1;
+  let left = 0;
+  let right = width - 1;
+
+  let found = false;
+
+  // 找 top
+  for (; top < height; top++) {
+    const rowOffset = top * stride;
+    for (let x = 0; x < width; x++) {
+      const alpha = data[rowOffset + x * 4 + 3];
+      if (alpha > alphaThreshold) {
+        found = true;
+        break;
+      }
+    }
+    if (found) break;
+  }
+
+  if (!found) {
+    // 整张图都透明，返回整张
+    return {
+      bounds: {
+        left: 0,
+        top: 0,
+        right: width - 1,
+        bottom: height - 1,
+        width,
+        height,
+      },
+    };
+  }
+
+  // 找 bottom
+  for (; bottom >= top; bottom--) {
+    const rowOffset = bottom * stride;
+    let rowHasPixel = false;
+    for (let x = 0; x < width; x++) {
+      const alpha = data[rowOffset + x * 4 + 3];
+      if (alpha > alphaThreshold) {
+        rowHasPixel = true;
+        break;
+      }
+    }
+    if (rowHasPixel) break;
+  }
+
+  // 找 left
+  for (; left < width; left++) {
+    let colHasPixel = false;
+    for (let y = top; y <= bottom; y++) {
+      const offset = y * stride + left * 4 + 3;
+      if (data[offset] > alphaThreshold) {
+        colHasPixel = true;
+        break;
+      }
+    }
+    if (colHasPixel) break;
+  }
+
+  // 找 right
+  for (; right >= left; right--) {
+    let colHasPixel = false;
+    for (let y = top; y <= bottom; y++) {
+      const offset = y * stride + right * 4 + 3;
+      if (data[offset] > alphaThreshold) {
+        colHasPixel = true;
+        break;
+      }
+    }
+    if (colHasPixel) break;
+  }
+
+  const croppedWidth = right - left + 1;
+  const croppedHeight = bottom - top + 1;
+
+  return {
+    bounds: {
+      left,
+      top,
+      right,
+      bottom,
+      width: croppedWidth,
+      height: croppedHeight,
+    },
+  };
+};

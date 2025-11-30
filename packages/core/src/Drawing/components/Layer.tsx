@@ -1,6 +1,6 @@
-import { useMemoizedFn } from '@monorepo/common';
+import { cropTransparentBorder, useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Group, Layer as KonvaLayer, Rect as KonvaRect, Transformer } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -29,16 +29,30 @@ const Layer = ({}) => {
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
+
+  const [transformerPos, setTransformerPos] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
     }))
   );
 
-  const { layerConfig, drawingId } = useDrawingStore(
+  const { layerConfig, drawingId, stageConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       drawingId: state.drawingId,
+      stageConfig: state.stageConfig,
     }))
   );
   const { drawingLayer } = useLayerStore(
@@ -95,44 +109,70 @@ const Layer = ({}) => {
     }
   };
 
-  //todo 裁剪掉被擦除的透明部分
+  const onGroupNodeChange = useMemoizedFn(() => {
+    const node = groupRef.current;
+    const rectNode = rectRef.current;
+    if (!node || !rectNode || !drawingLayer?.diagrams.length) return;
+
+    const groupRect = node.getClientRect();
+    const layer = node.getLayer();
+    if (!layer) return;
+
+    const layerRect = layer.getClientRect();
+
+    if (groupRect.width <= 0 || groupRect.height <= 0) return;
+
+    const interLeft = Math.max(groupRect.x, layerRect.x);
+    const interTop = Math.max(groupRect.y, layerRect.y);
+    const interRight = Math.min(groupRect.x + groupRect.width, layerRect.x + layerRect.width);
+    const interBottom = Math.min(groupRect.y + groupRect.height, layerRect.y + layerRect.height);
+
+    const interWidth = interRight - interLeft;
+    const interHeight = interBottom - interTop;
+
+    // 无交集直接返回
+    if (interWidth <= 0 || interHeight <= 0) return;
+
+    const pixelRatio = 0.1;
+
+    const canvas = node.toCanvas({
+      x: interLeft,
+      y: interTop,
+      width: interWidth,
+      height: interHeight,
+      pixelRatio,
+    });
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const { bounds } = cropTransparentBorder(imageData);
+
+    // 把 bounds 从采样坐标系 + layer 绝对坐标，转换回 layer 局部坐标，再除以缩放
+    const scale = stageConfig.scale || 1;
+    const xInLayer = (interLeft + bounds.left / pixelRatio - layerRect.x) / scale;
+    const yInLayer = (interTop + bounds.top / pixelRatio - layerRect.y) / scale;
+    const wInLayer = bounds.width / pixelRatio / scale;
+    const hInLayer = bounds.height / pixelRatio / scale;
+
+    if (wInLayer <= 0 || hInLayer <= 0) return;
+
+    setTransformerPos({
+      x: xInLayer,
+      y: yInLayer,
+      width: wInLayer,
+      height: hInLayer,
+    });
+
+    trRef.current?.nodes([rectNode]);
+    trRef.current?.getLayer()?.batchDraw();
+  });
+
   useEffect(() => {
     if (activeKey === Actions.ROPE) {
-      const group = groupRef.current;
-      const rectNode = rectRef.current;
-
-      if (!group || !rectNode) return;
-
-      const groupRect = group.getClientRect();
-      const layer = group.getLayer()!;
-      const layerRect = layer.getClientRect();
-      let pos: any = null;
-
-      pos = {
-        x: groupRect.x - layerRect.x,
-        y: groupRect.y - layerRect.y,
-        width: groupRect.width,
-        height: groupRect.height,
-      };
-      const absPos = layer.getAbsolutePosition();
-      if (pos.y <= 0) {
-        pos.y = groupRect.y - absPos.y;
-      }
-      if (pos.x <= 0) {
-        pos.x = groupRect.x - absPos.x;
-      }
-
-      rectNode.position({
-        x: pos.x,
-        y: pos.y,
-      });
-      rectNode.size({
-        width: pos.width,
-        height: pos.height,
-      });
-
-      trRef.current?.nodes([rectRef.current as Konva.Node]);
-      trRef.current?.getLayer()?.batchDraw();
+      onGroupNodeChange();
     }
   }, [activeKey]);
 
@@ -144,9 +184,15 @@ const Layer = ({}) => {
       clipHeight={layerConfig.height}
       isDrawing
     >
-      <KonvaRect ref={rectRef} listening={false} fillEnabled={false} strokeEnabled={false} />
+      <KonvaRect
+        ref={rectRef}
+        listening={false}
+        fillEnabled={false}
+        strokeEnabled={false}
+        {...transformerPos}
+      />
 
-      <Group ref={groupRef}>
+      <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {drawingLayer?.diagrams.map((diagram) => {
           const props = getDiagramProps(diagram.id, diagram.type)!;
 
