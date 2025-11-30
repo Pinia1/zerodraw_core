@@ -26,7 +26,7 @@ import Rect from './Diagram/Rect';
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
-const Layer = ({}) => {
+const Layer: React.FC = () => {
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const imageRef = useRef<Konva.Image>(null);
@@ -107,11 +107,13 @@ const Layer = ({}) => {
   };
 
   const onGroupNodeChange = async () => {
+    if (!drawingLayer) return;
+    //If there is no change.
     if (
-      drawingLayer!.diagrams.length === 1 &&
-      drawingLayer!.diagrams[0].type === 'image' &&
-      drawingLayer!.image &&
-      drawingLayer?.image.rotation === undefined
+      drawingLayer.diagrams.length === 1 &&
+      drawingLayer.diagrams[0].type === 'image' &&
+      drawingLayer.image &&
+      drawingLayer.image?.rotation === undefined
     ) {
       requestAnimationFrame(() => {
         trRef.current?.nodes([imageRef.current!]);
@@ -120,7 +122,8 @@ const Layer = ({}) => {
       return;
     }
 
-    const node = groupRef.current!;
+    const node = groupRef.current;
+    if (!node) return;
     const groupRect = node.getClientRect();
     const layerRect = stageRef!.current!.children[0].getLayer()!.getClientRect();
 
@@ -132,7 +135,7 @@ const Layer = ({}) => {
     let clipLeft = 0;
     let clipTop = 0;
 
-    const targetWidth = 2560; // 或者 3840
+    const targetWidth = 2560;
 
     let pixelRatio = targetWidth / layerConfig.width / stageConfig.scale;
 
