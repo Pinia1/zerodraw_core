@@ -1,7 +1,7 @@
 import { hexToRgba, useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -29,6 +29,7 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
+import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 
@@ -80,6 +81,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       getDrawingLayer: state.getDrawingLayer,
     }))
   );
+
+  useEffect(() => {
+    console.log('layers', layers);
+  }, [layers]);
 
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
@@ -652,9 +657,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (stageDraggable) return;
     const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
-    if (!isPointInLayer(pos)) {
-      return pushDrawingHistory();
-    }
+    if (!isPointInLayer(pos)) return;
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
@@ -716,7 +719,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onMouseUp={handleMouseUp}
       >
         <Mosic />
-        <Layer />
+        {layers.map(
+          (layer) =>
+            layer && layer.id !== getDrawingLayer()?.id && <Layer key={layer.id} {...layer} />
+        )}
+        <DrawLayer />
       </Stage>
       <Cursor />
       {tools?.includes(Tools.TOOL) && <Tool />}
