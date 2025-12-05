@@ -121,7 +121,7 @@ const Layer: React.FC = () => {
 
   const onGroupNodeChange = async () => {
     if (!drawingLayer) return;
-    //If there is no change.
+    // If there is no change.
     if (
       drawingLayer.diagrams.length === 1 &&
       drawingLayer.diagrams[0].type === 'image' &&
@@ -135,22 +135,32 @@ const Layer: React.FC = () => {
     }
 
     const node = groupRef.current;
-    if (!node) return;
+    const stage = stageRef?.current;
+    if (!node || !stage) return;
+
+    // 保存当前 stage 的缩放和位置
+    const originalScale = stage.scaleX();
+    const originalX = stage.x();
+    const originalY = stage.y();
+
+    // 临时重置 stage 缩放为 1
+    stage.scale({ x: 1, y: 1 });
+    stage.position({ x: 0, y: 0 });
+    stage.batchDraw();
+
+    // 现在所有坐标都是正常的（未缩放）
     const groupRect = node.getClientRect();
-    const layerRect = stageRef!.current!.children[0].getLayer()!.getClientRect();
+    const layerRect = stage.children[0].getLayer()!.getClientRect();
 
     let relativeX = 0;
     let relativeY = 0;
     let clipWidth = 0;
     let clipHeight = 0;
-
     let clipLeft = 0;
     let clipTop = 0;
 
-    const targetWidth = 2560;
-
-    let pixelRatio = targetWidth / layerConfig.width / stageConfig.scale;
-
+    const targetWidth = 1920;
+    let pixelRatio = targetWidth / layerConfig.width;
     pixelRatio = Math.max(1, Math.min(pixelRatio, 3));
 
     if (groupRect.x < layerRect.x) {
@@ -176,6 +186,7 @@ const Layer: React.FC = () => {
     if (groupRect.y + groupRect.height > layerRect.y + layerRect.height) {
       clipHeight = groupRect.y + groupRect.height - (layerRect.y + layerRect.height);
     }
+
     const imageData = node
       .toCanvas()
       .getContext('2d')
@@ -187,11 +198,16 @@ const Layer: React.FC = () => {
       pixelRatio: pixelRatio,
       mimeType: 'image/png',
       quality: 1,
-      x: Math.abs(Math.max(groupRect.x, layerRect.x) + bounds.left),
-      y: Math.abs(Math.max(groupRect.y, layerRect.y) + bounds.top),
-      width: Math.abs(bounds.width),
-      height: Math.abs(bounds.height),
+      x: Math.max(groupRect.x, layerRect.x) + bounds.left,
+      y: Math.max(groupRect.y, layerRect.y) + bounds.top,
+      width: bounds.width,
+      height: bounds.height,
     })) as Blob;
+
+    // 恢复 stage 的缩放和位置
+    stage.scale({ x: originalScale, y: originalScale });
+    stage.position({ x: originalX, y: originalY });
+    stage.batchDraw();
 
     const id = generateUUID();
 
@@ -202,11 +218,12 @@ const Layer: React.FC = () => {
     const img = new window.Image();
     img.src = URL.createObjectURL(blob);
     img.onload = () => {
+      // 位置已经是正常坐标，不需要再除以 scale
       const image: FillType = {
-        x: Math.abs((relativeX + bounds.left) / stageConfig.scale),
-        y: Math.abs((relativeY + bounds.top) / stageConfig.scale),
-        width: Math.abs(bounds.width / stageConfig.scale),
-        height: Math.abs(bounds.height / stageConfig.scale),
+        x: relativeX + bounds.left,
+        y: relativeY + bounds.top,
+        width: bounds.width,
+        height: bounds.height,
         id,
         img,
         src: img.src,
@@ -220,7 +237,7 @@ const Layer: React.FC = () => {
         ellipses: [],
         paths: [],
         fills: [],
-        diagrams: [{ id: image.id, type: 'image' }],
+        diagrams: [{ id: image.id, type: 'image' as const }],
       };
       clearCache();
       setDrawingLayer(newDrawingLayer as Layers);

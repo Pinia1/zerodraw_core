@@ -21,7 +21,6 @@ import {
   ASIDE_WIDTH,
   CANVAS_CONTAINER_ID,
   generateUUID,
-  INCREASE_SCALE,
   MAX_SCALE,
   MIN_SCALE,
   PROMPT_WIDTH,
@@ -263,28 +262,23 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
     const deltaY = e.evt.deltaY;
-    if (!Number.isInteger(deltaY)) {
-      const { scale, x, y } = getScaleAndPosition(
-        deltaY,
-        Math.abs(deltaY) > 2 ? REDUCE_SCALE : INCREASE_SCALE,
-        pointer
-      );
+
+    // 垂直滚动始终触发缩放
+    if (deltaY !== 0) {
+      // 根据 deltaY 大小动态调整缩放速度
+      const scaleStep = Math.min(Math.abs(deltaY) / 500, REDUCE_SCALE);
+      const { scale, x, y } = getScaleAndPosition(deltaY, scaleStep, pointer);
       return scaling(scale, { x, y });
     }
 
-    if (e.evt.altKey && deltaY !== 0) {
-      const { scale, x, y } = getScaleAndPosition(deltaY, 0.03, pointer);
-      return scaling(scale, { x, y });
+    // 水平滚动触发平移（触控板）
+    if (e.evt.deltaX !== 0) {
+      const newPosition = {
+        x: stageConfig.x - e.evt.deltaX,
+        y: stageConfig.y,
+      };
+      setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
     }
-
-    const threshold = 1;
-    if (Math.abs(deltaY) < threshold && Math.abs(e.evt.deltaX) < threshold) return;
-
-    const newPosition = {
-      x: stageConfig.x - e.evt.deltaX,
-      y: stageConfig.y - deltaY,
-    };
-    setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
   });
 
   const onDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
@@ -624,9 +618,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
+  // is point in layer
+  const isPointInLayer = (pos: Vector2d | null): boolean => {
+    if (!pos) return false;
+    const { x, y, width, height } = layerConfig;
+    return pos.x >= x && pos.x <= x + width && pos.y >= y && pos.y <= y + height;
+  };
+
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!isLeftMouseDown(e) || stageDraggable) return;
+
+    const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
+    if (!isPointInLayer(pos)) return;
+
     switch (activeKey) {
       case Actions.ERASER:
       case Actions.PEN:
@@ -646,6 +651,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (stageDraggable) return;
+    const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
+    if (!isPointInLayer(pos)) {
+      return pushDrawingHistory();
+    }
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:

@@ -1,5 +1,6 @@
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
@@ -77,6 +78,7 @@ const DragList: React.FC = () => {
     <DndContext
       sensors={sensors}
       // modifiers={[restrictToVerticalAxis]}
+      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
       onDragEnd={onDragEnd}
       id="list-drag-sorting"
     >
