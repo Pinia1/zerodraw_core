@@ -1,10 +1,13 @@
+import Icon from '@ant-design/icons';
 import { useMount } from '@monorepo/common';
-import { Tabs, TabsProps } from 'antd';
+import { Button, Flex, Tabs, TabsProps, Tooltip } from 'antd';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
+import useCreateLayer from '../../hooks/useCreateLayer';
+import { IconAdd } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
-import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
+import { CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
 import Container from '../Container';
 import DragList from './DragList';
 
@@ -15,6 +18,8 @@ const Layers: React.FC = () => {
       shrinkTools: state.shrinkTools,
     }))
   );
+
+  const { run: createLayerRun } = useCreateLayer();
   useMount(() => {
     const el =
       (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
@@ -25,6 +30,10 @@ const Layers: React.FC = () => {
     { key: '1', label: 'Layers', children: <DragList /> },
     { key: '2', label: 'Assets', children: 'Content of Tab Pane 2' },
   ];
+
+  const handleCreateLayer = () => {
+    createLayerRun(generateUUID());
+  };
 
   if (!container) return null;
 
@@ -40,9 +49,27 @@ const Layers: React.FC = () => {
         padding: 12,
         fontSize: 14,
         display: shrinkTools ? 'none' : 'block',
+        cursor: 'default',
       }}
     >
-      <Tabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
+      <Flex style={{ position: 'relative', height: '100%' }}>
+        <Tabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
+        <Button
+          type="text"
+          variant="link"
+          style={{
+            position: 'absolute',
+            right: 0,
+            transform: 'translateY(calc(17px - 50%))',
+            fontSize: 14,
+          }}
+          onClick={handleCreateLayer}
+        >
+          <Tooltip title="New Layer">
+            <Icon component={IconAdd} />
+          </Tooltip>
+        </Button>
+      </Flex>
     </Container>,
     container
   );

@@ -238,7 +238,7 @@ const Layer: React.FC = () => {
     handleBindTransformer();
   });
 
-  const handleDragEnd = useMemoizedFn((e, rotation?: number) => {
+  const handleDragEnd = useMemoizedFn((e: unknown, rotation?: number) => {
     const node = imageRef.current;
 
     if (!node) return;

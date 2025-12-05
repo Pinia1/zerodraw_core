@@ -1,6 +1,5 @@
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
@@ -10,13 +9,13 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { GetProps } from 'antd';
 import { List } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useLayerStore from '../../store/useLayer';
 import BackgroundControl from './BackgroundControl';
 import LayerItem from './LayerItem';
 
-const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number }> = (props) => {
+const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: string }> = (props) => {
   const { itemKey, style, children, ...rest } = props;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -28,7 +27,8 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: number 
     transform: CSS.Translate.toString(transform),
     transition,
     cursor: isDragging ? 'move' : 'default',
-    padding: 2,
+    borderBlockEnd: 'none',
+    padding: '2px 0px',
     ...(isDragging ? { position: 'relative', zIndex: 9999 } : {}),
   };
 
@@ -48,6 +48,10 @@ const DragList: React.FC = () => {
       setLayers: state.setLayers,
     }))
   );
+
+  const reverseLayers = useMemo(() => {
+    return [...layers].reverse();
+  }, [layers]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -72,15 +76,18 @@ const DragList: React.FC = () => {
   return (
     <DndContext
       sensors={sensors}
-      modifiers={[restrictToVerticalAxis]}
+      // modifiers={[restrictToVerticalAxis]}
       onDragEnd={onDragEnd}
       id="list-drag-sorting"
     >
-      <SortableContext items={layers.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        items={reverseLayers.map((item) => item.id)}
+        strategy={verticalListSortingStrategy}
+      >
         <List
-          dataSource={layers}
+          dataSource={reverseLayers}
           renderItem={(item) => (
-            <SortableListItem key={item.id} itemKey={Number(item.id)}>
+            <SortableListItem key={item.id} itemKey={item.id}>
               <LayerItem {...item} />
             </SortableListItem>
           )}

@@ -3,6 +3,7 @@ import type { Point2D } from './Drawing';
 export interface Layers {
   id: string;
   name?: string;
+  order: number;
   opacity: number;
   visible: boolean;
   diagrams: Diagram[];
@@ -62,6 +63,8 @@ export interface Fill {
   img?: HTMLImageElement;
   src?: string;
   rotation?: number;
+  originWidth?: number;
+  originHeight?: number;
 }
 
 export type DiagramPropsMap = {

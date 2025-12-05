@@ -1,32 +1,55 @@
 import Icon from '@ant-design/icons';
 import { Flex } from 'antd';
-import React from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
+import { useShallow } from 'zustand/react/shallow';
 import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
+import useLayerStore from '../../store/useLayer';
 import { Layers } from '../../types/Layers';
 import Container from '../Container';
 import { ToolItem } from '../index';
+import PreviewCanvas from './components/PreviewCanvas';
 
-const Wrapper = styled(Container)`
+const Wrapper = styled(Container)<{ $active?: boolean }>`
   width: 100%;
   display: grid;
   grid-template-columns: 32px 62px minmax(0px, 1fr) 32px;
   padding: 8px 4px;
   -webkit-box-align: center;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   user-select: none;
   min-height: 64px;
   border: 1px solid var(--container-border-color);
   border-radius: 8px;
   font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: ${({ $active }) =>
+    $active ? 'var(--color-primary-bg) !important' : 'transparent'};
+  box-shadow: none !important;
+  &:hover {
+    border-color: var(--color-primary-active);
+  }
 `;
 
 interface LayerItemProps extends Layers {}
 
-const LayerItem: React.FC<LayerItemProps> = ({ visible }) => {
+const LayerItem: React.FC<LayerItemProps> = (props) => {
+  const { visible, order, name, opacity } = props;
+
+  const { drawingLayer, setDrawingLayer } = useLayerStore(
+    useShallow((state) => ({
+      drawingLayer: state.drawingLayer,
+      setDrawingLayer: state.setDrawingLayer,
+    }))
+  );
+
+  const isActive = useMemo(() => {
+    return drawingLayer?.id === props.id;
+  }, [drawingLayer?.id, props.id]);
+
   return (
-    <Wrapper>
+    <Wrapper onClick={() => setDrawingLayer(props)} $active={isActive}>
       <Flex align="center" justify="center">
         <ToolItem style={{ aspectRatio: 1, fontSize: 16 }} $active={false}>
           <Icon component={visible ? IconEyeOpen : IconEyeClose} />
@@ -36,23 +59,24 @@ const LayerItem: React.FC<LayerItemProps> = ({ visible }) => {
       <Flex
         style={{
           aspectRatio: 16 / 9,
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'var(--color-fill-tertiary)',
           borderRadius: 4,
         }}
         align="center"
         justify="center"
       >
-        2
+        <PreviewCanvas {...props} />
       </Flex>
       <Flex
         style={{
           borderRadius: 4,
+          fontSize: 13,
         }}
         vertical
         justify="space-around"
       >
-        <span>3</span>
-        <span>4</span>
+        <span>{name || `${order + 1}`}</span>
+        <span>{opacity}%</span>
       </Flex>
       <Flex align="center" justify="center">
         <ToolItem style={{ aspectRatio: 1 }} $active={false}>

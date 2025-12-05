@@ -40,7 +40,7 @@ const BackgroundControl: React.FC<BackgroundControlProps> = () => {
   };
 
   return (
-    <Wrapper>
+    <Wrapper style={{ marginTop: 10 }}>
       <Flex align="center" justify="center">
         <ToolItem
           style={{ aspectRatio: 1, fontSize: 16 }}

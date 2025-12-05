@@ -41,6 +41,7 @@ export const initialDrawingLayer: () => Layers = () => ({
   fills: [],
   image: null,
   name: 'layer 1',
+  order: 0,
 });
 const init = initialDrawingLayer();
 
@@ -53,7 +54,7 @@ interface LayerState {
   getDrawingLayer: () => Layers | null;
   setDrawingLayer: (drawingLayer: Layers) => void;
 
-  // history manager（单例实例）
+  // history manager
   history: HistoryManager<Layers[]>;
   canUndo: boolean;
   canRedo: boolean;
@@ -68,6 +69,8 @@ const useLayerStore = create<LayerState>()(
     (set, get) => ({
       layers: [init],
       setLayers: (layers) => set({ layers }),
+
+      //
       drawingLayer: init,
       getDrawingLayer: () => get().drawingLayer,
       setDrawingLayer: (drawingLayer) => set({ drawingLayer }),

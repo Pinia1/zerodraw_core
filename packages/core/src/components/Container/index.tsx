@@ -10,7 +10,14 @@ interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
   const { token } = useToken();
-  const { colorBgContainer, colorText, colorInfoActive } = token;
+  const {
+    colorPrimaryBg,
+    colorBgContainer,
+    colorText,
+    colorInfoActive,
+    colorPrimaryActive,
+    colorFillTertiary,
+  } = token;
 
   const [windowTheme] = useMediaQuery();
 
@@ -32,6 +39,9 @@ const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
     '--container-border-color':
       windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
     '--border-color': windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
+    '--color-primary-active': colorPrimaryActive,
+    '--color-fill-tertiary': colorFillTertiary,
+    '--color-primary-bg': colorPrimaryBg,
 
     //
     backgroundColor: 'var(--container-bg)',
