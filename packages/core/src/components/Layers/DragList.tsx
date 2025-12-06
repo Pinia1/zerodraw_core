@@ -1,12 +1,7 @@
 import type { DragEndEvent } from '@dnd-kit/core';
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { GetProps } from 'antd';
 import { List } from 'antd';
@@ -70,7 +65,18 @@ const DragList: React.FC = () => {
     if (active.id !== over.id) {
       const activeIndex = layers.findIndex((i) => i.id === active.id);
       const overIndex = layers.findIndex((i) => i.id === over.id);
-      pushHistory(arrayMove(layers, activeIndex, overIndex));
+      if (activeIndex === -1 || overIndex === -1) return;
+
+      const activeOrder = layers[activeIndex].order;
+      const overOrder = layers[overIndex].order;
+
+      const nextLayers = layers.map((layer, idx) => {
+        if (idx === activeIndex) return { ...layer, order: overOrder };
+        if (idx === overIndex) return { ...layer, order: activeOrder };
+        return layer;
+      });
+
+      pushHistory(nextLayers);
     }
   };
 

@@ -84,6 +84,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       }))
     );
 
+  const renderOrderLayers = useMemo(() => {
+    return [...layers].sort((a, b) => a.order - b.order);
+  }, [layers]);
+
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
@@ -717,7 +721,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onMouseUp={handleMouseUp}
       >
         <Mosic />
-        {layers.map((layer) => {
+        {renderOrderLayers.map((layer) => {
           if (layer && layer.id !== drawingLayer?.id) {
             return <Layer key={layer.id} {...layer} />;
           }

@@ -137,6 +137,17 @@ const DrawLayer: React.FC = () => {
     const stage = stageRef?.current;
     if (!node || !stage) return;
 
+    // 预取 fills 对应的位图，避免 toCanvas 时未加载导致透明
+    const fillsBitmaps = await Promise.all(
+      (drawingLayer.fills || []).map(async (fill) => {
+        const stored = await imageManager.getImage(fill.id);
+        if (!stored?.buffer) return null;
+        const blob = new Blob([stored.buffer], { type: stored.mimeType || 'image/png' });
+        const bitmap = await createImageBitmap(blob);
+        return { fill, bitmap };
+      })
+    );
+
     // 克隆 Group 节点用于离屏截图
     const clonedGroup = node.clone();
 
@@ -202,8 +213,8 @@ const DrawLayer: React.FC = () => {
       clipHeight = groupRect.y + groupRect.height - (layerY + layerHeight);
     }
 
-    const imageData = clonedGroup
-      .toCanvas()
+    const layerCanvas = clonedGroup.toCanvas();
+    const imageData = layerCanvas
       .getContext('2d')
       ?.getImageData(clipLeft, clipTop, groupRect.width - clipWidth, groupRect.height - clipHeight);
 
@@ -231,6 +242,16 @@ const DrawLayer: React.FC = () => {
     const img = new window.Image();
     img.src = URL.createObjectURL(blob);
     img.onload = () => {
+      // 将填充位图绘制到离屏 canvas 上，确保最终图片包含 fill
+      const layerCtx = layerCanvas.getContext('2d');
+      if (layerCtx && fillsBitmaps.length) {
+        fillsBitmaps.forEach((item) => {
+          if (!item) return;
+          const { fill, bitmap } = item;
+          layerCtx.drawImage(bitmap, fill.x, fill.y, fill.width, fill.height);
+        });
+      }
+
       // 离屏 Stage 是 scale=1，坐标已经是正常的 Layer 坐标
       const image: FillType = {
         x: relativeX + bounds.left,
