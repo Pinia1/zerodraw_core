@@ -67,10 +67,8 @@ const DrawLayer: React.FC = () => {
   });
 
   useEffect(() => {
-    if (imageRef.current) {
-      handleBindTransformer();
-    }
-  }, [drawingLayer?.image]);
+    onGroupNodeChange();
+  }, [drawingLayer?.id]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
@@ -303,6 +301,7 @@ const DrawLayer: React.FC = () => {
       image: updatedImage,
     };
     setDrawingLayer(newDrawingLayer as Layers);
+
     pushHistory(
       layers.map((layer) => (layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)))
     );

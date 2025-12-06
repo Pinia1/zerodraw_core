@@ -1,7 +1,7 @@
 import { hexToRgba, useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -72,19 +72,17 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } = useLayerStore(
-    useShallow((state) => ({
-      setDrawingLayer: state.setDrawingLayer,
-      layers: state.layers,
-      initHistory: state.initHistory,
-      pushHistory: state.pushHistory,
-      getDrawingLayer: state.getDrawingLayer,
-    }))
-  );
-
-  useEffect(() => {
-    console.log('layers', layers);
-  }, [layers]);
+  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer, drawingLayer } =
+    useLayerStore(
+      useShallow((state) => ({
+        setDrawingLayer: state.setDrawingLayer,
+        layers: state.layers,
+        initHistory: state.initHistory,
+        pushHistory: state.pushHistory,
+        getDrawingLayer: state.getDrawingLayer,
+        drawingLayer: state.drawingLayer,
+      }))
+    );
 
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
@@ -719,10 +717,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onMouseUp={handleMouseUp}
       >
         <Mosic />
-        {layers.map(
-          (layer) =>
-            layer && layer.id !== getDrawingLayer()?.id && <Layer key={layer.id} {...layer} />
-        )}
+        {layers.map((layer) => {
+          if (layer && layer.id !== drawingLayer?.id) {
+            return <Layer key={layer.id} {...layer} />;
+          }
+          return null;
+        })}
         <DrawLayer />
       </Stage>
       <Cursor />
