@@ -3,6 +3,7 @@ import { useMount } from '@monorepo/common';
 import { Button, Flex, Tabs, TabsProps, Tooltip } from 'antd';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
+import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
 import { IconAdd } from '../../icons';
@@ -10,6 +11,14 @@ import { useDrawingStore } from '../../store/useDrawing';
 import { CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
 import Container from '../Container';
 import DragList from './DragList';
+
+const StyledTabs = styled(Tabs)`
+  .ant-tabs-content-holder {
+    padding: 3px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+`;
 
 const Layers: React.FC = () => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
@@ -53,7 +62,7 @@ const Layers: React.FC = () => {
       }}
     >
       <Flex style={{ position: 'relative', height: '100%' }}>
-        <Tabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
+        <StyledTabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
         <Button
           type="text"
           variant="link"

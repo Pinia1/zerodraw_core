@@ -81,7 +81,7 @@ const useLayerStore = create<LayerState>()(
       canRedo: false,
 
       initHistory: (initialLayers: Layers[]) => {
-        historyManager.setInitial(initialLayers);
+        historyManager.setInitial(get().layers);
         set({
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
@@ -126,6 +126,7 @@ const useLayerStore = create<LayerState>()(
 
       redoHistory: () => {
         const layers = historyManager.redo();
+
         if (!layers) return;
 
         const currentDrawing = get().drawingLayer;

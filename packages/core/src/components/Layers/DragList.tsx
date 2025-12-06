@@ -43,10 +43,10 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: string 
 };
 
 const DragList: React.FC = () => {
-  const { layers, setLayers } = useLayerStore(
+  const { layers, pushHistory } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
-      setLayers: state.setLayers,
+      pushHistory: state.pushHistory,
     }))
   );
 
@@ -70,7 +70,7 @@ const DragList: React.FC = () => {
     if (active.id !== over.id) {
       const activeIndex = layers.findIndex((i) => i.id === active.id);
       const overIndex = layers.findIndex((i) => i.id === over.id);
-      setLayers(arrayMove(layers, activeIndex, overIndex));
+      pushHistory(arrayMove(layers, activeIndex, overIndex));
     }
   };
 

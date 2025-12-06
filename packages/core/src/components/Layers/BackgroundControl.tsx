@@ -1,4 +1,5 @@
 import Icon from '@ant-design/icons';
+import { useThrottleFn } from '@monorepo/common';
 import { Flex } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
@@ -35,9 +36,14 @@ const BackgroundControl: React.FC<BackgroundControlProps> = () => {
     }))
   );
 
-  const handleSetConfig = (config: Partial<LayerConfigTypes>) => {
-    setLayerConfig({ ...layerConfig, ...config });
-  };
+  const { run: handleSetConfig } = useThrottleFn(
+    (config: Partial<LayerConfigTypes>) => {
+      setLayerConfig({ ...layerConfig, ...config });
+    },
+    {
+      wait: 16,
+    }
+  );
 
   return (
     <Wrapper style={{ marginTop: 10 }}>
@@ -78,6 +84,7 @@ const BackgroundControl: React.FC<BackgroundControlProps> = () => {
       <Flex
         style={{
           borderRadius: 4,
+          fontSize: 13,
         }}
         vertical
         justify="space-around"

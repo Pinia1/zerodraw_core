@@ -26,7 +26,8 @@ import Rect from './Diagram/Rect';
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 const DrawLayer: React.FC<Layers> = (props) => {
-  const { opacity, diagrams, paths, eraserLines, rects, ellipses, lines, fills, image } = props;
+  const { opacity, diagrams, paths, eraserLines, rects, ellipses, lines, fills, image, visible } =
+    props;
   const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
@@ -253,7 +254,9 @@ const DrawLayer: React.FC<Layers> = (props) => {
       y={layerConfig.y}
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
-      listening={false}
+      listening={visible}
+      visible={visible}
+      id={props.id}
     >
       <Group
         ref={groupRef}

@@ -35,12 +35,14 @@ const Wrapper = styled(Container)<{ $active?: boolean }>`
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
-  const { visible, order, name, opacity } = props;
+  const { visible, order, name, opacity, id } = props;
 
-  const { drawingLayer, setDrawingLayer } = useLayerStore(
+  const { drawingLayer, setDrawingLayer, pushHistory, layers } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,
       setDrawingLayer: state.setDrawingLayer,
+      pushHistory: state.pushHistory,
+      layers: state.layers,
     }))
   );
 
@@ -48,10 +50,27 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     return drawingLayer?.id === props.id;
   }, [drawingLayer?.id, props.id]);
 
+  const handlerSetLayer = (key: keyof Layers, value: any) => {
+    const newLayers = layers.map((layer) => {
+      if (layer.id === id) {
+        return { ...layer, [key]: value };
+      }
+      return layer;
+    });
+    pushHistory(newLayers);
+  };
+
   return (
     <Wrapper onClick={() => setDrawingLayer(props)} $active={isActive}>
       <Flex align="center" justify="center">
-        <ToolItem style={{ aspectRatio: 1, fontSize: 16 }} $active={false}>
+        <ToolItem
+          onClick={(e) => {
+            e.stopPropagation();
+            handlerSetLayer('visible', !visible);
+          }}
+          style={{ aspectRatio: 1, fontSize: 16 }}
+          $active={false}
+        >
           <Icon component={visible ? IconEyeOpen : IconEyeClose} />
         </ToolItem>
       </Flex>
@@ -61,6 +80,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           aspectRatio: 16 / 9,
           backgroundColor: 'var(--color-fill-tertiary)',
           borderRadius: 4,
+          overflow: 'hidden',
         }}
         align="center"
         justify="center"

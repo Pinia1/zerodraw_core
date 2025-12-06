@@ -118,7 +118,7 @@ const DrawLayer: React.FC = () => {
     }
   };
 
-  const onGroupNodeChange = async () => {
+  const onGroupNodeChange = async (isPushHistory = false) => {
     if (!drawingLayer) return;
     // If there is no change.
     if (
@@ -255,9 +255,13 @@ const DrawLayer: React.FC = () => {
       clearCache();
       setDrawingLayer(newDrawingLayer as Layers);
 
-      pushHistory(
-        layers.map((layer) => (layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)))
-      );
+      if (isPushHistory) {
+        pushHistory(
+          layers.map((layer) =>
+            layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)
+          )
+        );
+      }
 
       requestAnimationFrame(() => {
         handleBindTransformer();
@@ -323,6 +327,7 @@ const DrawLayer: React.FC = () => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       isDrawing
+      id={drawingLayer?.id}
     >
       <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {drawingLayer?.diagrams.map((diagram) => {
