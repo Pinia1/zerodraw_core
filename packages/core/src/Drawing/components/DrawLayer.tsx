@@ -68,7 +68,7 @@ const DrawLayer: React.FC = () => {
 
   useEffect(() => {
     onGroupNodeChange();
-  }, [drawingLayer?.id]);
+  }, [drawingLayer?.id, drawingLayer?.version]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,

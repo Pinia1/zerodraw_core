@@ -10,6 +10,7 @@ const DotContainer = styled(Flex)`
   gap: 8px;
   font-size: 12px;
   align-items: center;
+  user-select: none;
 `;
 
 const Dot = () => {

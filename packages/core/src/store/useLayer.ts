@@ -1,7 +1,7 @@
 import { HistoryManager } from '@monorepo/common';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Layers } from '../types/Layers';
+import type { DrawLayer, Layers } from '../types/Layers';
 import { generateUUID } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
 
@@ -50,18 +50,18 @@ interface LayerState {
   setLayers: (layers: Layers[]) => void;
 
   //drawingLayer
-  drawingLayer: Layers | null;
-  getDrawingLayer: () => Layers | null;
-  setDrawingLayer: (drawingLayer: Layers) => void;
+  drawingLayer: DrawLayer | null;
+  getDrawingLayer: () => DrawLayer | null;
+  setDrawingLayer: (drawingLayer: Layers, version?: DrawLayer['version']) => void;
 
   // history manager
   history: HistoryManager<Layers[]>;
   canUndo: boolean;
   canRedo: boolean;
-  initHistory: (initialLayers: Layers[]) => void;
+  initHistory: () => void;
   pushHistory: (layers: Layers[]) => void;
-  undoHistory: () => void;
-  redoHistory: () => void;
+  undoHistory: (version?: DrawLayer['version']) => void;
+  redoHistory: (version?: DrawLayer['version']) => void;
 }
 
 const useLayerStore = create<LayerState>()(
@@ -71,16 +71,21 @@ const useLayerStore = create<LayerState>()(
       setLayers: (layers) => set({ layers }),
 
       //
-      drawingLayer: init,
+      drawingLayer: { version: generateUUID(), ...init },
       getDrawingLayer: () => get().drawingLayer,
-      setDrawingLayer: (drawingLayer) => set({ drawingLayer }),
-
+      setDrawingLayer: (drawingLayer, version?: string) =>
+        set({
+          drawingLayer: {
+            ...drawingLayer,
+            version: version ? version : get().drawingLayer?.version!,
+          },
+        }),
       // history
       history: historyManager,
       canUndo: false,
       canRedo: false,
 
-      initHistory: (initialLayers: Layers[]) => {
+      initHistory: () => {
         historyManager.setInitial(get().layers);
         set({
           canUndo: historyManager.canUndo,
@@ -97,7 +102,7 @@ const useLayerStore = create<LayerState>()(
         });
       },
 
-      undoHistory: () => {
+      undoHistory: (version?: string) => {
         const layers = historyManager.undo();
         if (!layers) return;
 
@@ -109,22 +114,26 @@ const useLayerStore = create<LayerState>()(
           const newDrawing = initialDrawingLayer();
           set({
             layers: [newDrawing],
-            drawingLayer: newDrawing,
+            drawingLayer: { ...newDrawing, version: version ? version : currentDrawing?.version },
             canUndo: historyManager.canUndo,
             canRedo: historyManager.canRedo,
           });
           return;
         }
+        const newDrawingLayer = {
+          ...nextDrawing,
+          version: version ? version : currentDrawing?.version,
+        };
 
         set({
           layers,
-          drawingLayer: nextDrawing,
+          drawingLayer: newDrawingLayer,
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
         });
       },
 
-      redoHistory: () => {
+      redoHistory: (version?: string) => {
         const layers = historyManager.redo();
 
         if (!layers) return;
@@ -135,7 +144,7 @@ const useLayerStore = create<LayerState>()(
 
         set({
           layers,
-          drawingLayer: nextDrawing,
+          drawingLayer: { ...nextDrawing, version: version ? version : currentDrawing?.version },
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
         });

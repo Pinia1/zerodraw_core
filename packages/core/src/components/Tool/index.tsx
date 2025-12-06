@@ -19,6 +19,7 @@ import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
+import { generateUUID } from '../../utils/drawing';
 import Container from '../Container';
 import { ToolItem } from '../index';
 import BrushDetail from './components/BrushDetail';
@@ -172,7 +173,8 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconUndo} />,
         type: ToolTypes.ACTION,
         onClick: () => {
-          undoHistory();
+          const verison = activeKey === Actions.ROPE ? generateUUID() : undefined;
+          undoHistory(verison);
         },
         disabled: !canUndo,
       },
@@ -181,7 +183,8 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconRedo} />,
         type: ToolTypes.ACTION,
         onClick: () => {
-          redoHistory();
+          const verison = activeKey === Actions.ROPE ? generateUUID() : undefined;
+          redoHistory(verison);
         },
         disabled: !canRedo,
       },

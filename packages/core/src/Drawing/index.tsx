@@ -138,7 +138,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   useMount(() => {
     init();
-    initHistory([]);
+    initHistory();
   });
   useKeyPress(
     'space',

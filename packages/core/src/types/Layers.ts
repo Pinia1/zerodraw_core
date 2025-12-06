@@ -16,6 +16,10 @@ export interface Layers {
   image: Fill | null;
 }
 
+export interface DrawLayer extends Layers {
+  version?: string;
+}
+
 export interface Diagram {
   id: string;
   type:
