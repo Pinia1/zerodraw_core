@@ -9,7 +9,7 @@ import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
 const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig>>(
-  ({ x, y, width, height, id, img, onDragStart, onDragEnd, rotation }, ref) => {
+  ({ x, y, width, height, id, img, onDragStart, onDragEnd, rotation, handleDragMove }, ref) => {
     const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
 
     useEffect(() => {
@@ -62,6 +62,7 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         listening={activeKey === Actions.ROPE}
         onDragStart={onDragStart}
         onDragEnd={handleDragEnd}
+        onDragMove={handleDragMove}
       />
     );
   }

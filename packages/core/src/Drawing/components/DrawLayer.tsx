@@ -1,7 +1,14 @@
 import { cropTransparentBorder, generateUUID, useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useEffect, useRef } from 'react';
-import { Group, Layer as KonvaLayer, Rect as KonvaRect, Transformer } from 'react-konva';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Group,
+  Layer as KonvaLayer,
+  Line as KonvaLine,
+  Rect as KonvaRect,
+  Text as KonvaText,
+  Transformer,
+} from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
@@ -33,6 +40,12 @@ const DrawLayer: React.FC = () => {
   const trRef = useRef<Konva.Transformer>(null);
   const imageRef = useRef<Konva.Image>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
+  const [guideLines, setGuideLines] = useState<{
+    v: number[];
+    h: number[];
+    points: { x: number; y: number }[];
+  }>({ v: [], h: [], points: [] });
+  const snapThreshold = 6;
 
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
@@ -64,6 +77,85 @@ const DrawLayer: React.FC = () => {
     if (!trRef.current || !imageRef.current) return;
     trRef.current?.nodes([imageRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
+  });
+
+  const handleDragMove = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+    const node = e.target;
+    if (!node) return;
+
+    const width = node.width() * node.scaleX();
+    const height = node.height() * node.scaleY();
+    const origX = node.x();
+    const origY = node.y();
+
+    const pickBestSnap = <
+      T extends { curr: number; target: number; newValue: number; line: number },
+    >(
+      candidates: T[]
+    ): T | null => {
+      let best: T | null = null;
+      candidates.forEach((c) => {
+        const delta = Math.abs(c.curr - c.target);
+        if (delta <= snapThreshold && (!best || delta < Math.abs(best.curr - best.target))) {
+          best = c;
+        }
+      });
+      return best;
+    };
+
+    const snapX = pickBestSnap([
+      { curr: origX, target: 0, newValue: 0, line: 0 },
+      {
+        curr: origX + width / 2,
+        target: layerConfig.width / 2,
+        newValue: layerConfig.width / 2 - width / 2,
+        line: layerConfig.width / 2,
+      },
+      {
+        curr: origX + width,
+        target: layerConfig.width,
+        newValue: layerConfig.width - width,
+        line: layerConfig.width,
+      },
+    ]);
+
+    const snapY = pickBestSnap([
+      { curr: origY, target: 0, newValue: 0, line: 0 },
+      {
+        curr: origY + height / 2,
+        target: layerConfig.height / 2,
+        newValue: layerConfig.height / 2 - height / 2,
+        line: layerConfig.height / 2,
+      },
+      {
+        curr: origY + height,
+        target: layerConfig.height,
+        newValue: layerConfig.height - height,
+        line: layerConfig.height,
+      },
+    ]);
+
+    let nextX = origX;
+    let nextY = origY;
+    const v: number[] = [];
+    const h: number[] = [];
+    const points: { x: number; y: number }[] = [];
+
+    if (snapX) {
+      nextX = snapX.newValue;
+      v.push(snapX.line);
+      points.push({ x: snapX.line, y: nextY + height / 2 });
+    }
+
+    if (snapY) {
+      nextY = snapY.newValue;
+      h.push(snapY.line);
+      points.push({ x: nextX + width / 2, y: snapY.line });
+    }
+
+    node.x(nextX);
+    node.y(nextY);
+    setGuideLines({ v, h, points });
   });
 
   useEffect(() => {
@@ -293,10 +385,11 @@ const DrawLayer: React.FC = () => {
   const handleDragStart = useMemoizedFn(() => {
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = 'move';
+    setGuideLines({ v: [], h: [], points: [] });
     handleBindTransformer();
   });
 
-  const handleDragEnd = useMemoizedFn((e: unknown, rotation?: number) => {
+  const handleDragEnd = useMemoizedFn((_e: unknown, rotation?: number) => {
     const node = imageRef.current;
 
     if (!node) return;
@@ -333,6 +426,7 @@ const DrawLayer: React.FC = () => {
 
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = '';
+    setGuideLines({ v: [], h: [], points: [] });
   });
 
   useEffect(() => {
@@ -366,6 +460,7 @@ const DrawLayer: React.FC = () => {
                   onDragEnd={handleDragEnd}
                   key={diagram.id}
                   handleBindTransformer={handleBindTransformer}
+                  handleDragMove={handleDragMove}
                   {...(props as FillType)}
                 />
               );
@@ -389,6 +484,55 @@ const DrawLayer: React.FC = () => {
           }
         })}
       </Group>
+
+      {guideLines.v.map((x) => (
+        <KonvaLine
+          key={`v-${x}`}
+          points={[x, 0, x, layerConfig.height]}
+          stroke="red"
+          strokeWidth={1}
+          dash={[6, 4]}
+          listening={false}
+        />
+      ))}
+      {guideLines.h.map((y) => (
+        <KonvaLine
+          key={`h-${y}`}
+          points={[0, y, layerConfig.width, y]}
+          stroke="red"
+          strokeWidth={1}
+          dash={[6, 4]}
+          listening={false}
+        />
+      ))}
+      {guideLines.points.map((p, idx) => {
+        const isVertical = guideLines.v.includes(p.x);
+        const isHorizontal = guideLines.h.includes(p.y);
+
+        let textX = p.x + 4;
+        let textY = p.y - 10;
+
+        if (isHorizontal && p.y === 0) {
+          textY = p.y + 4;
+        }
+
+        if (isVertical && p.x === layerConfig.width) {
+          textX = p.x - 12;
+        }
+
+        return (
+          <KonvaText
+            key={`snap-${p.x}-${p.y}-${idx}`}
+            text="x"
+            x={textX}
+            y={textY}
+            fill="red"
+            fontStyle="bold"
+            fontSize={12}
+            listening={false}
+          />
+        );
+      })}
 
       {activeKey === Actions.ROPE && (
         <Transformer
