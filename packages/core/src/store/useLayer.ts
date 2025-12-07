@@ -106,11 +106,11 @@ const useLayerStore = create<LayerState>()(
       replaceCurrentHistory: (layers: Layers[]) => {
         // 直接替换当前 present，不新增历史记录
         historyManager.replaceCurrent(layers);
-        // set({
-        //   layers,
-        //   canUndo: historyManager.canUndo,
-        //   canRedo: historyManager.canRedo,
-        // });
+        set({
+          layers,
+          canUndo: historyManager.canUndo,
+          canRedo: historyManager.canRedo,
+        });
       },
 
       undoHistory: (version?: string) => {

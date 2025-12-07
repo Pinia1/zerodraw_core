@@ -212,7 +212,7 @@ const DrawLayer: React.FC = () => {
     }
   };
 
-  const onGroupNodeChange = async (isPushHistory = false) => {
+  const onGroupNodeChange = async () => {
     if (!drawingLayer) return;
     // If there is no change.
     if (
@@ -355,21 +355,12 @@ const DrawLayer: React.FC = () => {
         paths: [],
         // fills: drawingLayer.fills.map((i) => ({ ...i, visible: true })),
         diagrams: [
-          ...drawingLayer.diagrams.filter((diagram) => ['fill', 'image'].includes(diagram.type)),
+          ...drawingLayer.diagrams.filter((diagram) => diagram.type === 'fill'),
           { id: image.id, type: 'image' as const },
         ],
       };
       clearCache();
       setDrawingLayer(newDrawingLayer as Layers);
-
-      if (isPushHistory) {
-        pushHistory(
-          layers.map((layer) =>
-            layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)
-          )
-        );
-        return;
-      }
 
       /**
        * Here, when converting a vector image to a bitmap,
@@ -377,15 +368,7 @@ const DrawLayer: React.FC = () => {
        * This helps save time for undoing the conversion process.
        */
       replaceCurrentHistory(
-        layers.map((layer) =>
-          layer.id !== drawingLayer?.id
-            ? layer
-            : ({
-                ...newDrawingLayer,
-                fills: [],
-                diagrams: [{ id: image.id, type: 'image' as const }],
-              } as Layers)
-        )
+        layers.map((layer) => (layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)))
       );
 
       requestAnimationFrame(() => {
@@ -437,6 +420,7 @@ const DrawLayer: React.FC = () => {
       ...drawingLayer!,
       image: updatedImage,
     };
+
     setDrawingLayer(newDrawingLayer as Layers);
 
     pushHistory(
