@@ -1,8 +1,10 @@
 import Icon from '@ant-design/icons';
 import { Flex } from 'antd';
+import Konva from 'konva';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
+import useBindRef from '../../hooks/useBindRef';
 import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
 import useLayerStore from '../../store/useLayer';
 import { Layers } from '../../types/Layers';
@@ -37,12 +39,14 @@ interface LayerItemProps extends Layers {}
 const LayerItem: React.FC<LayerItemProps> = (props) => {
   const { visible, order, name, opacity, id } = props;
 
-  const { drawingLayer, setDrawingLayer, pushHistory, layers } = useLayerStore(
+  const stageRef = useBindRef();
+  const { drawingLayer, setDrawingLayer, pushHistory, layers, setCacheGroup } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,
       setDrawingLayer: state.setDrawingLayer,
       pushHistory: state.pushHistory,
       layers: state.layers,
+      setCacheGroup: state.setCacheGroup,
     }))
   );
 
@@ -60,8 +64,16 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     pushHistory(newLayers);
   };
 
+  const handleBindLayer = () => {
+    const targetLayer = stageRef?.current?.getLayers().find((layer) => layer.attrs.id === props.id);
+    const group = targetLayer?.findOne('Group');
+
+    setCacheGroup(group as Konva.Group);
+    setDrawingLayer(props);
+  };
+
   return (
-    <Wrapper onClick={() => setDrawingLayer(props)} $active={isActive}>
+    <Wrapper onClick={handleBindLayer} $active={isActive}>
       <Flex align="center" justify="center">
         <ToolItem
           onClick={(e) => {

@@ -60,7 +60,7 @@ const DrawLayer: React.FC = () => {
       stageRef: state.stageRef,
     }))
   );
-  const { drawingLayer, setDrawingLayer, pushHistory, layers, replaceCurrentHistory } =
+  const { drawingLayer, setDrawingLayer, pushHistory, layers, replaceCurrentHistory, cacheGroup } =
     useLayerStore(
       useShallow((state) => ({
         drawingLayer: state.drawingLayer,
@@ -68,6 +68,7 @@ const DrawLayer: React.FC = () => {
         pushHistory: state.pushHistory,
         layers: state.layers,
         replaceCurrentHistory: state.replaceCurrentHistory,
+        cacheGroup: state.cacheGroup,
       }))
     );
 
@@ -162,9 +163,15 @@ const DrawLayer: React.FC = () => {
 
   useEffect(() => {
     if (activeKey === Actions.ROPE) {
+      onGroupNodeChange(cacheGroup);
+    }
+  }, [drawingLayer?.id]);
+
+  useEffect(() => {
+    if (activeKey === Actions.ROPE) {
       onGroupNodeChange();
     }
-  }, [drawingLayer?.id, drawingLayer?.version, activeKey]);
+  }, [activeKey, drawingLayer?.version]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
@@ -214,7 +221,7 @@ const DrawLayer: React.FC = () => {
     }
   };
 
-  const onGroupNodeChange = async (layerId?: string) => {
+  const onGroupNodeChange = async (cacheGroup?: Konva.Group | null) => {
     if (!drawingLayer || !drawingLayer.diagrams?.length) return;
     // If there is no change.
     if (
@@ -234,7 +241,7 @@ const DrawLayer: React.FC = () => {
     if (!node || !stage) return;
 
     // 克隆 Group 节点用于离屏截图
-    const clonedGroup = node.clone();
+    const clonedGroup = cacheGroup ? cacheGroup.clone() : node.clone();
 
     // 创建离屏 Stage（不添加到 DOM，不会显示）
     const offscreenContainer = document.createElement('div');
