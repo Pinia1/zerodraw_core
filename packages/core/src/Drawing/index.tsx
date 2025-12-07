@@ -611,6 +611,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         width: groupPos.width / scale,
         height: groupPos.height / scale,
         id,
+        visible: true,
       };
 
       setDrawingLayer({

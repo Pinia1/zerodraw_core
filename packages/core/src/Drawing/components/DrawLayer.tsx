@@ -197,7 +197,7 @@ const DrawLayer: React.FC = () => {
       }
       case 'fill': {
         const props = drawingLayer?.fills.find((fill) => fill.id === id)!;
-        diagramMap.current.set(id, props);
+        // diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
       case 'image': {
@@ -229,17 +229,6 @@ const DrawLayer: React.FC = () => {
     const stage = stageRef?.current;
     if (!node || !stage) return;
 
-    // 预取 fills 对应的位图，避免 toCanvas 时未加载导致透明
-    const fillsBitmaps = await Promise.all(
-      (drawingLayer.fills || []).map(async (fill) => {
-        const stored = await imageManager.getImage(fill.id);
-        if (!stored?.buffer) return null;
-        const blob = new Blob([stored.buffer], { type: stored.mimeType || 'image/png' });
-        const bitmap = await createImageBitmap(blob);
-        return { fill, bitmap };
-      })
-    );
-
     // 克隆 Group 节点用于离屏截图
     const clonedGroup = node.clone();
 
@@ -260,6 +249,11 @@ const DrawLayer: React.FC = () => {
     });
     offscreenStage.add(offscreenLayer);
     offscreenLayer.add(clonedGroup);
+
+    // 确保离屏截图时 fills 处于可见状态（拖拽时原节点可能被设为 visible:false）
+    clonedGroup.find<Konva.Image>('Image').forEach((imgNode) => {
+      imgNode.visible(true);
+    });
 
     // 在离屏 Stage 上获取坐标（未缩放）
     const groupRect = clonedGroup.getClientRect();
@@ -334,16 +328,6 @@ const DrawLayer: React.FC = () => {
     const img = new window.Image();
     img.src = URL.createObjectURL(blob);
     img.onload = () => {
-      // 将填充位图绘制到离屏 canvas 上，确保最终图片包含 fill
-      const layerCtx = layerCanvas.getContext('2d');
-      if (layerCtx && fillsBitmaps.length) {
-        fillsBitmaps.forEach((item) => {
-          if (!item) return;
-          const { fill, bitmap } = item;
-          layerCtx.drawImage(bitmap, fill.x, fill.y, fill.width, fill.height);
-        });
-      }
-
       // 离屏 Stage 是 scale=1，坐标已经是正常的 Layer 坐标
       const image: FillType = {
         x: relativeX + bounds.left,
@@ -353,6 +337,7 @@ const DrawLayer: React.FC = () => {
         id,
         img,
         src: img.src,
+        visible: true,
       };
       const newDrawingLayer = {
         ...drawingLayer!,
@@ -362,8 +347,11 @@ const DrawLayer: React.FC = () => {
         rects: [],
         ellipses: [],
         paths: [],
-        fills: [],
-        diagrams: [{ id: image.id, type: 'image' as const }],
+        // fills: drawingLayer.fills.map((i) => ({ ...i, visible: true })),
+        diagrams: [
+          ...drawingLayer.diagrams.filter((diagram) => ['fill', 'image'].includes(diagram.type)),
+          { id: image.id, type: 'image' as const },
+        ],
       };
       clearCache();
       setDrawingLayer(newDrawingLayer as Layers);
@@ -383,10 +371,16 @@ const DrawLayer: React.FC = () => {
   };
 
   const handleDragStart = useMemoizedFn(() => {
+    clearCache();
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = 'move';
     setGuideLines({ v: [], h: [], points: [] });
     handleBindTransformer();
+
+    setDrawingLayer({
+      ...drawingLayer!,
+      fills: drawingLayer?.fills.map((i) => ({ ...i, visible: false })) || [],
+    });
   });
 
   const handleDragEnd = useMemoizedFn((_e: unknown, rotation?: number) => {
@@ -548,7 +542,7 @@ const DrawLayer: React.FC = () => {
           flipEnabled={false}
           anchorFill={'rgb(209, 249, 247)'}
           id={`transformer_selected`}
-          onTransformStart={clearCache}
+          onTransformStart={handleDragStart}
           onTransformEnd={(e) => {
             const rotation = imageRef.current?.rotation();
             handleDragEnd(e, rotation);

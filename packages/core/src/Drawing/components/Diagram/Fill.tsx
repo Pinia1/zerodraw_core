@@ -18,6 +18,7 @@ const Fill: React.FC<FillType> = (props) => {
 
   return (
     <KonvaImage
+      visible={props.visible}
       x={props.x}
       y={props.y}
       width={props.width}

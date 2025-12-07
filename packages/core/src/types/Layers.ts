@@ -69,6 +69,7 @@ export interface Fill {
   rotation?: number;
   originWidth?: number;
   originHeight?: number;
+  visible: boolean;
 }
 
 export type DiagramPropsMap = {
