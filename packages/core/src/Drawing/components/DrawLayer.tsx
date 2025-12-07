@@ -60,14 +60,16 @@ const DrawLayer: React.FC = () => {
       stageRef: state.stageRef,
     }))
   );
-  const { drawingLayer, setDrawingLayer, pushHistory, layers } = useLayerStore(
-    useShallow((state) => ({
-      drawingLayer: state.drawingLayer,
-      setDrawingLayer: state.setDrawingLayer,
-      pushHistory: state.pushHistory,
-      layers: state.layers,
-    }))
-  );
+  const { drawingLayer, setDrawingLayer, pushHistory, layers, replaceCurrentHistory } =
+    useLayerStore(
+      useShallow((state) => ({
+        drawingLayer: state.drawingLayer,
+        setDrawingLayer: state.setDrawingLayer,
+        pushHistory: state.pushHistory,
+        layers: state.layers,
+        replaceCurrentHistory: state.replaceCurrentHistory,
+      }))
+    );
 
   const clearCache = useMemoizedFn(() => {
     diagramMap.current.clear();
@@ -360,6 +362,18 @@ const DrawLayer: React.FC = () => {
         pushHistory(
           layers.map((layer) =>
             layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)
+          )
+        );
+      } else {
+        replaceCurrentHistory(
+          layers.map((layer) =>
+            layer.id !== drawingLayer?.id
+              ? layer
+              : ({
+                  ...newDrawingLayer,
+                  fills: [],
+                  diagrams: [{ id: image.id, type: 'image' as const }],
+                } as Layers)
           )
         );
       }

@@ -140,6 +140,14 @@ export class HistoryManager<T> {
   }
 
   /**
+   * 替换当前值（不变更 past/future），常用于就地更新 present
+   */
+  replaceCurrent(value: T): void {
+    const next = this.cloneValue(value);
+    this.presentValue = next;
+  }
+
+  /**
    * 清空所有内容（包括当前值）
    */
   clearAll(): void {

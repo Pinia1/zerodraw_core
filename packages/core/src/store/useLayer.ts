@@ -60,6 +60,7 @@ interface LayerState {
   canRedo: boolean;
   initHistory: () => void;
   pushHistory: (layers: Layers[]) => void;
+  replaceCurrentHistory: (layers: Layers[]) => void;
   undoHistory: (version?: DrawLayer['version']) => void;
   redoHistory: (version?: DrawLayer['version']) => void;
 }
@@ -100,6 +101,16 @@ const useLayerStore = create<LayerState>()(
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
         });
+      },
+
+      replaceCurrentHistory: (layers: Layers[]) => {
+        // 直接替换当前 present，不新增历史记录
+        historyManager.replaceCurrent(layers);
+        // set({
+        //   layers,
+        //   canUndo: historyManager.canUndo,
+        //   canRedo: historyManager.canRedo,
+        // });
       },
 
       undoHistory: (version?: string) => {
@@ -152,7 +163,7 @@ const useLayerStore = create<LayerState>()(
     }),
     {
       name: 'drawing-layers-storage',
-      partialize: (state) => ({
+      partialize: (_state) => ({
         // layers: state.layers,
         // drawingLayer: state.drawingLayer,
       }),
