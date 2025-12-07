@@ -213,7 +213,7 @@ const DrawLayer: React.FC = () => {
   };
 
   const onGroupNodeChange = async () => {
-    if (!drawingLayer) return;
+    if (!drawingLayer || !drawingLayer.diagrams?.length) return;
     // If there is no change.
     if (
       drawingLayer.diagrams.length === 1 &&
@@ -251,11 +251,6 @@ const DrawLayer: React.FC = () => {
     });
     offscreenStage.add(offscreenLayer);
     offscreenLayer.add(clonedGroup);
-
-    // 确保离屏截图时 fills 处于可见状态（拖拽时原节点可能被设为 visible:false）
-    clonedGroup.find<Konva.Image>('Image').forEach((imgNode) => {
-      imgNode.visible(true);
-    });
 
     // 在离屏 Stage 上获取坐标（未缩放）
     const groupRect = clonedGroup.getClientRect();
@@ -302,6 +297,7 @@ const DrawLayer: React.FC = () => {
     }
 
     const layerCanvas = clonedGroup.toCanvas();
+
     const imageData = layerCanvas
       .getContext('2d')
       ?.getImageData(clipLeft, clipTop, groupRect.width - clipWidth, groupRect.height - clipHeight);
