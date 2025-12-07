@@ -161,8 +161,10 @@ const DrawLayer: React.FC = () => {
   });
 
   useEffect(() => {
-    onGroupNodeChange(drawingLayer?.id);
-  }, [drawingLayer?.id, drawingLayer?.version]);
+    if (activeKey === Actions.ROPE) {
+      onGroupNodeChange();
+    }
+  }, [drawingLayer?.id, drawingLayer?.version, activeKey]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
@@ -427,12 +429,6 @@ const DrawLayer: React.FC = () => {
     container!.style.cursor = '';
     setGuideLines({ v: [], h: [], points: [] });
   });
-
-  useEffect(() => {
-    if (activeKey === Actions.ROPE) {
-      onGroupNodeChange();
-    }
-  }, [activeKey]);
 
   return (
     <KonvaLayer
