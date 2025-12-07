@@ -45,8 +45,8 @@ const DragList: React.FC = () => {
     }))
   );
 
-  const reverseLayers = useMemo(() => {
-    return [...layers].reverse();
+  const sortList = useMemo(() => {
+    return layers.slice().sort((a, b) => b.order - a.order);
   }, [layers]);
 
   const sensors = useSensors(
@@ -89,11 +89,11 @@ const DragList: React.FC = () => {
       id="list-drag-sorting"
     >
       <SortableContext
-        items={reverseLayers.map((item) => item.id)}
+        items={sortList.map((item) => item.id)}
         strategy={verticalListSortingStrategy}
       >
         <List
-          dataSource={reverseLayers}
+          dataSource={sortList}
           renderItem={(item) => (
             <SortableListItem key={item.id} itemKey={item.id}>
               <LayerItem {...item} />

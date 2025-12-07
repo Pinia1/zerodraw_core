@@ -74,6 +74,7 @@ const useCreateLayer = () => {
               src: imageUrl,
               originWidth: imgWidth,
               originHeight: imgHeight,
+              visible: true,
             };
             newLayer.diagrams = [{ id: image.id, type: 'image' }];
             newLayer.image = image;

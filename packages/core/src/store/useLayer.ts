@@ -1,5 +1,4 @@
 import { HistoryManager } from '@monorepo/common';
-import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { DrawLayer, Layers } from '../types/Layers';
@@ -64,8 +63,6 @@ interface LayerState {
   replaceCurrentHistory: (layers: Layers[]) => void;
   undoHistory: (version?: DrawLayer['version']) => void;
   redoHistory: (version?: DrawLayer['version']) => void;
-  cacheGroup: Konva.Group | null;
-  setCacheGroup: (group: Konva.Group | null) => void;
 }
 
 const useLayerStore = create<LayerState>()(
@@ -121,8 +118,7 @@ const useLayerStore = create<LayerState>()(
         if (!layers) return;
 
         const currentDrawing = get().drawingLayer;
-        const nextDrawing =
-          (currentDrawing && layers.find((l) => l.id === currentDrawing.id)) || layers[0] || null;
+        const nextDrawing = layers[layers.length - 1];
 
         if (!layers.length || !nextDrawing) {
           const newDrawing = initialDrawingLayer();
@@ -153,8 +149,7 @@ const useLayerStore = create<LayerState>()(
         if (!layers) return;
 
         const currentDrawing = get().drawingLayer;
-        const nextDrawing =
-          (currentDrawing && layers.find((l) => l.id === currentDrawing.id)) || layers[0] || null;
+        const nextDrawing = layers[layers.length - 1];
 
         set({
           layers,
@@ -163,10 +158,6 @@ const useLayerStore = create<LayerState>()(
           canRedo: historyManager.canRedo,
         });
       },
-
-      //
-      cacheGroup: null,
-      setCacheGroup: (group) => set({ cacheGroup: group }),
     }),
     {
       name: 'drawing-layers-storage',

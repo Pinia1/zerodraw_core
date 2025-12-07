@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useBindRef from '../../hooks/useBindRef';
+import useLayerToBitmap from '../../hooks/useLayerToBitmap';
 import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
 import useLayerStore from '../../store/useLayer';
 import { Layers } from '../../types/Layers';
@@ -40,13 +41,16 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
   const { visible, order, name, opacity, id } = props;
 
   const stageRef = useBindRef();
-  const { drawingLayer, setDrawingLayer, pushHistory, layers, setCacheGroup } = useLayerStore(
+
+  const { run: runBitmap } = useLayerToBitmap();
+
+  const { drawingLayer, setDrawingLayer, pushHistory, layers, setLayers } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,
       setDrawingLayer: state.setDrawingLayer,
       pushHistory: state.pushHistory,
       layers: state.layers,
-      setCacheGroup: state.setCacheGroup,
+      setLayers: state.setLayers,
     }))
   );
 
@@ -64,12 +68,22 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     pushHistory(newLayers);
   };
 
-  const handleBindLayer = () => {
+  const handleBindLayer = async () => {
+    const newLayers = [...layers];
+    const index = newLayers.findIndex((item) => item.id === props.id);
+
+    if (index === newLayers.length - 1) return;
+
     const targetLayer = stageRef?.current?.getLayers().find((layer) => layer.attrs.id === props.id);
     const group = targetLayer?.findOne('Group');
 
-    setCacheGroup(group as Konva.Group);
-    setDrawingLayer(props);
+    const newLayer = (await runBitmap(props, group as Konva.Group)) as Layers;
+
+    if (newLayer) {
+      setDrawingLayer(newLayer);
+      newLayers.splice(index, 1);
+      setLayers([...newLayers, newLayer]);
+    }
   };
 
   return (

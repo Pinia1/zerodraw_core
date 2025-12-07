@@ -173,8 +173,7 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconUndo} />,
         type: ToolTypes.ACTION,
         onClick: () => {
-          const verison = activeKey === Actions.ROPE ? generateUUID() : undefined;
-          undoHistory(verison);
+          undoHistory(generateUUID());
         },
         disabled: !canUndo,
       },
@@ -183,8 +182,7 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconRedo} />,
         type: ToolTypes.ACTION,
         onClick: () => {
-          const verison = activeKey === Actions.ROPE ? generateUUID() : undefined;
-          redoHistory(verison);
+          redoHistory(generateUUID());
         },
         disabled: !canRedo,
       },

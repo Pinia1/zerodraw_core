@@ -85,7 +85,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     );
 
   const renderOrderLayers = useMemo(() => {
-    return [...layers].sort((a, b) => a.order - b.order);
+    const newLayers = [...layers];
+    newLayers.sort((a, b) => a.order - b.order);
+    return newLayers;
   }, [layers]);
 
   const init = useMemoizedFn(() => {
@@ -116,6 +118,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     isDrawing.current = false;
     setDrawingId(null);
 
+    setDrawingLayer({
+      ...drawingLayer,
+      imageFull: false,
+    });
     pushHistory(newLayers);
   };
 

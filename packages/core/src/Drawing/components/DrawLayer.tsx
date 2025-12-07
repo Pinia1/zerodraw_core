@@ -1,4 +1,4 @@
-import { cropTransparentBorder, generateUUID, useMemoizedFn } from '@monorepo/common';
+import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   Transformer,
 } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
+import useLayerToBitmap from '../../hooks/useLayerToBitmap';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
@@ -24,7 +25,6 @@ import {
   Rect as RectType,
 } from '../../types/Layers';
 import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
-import imageManager from '../../utils/imageManager';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
@@ -45,32 +45,32 @@ const DrawLayer: React.FC = () => {
     h: number[];
     points: { x: number; y: number }[];
   }>({ v: [], h: [], points: [] });
+
+  const { run: runBitmap } = useLayerToBitmap();
+
   const snapThreshold = 6;
 
-  const { activeKey } = useToolsStore(
+  const { activeKey, setActiveKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
+      setActiveKey: state.setActiveKey,
     }))
   );
 
-  const { layerConfig, drawingId, stageRef } = useDrawingStore(
+  const { layerConfig, drawingId } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       drawingId: state.drawingId,
-      stageRef: state.stageRef,
     }))
   );
-  const { drawingLayer, setDrawingLayer, pushHistory, layers, replaceCurrentHistory, cacheGroup } =
-    useLayerStore(
-      useShallow((state) => ({
-        drawingLayer: state.drawingLayer,
-        setDrawingLayer: state.setDrawingLayer,
-        pushHistory: state.pushHistory,
-        layers: state.layers,
-        replaceCurrentHistory: state.replaceCurrentHistory,
-        cacheGroup: state.cacheGroup,
-      }))
-    );
+  const { drawingLayer, setDrawingLayer, pushHistory, layers } = useLayerStore(
+    useShallow((state) => ({
+      drawingLayer: state.drawingLayer,
+      setDrawingLayer: state.setDrawingLayer,
+      pushHistory: state.pushHistory,
+      layers: state.layers,
+    }))
+  );
 
   const clearCache = useMemoizedFn(() => {
     diagramMap.current.clear();
@@ -162,16 +162,26 @@ const DrawLayer: React.FC = () => {
   });
 
   useEffect(() => {
-    if (activeKey === Actions.ROPE) {
-      onGroupNodeChange(cacheGroup);
+    if (
+      drawingLayer?.imageFull &&
+      drawingLayer?.diagrams.length === 1 &&
+      drawingLayer?.diagrams[0].type === 'image'
+    ) {
+      setActiveKey(Actions.ROPE);
+      requestAnimationFrame(() => {
+        handleBindTransformer();
+      });
+    } else {
+      //todo
+      setActiveKey(Actions.PEN);
     }
-  }, [drawingLayer?.id]);
+  }, [drawingLayer?.id, drawingLayer?.version]);
 
   useEffect(() => {
     if (activeKey === Actions.ROPE) {
       onGroupNodeChange();
     }
-  }, [activeKey, drawingLayer?.version]);
+  }, [activeKey]);
 
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
@@ -221,166 +231,14 @@ const DrawLayer: React.FC = () => {
     }
   };
 
-  const onGroupNodeChange = async (cacheGroup?: Konva.Group | null) => {
-    if (!drawingLayer || !drawingLayer.diagrams?.length) return;
-    // If there is no change.
-    if (
-      drawingLayer.diagrams.length === 1 &&
-      drawingLayer.diagrams[0].type === 'image' &&
-      drawingLayer.image &&
-      drawingLayer.image?.rotation === undefined
-    ) {
-      requestAnimationFrame(() => {
-        handleBindTransformer();
-      });
-      return;
-    }
-
-    const node = groupRef.current;
-    const stage = stageRef?.current;
-    if (!node || !stage) return;
-
-    // 克隆 Group 节点用于离屏截图
-    const clonedGroup = cacheGroup ? cacheGroup.clone() : node.clone();
-
-    // 创建离屏 Stage（不添加到 DOM，不会显示）
-    const offscreenContainer = document.createElement('div');
-    const offscreenStage = new Konva.Stage({
-      container: offscreenContainer,
-      width: layerConfig.width,
-      height: layerConfig.height,
+  const onGroupNodeChange = useMemoizedFn(async () => {
+    if (!drawingLayer) return;
+    const newLayer = await runBitmap(drawingLayer, groupRef.current as Konva.Group);
+    setDrawingLayer(newLayer as Layers);
+    requestAnimationFrame(() => {
+      handleBindTransformer();
     });
-
-    // 创建离屏 Layer 并添加克隆的 Group
-    const offscreenLayer = new Konva.Layer({
-      x: 0,
-      y: 0,
-      clipWidth: layerConfig.width,
-      clipHeight: layerConfig.height,
-    });
-    offscreenStage.add(offscreenLayer);
-    offscreenLayer.add(clonedGroup);
-
-    // 在离屏 Stage 上获取坐标（未缩放）
-    const groupRect = clonedGroup.getClientRect();
-
-    let relativeX = 0;
-    let relativeY = 0;
-    let clipWidth = 0;
-    let clipHeight = 0;
-    let clipLeft = 0;
-    let clipTop = 0;
-
-    const targetWidth = 1920;
-    let pixelRatio = targetWidth / layerConfig.width;
-    pixelRatio = Math.max(1, Math.min(pixelRatio, 3));
-
-    // Layer 边界（离屏 Stage 中 Layer 位置是 0,0）
-    const layerX = 0;
-    const layerY = 0;
-    const layerWidth = layerConfig.width;
-    const layerHeight = layerConfig.height;
-
-    if (groupRect.x < layerX) {
-      relativeX = 0;
-      clipWidth = layerX - groupRect.x;
-      clipLeft = layerX - groupRect.x;
-    } else {
-      relativeX = groupRect.x - layerX;
-    }
-
-    if (groupRect.x + groupRect.width > layerX + layerWidth) {
-      clipWidth = groupRect.x + groupRect.width - (layerX + layerWidth);
-    }
-
-    if (groupRect.y < layerY) {
-      relativeY = 0;
-      clipHeight = layerY - groupRect.y;
-      clipTop = layerY - groupRect.y;
-    } else {
-      relativeY = groupRect.y - layerY;
-    }
-
-    if (groupRect.y + groupRect.height > layerY + layerHeight) {
-      clipHeight = groupRect.y + groupRect.height - (layerY + layerHeight);
-    }
-
-    const layerCanvas = clonedGroup.toCanvas();
-
-    const imageData = layerCanvas
-      .getContext('2d')
-      ?.getImageData(clipLeft, clipTop, groupRect.width - clipWidth, groupRect.height - clipHeight);
-
-    const { bounds } = cropTransparentBorder(imageData!);
-
-    const blob = (await clonedGroup.toBlob({
-      pixelRatio: pixelRatio,
-      mimeType: 'image/png',
-      quality: 1,
-      x: Math.max(groupRect.x, layerX) + bounds.left,
-      y: Math.max(groupRect.y, layerY) + bounds.top,
-      width: bounds.width,
-      height: bounds.height,
-    })) as Blob;
-
-    // 销毁离屏资源
-    offscreenStage.destroy();
-
-    const id = generateUUID();
-
-    blob.arrayBuffer().then(async (buffer) => {
-      imageManager.saveImage(id, buffer);
-    });
-
-    const img = new window.Image();
-    img.src = URL.createObjectURL(blob);
-    img.onload = () => {
-      const image: FillType = {
-        x: relativeX + bounds.left,
-        y: relativeY + bounds.top,
-        width: bounds.width,
-        height: bounds.height,
-        id,
-        img,
-        src: img.src,
-        visible: true,
-      };
-
-      /**
-       *the loading time of fills is quite long,
-       * so it is better to keep fills in order to convert them into bitmaps more quickly.
-       */
-      const newDrawingLayer = {
-        ...drawingLayer!,
-        image: image,
-        lines: [],
-        eraserLines: [],
-        rects: [],
-        ellipses: [],
-        paths: [],
-        // fills: drawingLayer.fills.map((i) => ({ ...i, visible: true })),
-        diagrams: [
-          ...drawingLayer.diagrams.filter((diagram) => diagram.type === 'fill'),
-          { id: image.id, type: 'image' as const },
-        ],
-      };
-      clearCache();
-      setDrawingLayer(newDrawingLayer as Layers);
-
-      /**
-       * Here, when converting a vector image to a bitmap,
-       * all vector content needs to be removed so that the history can be changed to a bitmap.
-       * This helps save time for undoing the conversion process.
-       */
-      replaceCurrentHistory(
-        layers.map((layer) => (layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)))
-      );
-
-      requestAnimationFrame(() => {
-        handleBindTransformer();
-      });
-    };
-  };
+  });
 
   const handleDragStart = useMemoizedFn(() => {
     clearCache();
@@ -388,12 +246,6 @@ const DrawLayer: React.FC = () => {
     container!.style.cursor = 'move';
     setGuideLines({ v: [], h: [], points: [] });
     handleBindTransformer();
-
-    setDrawingLayer({
-      ...drawingLayer!,
-      fills: [],
-      diagrams: drawingLayer?.diagrams.filter((diagram) => diagram.type !== 'fill') || [],
-    });
   });
 
   const handleDragEnd = useMemoizedFn((_e: unknown, rotation?: number) => {
@@ -424,6 +276,7 @@ const DrawLayer: React.FC = () => {
     const newDrawingLayer = {
       ...drawingLayer!,
       image: updatedImage,
+      imageFull: true,
     };
 
     setDrawingLayer(newDrawingLayer as Layers);

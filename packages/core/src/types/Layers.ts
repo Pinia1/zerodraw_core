@@ -14,6 +14,7 @@ export interface Layers {
   paths: Line[];
   fills: Fill[];
   image: Fill | null;
+  imageFull?: boolean;
 }
 
 export interface DrawLayer extends Layers {
