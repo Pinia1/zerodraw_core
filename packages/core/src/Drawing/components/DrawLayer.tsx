@@ -161,7 +161,7 @@ const DrawLayer: React.FC = () => {
   });
 
   useEffect(() => {
-    onGroupNodeChange();
+    onGroupNodeChange(drawingLayer?.id);
   }, [drawingLayer?.id, drawingLayer?.version]);
 
   const getDiagramProps = <T extends Diagram['type']>(
@@ -199,7 +199,7 @@ const DrawLayer: React.FC = () => {
       }
       case 'fill': {
         const props = drawingLayer?.fills.find((fill) => fill.id === id)!;
-        // diagramMap.current.set(id, props);
+        diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
       case 'image': {
@@ -212,7 +212,7 @@ const DrawLayer: React.FC = () => {
     }
   };
 
-  const onGroupNodeChange = async () => {
+  const onGroupNodeChange = async (layerId?: string) => {
     if (!drawingLayer || !drawingLayer.diagrams?.length) return;
     // If there is no change.
     if (
@@ -451,7 +451,7 @@ const DrawLayer: React.FC = () => {
             case 'path': {
               return <Paths key={diagram.id} {...(props as LineType)} />;
             }
-            case 'image':
+            case 'image': {
               return (
                 <Image
                   ref={imageRef}
@@ -463,6 +463,8 @@ const DrawLayer: React.FC = () => {
                   {...(props as FillType)}
                 />
               );
+            }
+
             case 'fill': {
               return <Fill key={diagram.id} {...(props as FillType)} />;
             }

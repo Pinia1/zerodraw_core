@@ -13,6 +13,7 @@ const Fill: React.FC<FillType> = (props) => {
 
     const blob = new Blob([stored.buffer], { type: stored.mimeType || 'image/webp' });
     const bitmap = await createImageBitmap(blob);
+
     setImageBitmap(bitmap);
   }, [props.id]);
 
