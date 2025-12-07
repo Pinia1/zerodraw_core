@@ -330,7 +330,6 @@ const DrawLayer: React.FC = () => {
     const img = new window.Image();
     img.src = URL.createObjectURL(blob);
     img.onload = () => {
-      // 离屏 Stage 是 scale=1，坐标已经是正常的 Layer 坐标
       const image: FillType = {
         x: relativeX + bounds.left,
         y: relativeY + bounds.top,
@@ -341,6 +340,11 @@ const DrawLayer: React.FC = () => {
         src: img.src,
         visible: true,
       };
+
+      /**
+       *the loading time of fills is quite long,
+       * so it is better to keep fills in order to convert them into bitmaps more quickly.
+       */
       const newDrawingLayer = {
         ...drawingLayer!,
         image: image,
@@ -364,19 +368,25 @@ const DrawLayer: React.FC = () => {
             layer.id !== drawingLayer?.id ? layer : (newDrawingLayer as Layers)
           )
         );
-      } else {
-        replaceCurrentHistory(
-          layers.map((layer) =>
-            layer.id !== drawingLayer?.id
-              ? layer
-              : ({
-                  ...newDrawingLayer,
-                  fills: [],
-                  diagrams: [{ id: image.id, type: 'image' as const }],
-                } as Layers)
-          )
-        );
+        return;
       }
+
+      /**
+       * Here, when converting a vector image to a bitmap,
+       * all vector content needs to be removed so that the history can be changed to a bitmap.
+       * This helps save time for undoing the conversion process.
+       */
+      replaceCurrentHistory(
+        layers.map((layer) =>
+          layer.id !== drawingLayer?.id
+            ? layer
+            : ({
+                ...newDrawingLayer,
+                fills: [],
+                diagrams: [{ id: image.id, type: 'image' as const }],
+              } as Layers)
+        )
+      );
 
       requestAnimationFrame(() => {
         handleBindTransformer();
@@ -393,7 +403,8 @@ const DrawLayer: React.FC = () => {
 
     setDrawingLayer({
       ...drawingLayer!,
-      fills: drawingLayer?.fills.map((i) => ({ ...i, visible: false })) || [],
+      fills: [],
+      diagrams: drawingLayer?.diagrams.filter((diagram) => diagram.type !== 'fill') || [],
     });
   });
 
@@ -559,7 +570,7 @@ const DrawLayer: React.FC = () => {
           onTransformStart={handleDragStart}
           onTransformEnd={(e) => {
             const rotation = imageRef.current?.rotation();
-            handleDragEnd(e, rotation);
+            handleDragEnd(e, rotation === 0 ? undefined : rotation);
           }}
         />
       )}
