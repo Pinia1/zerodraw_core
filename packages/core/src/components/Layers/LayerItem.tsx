@@ -8,6 +8,8 @@ import useBindRef from '../../hooks/useBindRef';
 import useLayerToBitmap from '../../hooks/useLayerToBitmap';
 import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
 import useLayerStore from '../../store/useLayer';
+import useToolsStore from '../../store/useTools';
+import { Actions } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
 import Container from '../Container';
 import { ToolItem } from '../index';
@@ -43,6 +45,11 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
   const stageRef = useBindRef();
 
   const { run: runBitmap } = useLayerToBitmap();
+  const { activeKey } = useToolsStore(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+    }))
+  );
 
   const { drawingLayer, setDrawingLayer, pushHistory, layers, setLayers } = useLayerStore(
     useShallow((state) => ({
@@ -73,6 +80,13 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     const index = newLayers.findIndex((item) => item.id === props.id);
 
     if (index === newLayers.length - 1) return;
+
+    if (activeKey !== Actions.ROPE) {
+      setDrawingLayer(props);
+      newLayers.splice(index, 1);
+      setLayers([...newLayers, props]);
+      return;
+    }
 
     const targetLayer = stageRef?.current?.getLayers().find((layer) => layer.attrs.id === props.id);
     const group = targetLayer?.findOne('Group');

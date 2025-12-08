@@ -1,8 +1,10 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
 import { Divider, Popover } from 'antd';
+import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
+import useLayerToBitmap from '../../hooks/useLayerToBitmap';
 import useUpload from '../../hooks/useUpload';
 import {
   IconAdd,
@@ -19,6 +21,7 @@ import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
+import { Layers } from '../../types/Layers';
 import { generateUUID } from '../../utils/drawing';
 import Container from '../Container';
 import { ToolItem } from '../index';
@@ -32,20 +35,36 @@ import RectConf from './components/RectConf';
 const Tool: React.FC = () => {
   const [open, setOpen] = useState(true);
 
+  const { run: runLayerToBitmap } = useLayerToBitmap();
+
   const { loading: createLayerLoading, run: createLayerRun } = useCreateLayer();
 
-  const { layerConfig } = useDrawingStore(
+  const { layerConfig, stageRef } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
+      stageRef: state.stageRef,
     }))
   );
 
-  const { canUndo, canRedo, undoHistory, redoHistory } = useLayerStore(
+  const {
+    canUndo,
+    canRedo,
+    undoHistory,
+    redoHistory,
+    drawingLayer,
+    setDrawingLayer,
+    layers,
+    setLayers,
+  } = useLayerStore(
     useShallow((state) => ({
       canUndo: state.canUndo,
       canRedo: state.canRedo,
       undoHistory: state.undoHistory,
       redoHistory: state.redoHistory,
+      drawingLayer: state.drawingLayer,
+      setDrawingLayer: state.setDrawingLayer,
+      layers: state.layers,
+      setLayers: state.setLayers,
     }))
   );
 
@@ -110,6 +129,21 @@ const Tool: React.FC = () => {
         type: ToolTypes.STATE,
         get isActive() {
           return activeKey === Actions.ROPE;
+        },
+        onClick: async () => {
+          const currentLayer = stageRef?.current
+            ?.getLayers()
+            .find((layer) => layer.attrs.isDrawing);
+          const group = currentLayer?.findOne('Group');
+          const newDrawingLayer = await runLayerToBitmap(
+            drawingLayer! as unknown as Layers,
+            group as Konva.Group
+          );
+          setLayers(
+            layers.map((layer) =>
+              layer.id === drawingLayer?.id ? (newDrawingLayer as Layers) : layer
+            )
+          );
         },
       },
       {
@@ -187,10 +221,14 @@ const Tool: React.FC = () => {
         disabled: !canRedo,
       },
     ];
-  }, [activeKey, canUndo, canRedo, loading, createLayerLoading]);
+  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
     if (item.disabled) return;
+
+    if (activeKey === Actions.ROPE) {
+      setDrawingLayer(layers.find((layer) => layer.id === drawingLayer?.id)! as Layers);
+    }
 
     await item.onClick?.(item);
     if (item.type !== ToolTypes.STATE) return;

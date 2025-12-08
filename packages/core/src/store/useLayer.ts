@@ -74,13 +74,11 @@ const useLayerStore = create<LayerState>()(
       //
       drawingLayer: { version: generateUUID(), ...init },
       getDrawingLayer: () => get().drawingLayer,
-      setDrawingLayer: (drawingLayer, version?: string) =>
+      setDrawingLayer: (layer) => {
         set({
-          drawingLayer: {
-            ...drawingLayer,
-            version: version ? version : get().drawingLayer?.version!,
-          },
-        }),
+          drawingLayer: layer,
+        });
+      },
       // history
       history: historyManager,
       canUndo: false,

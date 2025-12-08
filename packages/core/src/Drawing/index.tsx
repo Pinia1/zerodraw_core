@@ -74,23 +74,30 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer, drawingLayer } =
-    useLayerStore(
-      useShallow((state) => ({
-        setDrawingLayer: state.setDrawingLayer,
-        layers: state.layers,
-        initHistory: state.initHistory,
-        pushHistory: state.pushHistory,
-        getDrawingLayer: state.getDrawingLayer,
-        drawingLayer: state.drawingLayer,
-      }))
-    );
+  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } = useLayerStore(
+    useShallow((state) => ({
+      setDrawingLayer: state.setDrawingLayer,
+      layers: state.layers,
+      initHistory: state.initHistory,
+      pushHistory: state.pushHistory,
+      getDrawingLayer: state.getDrawingLayer,
+    }))
+  );
 
   const renderOrderLayers = useMemo(() => {
     const newLayers = [...layers];
     newLayers.sort((a, b) => a.order - b.order);
     return newLayers;
   }, [layers]);
+
+  const topLayer = useMemo(() => {
+    return layers[layers.length - 1];
+  }, [layers]);
+
+  const getDrawingLayerIndex = useMemo(() => {
+    if (!topLayer) return renderOrderLayers.length;
+    return renderOrderLayers.findIndex((layer) => layer.id === topLayer.id);
+  }, [renderOrderLayers, topLayer]);
 
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
@@ -120,10 +127,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     isDrawing.current = false;
     setDrawingId(null);
 
-    setDrawingLayer({
-      ...drawingLayer,
-      imageFull: false,
-    });
     pushHistory(newLayers);
   };
 
@@ -148,6 +151,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     init();
     initHistory();
   });
+
   useKeyPress(
     'space',
     () => {
@@ -363,7 +367,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
-  const onPenMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
@@ -394,25 +398,31 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       [type]: [...drawingLayer[type], line],
       diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
     });
-  };
+  });
 
-  const onPenMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer || !isDrawing.current) return;
     const { pos: point } = getDrawingInfo(e);
     const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
     const { type } = getDrawingTypes();
-    let lastLine = drawingLayer[type][drawingLayer[type].length - 1] as Line;
-    lastLine.points = (lastLine.points as number[]).concat([
-      point.x - layerConfig.x,
-      point.y - layerConfig.y,
-    ]);
-    lastLine.pressure.push(pressure);
-    const value = [...drawingLayer[type]];
-    setDrawingLayer({ ...drawingLayer, [type]: value });
-  };
+    const lines = drawingLayer[type] as Line[];
+    const lastLine = lines[lines.length - 1];
 
-  const onRectMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    // 创建新的 line 对象，而不是直接修改原始对象
+    const updatedLine: Line = {
+      ...lastLine,
+      points: [...lastLine.points, point.x - layerConfig.x, point.y - layerConfig.y],
+      pressure: [...lastLine.pressure, pressure],
+    };
+
+    // 创建新的数组
+    const newLines = [...lines.slice(0, -1), updatedLine];
+
+    setDrawingLayer({ ...drawingLayer, [type]: newLines });
+  });
+
+  const onRectMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
@@ -439,9 +449,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       [type]: [...drawingLayer[type], rect],
       diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
     });
-  };
+  });
 
-  const onRectMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onRectMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!isDrawing.current) return;
     const rects = drawingLayer?.rects || [];
@@ -456,9 +466,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     };
     rects.splice(rects.length - 1, 1, rect);
     setDrawingLayer({ ...drawingLayer!, rects: rects });
-  };
+  });
 
-  const onEllipseMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onEllipseMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     isDrawing.current = true;
@@ -487,8 +497,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       [type]: [...drawingLayer[type], ellipse],
       diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
     });
-  };
-  const onEllipseMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  });
+  const onEllipseMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!isDrawing.current) return;
     const ellipses = drawingLayer?.ellipses || [];
@@ -509,9 +519,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     };
     ellipses.splice(ellipses.length - 1, 1, ellipse);
     setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
-  };
+  });
 
-  const onLineMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onLineMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     const { pos } = getDrawingInfo(e);
@@ -551,9 +561,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       [type]: [...drawingLayer[type], line],
       diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
     });
-  };
+  });
 
-  const onLineMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onLineMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!isDrawing.current || !drawingLayer) return;
     const lines = drawingLayer?.lines || [];
@@ -567,9 +577,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     };
     lines.splice(lines.length - 1, 1, line);
     setDrawingLayer({ ...drawingLayer!, lines: lines });
-  };
+  });
 
-  const finishLine = () => {
+  const finishLine = useMemoizedFn(() => {
     const drawingLayer = getDrawingLayer();
     if (isDrawing.current && activeKey === Actions.LINE) {
       isDrawing.current = false;
@@ -580,9 +590,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lines.splice(lines.length - 1, 1, line);
       setDrawingLayer({ ...drawingLayer!, lines: lines });
     }
-  };
+  });
 
-  const onFillMouseDown = async (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onFillMouseDown = useMemoizedFn(async (e: Konva.KonvaEventObject<MouseEvent>) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
     try {
@@ -632,7 +642,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     } catch (error) {
       console.log(error, 'fill error');
     }
-  };
+  });
 
   // is point in layer
   const isPointInLayer = (pos: Vector2d | null): boolean => {
@@ -736,10 +746,18 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onMouseLeave={handleMouseLeave}
       >
         <Mosic />
-        {renderOrderLayers.map((layer) => {
-          return <Layer key={layer.id} {...layer} />;
+
+        {renderOrderLayers.map((layer, index) => {
+          if (index === getDrawingLayerIndex) {
+            return (
+              <React.Fragment key={`drawing-${index}`}>
+                {!!layer && <Layer key={layer.id} {...layer} />}
+                <DrawLayer />
+              </React.Fragment>
+            );
+          }
+          return !!layer && <Layer key={layer.id} {...layer} />;
         })}
-        <DrawLayer />
       </Stage>
       <Cursor visible={cursorVisible} />
       {tools?.includes(Tools.TOOL) && <Tool />}

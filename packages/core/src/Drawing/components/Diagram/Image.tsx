@@ -2,14 +2,14 @@ import { isEmptyObj, useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
-import { useShallow } from 'zustand/react/shallow';
-import useToolsStore from '../../../store/useTools';
-import { Actions } from '../../../types/Drawing';
 import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
 const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig>>(
-  ({ x, y, width, height, id, img, onDragStart, onDragEnd, rotation, handleDragMove }, ref) => {
+  (
+    { x, y, width, height, id, img, onDragStart, onDragEnd, rotation, handleDragMove, draggable },
+    ref
+  ) => {
     const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
 
     useEffect(() => {
@@ -17,12 +17,6 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         getImageBitmap();
       }
     }, [img]);
-
-    const { activeKey } = useToolsStore(
-      useShallow((state) => ({
-        activeKey: state.activeKey,
-      }))
-    );
 
     const getImageBitmap = useMemoizedFn(async () => {
       const stored = await imageManager.getImage(id);
@@ -58,8 +52,8 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         height={height}
         rotation={rotation}
         image={image}
-        draggable={activeKey === Actions.ROPE}
-        listening={activeKey === Actions.ROPE}
+        draggable={draggable}
+        listening={draggable}
         onDragStart={onDragStart}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}

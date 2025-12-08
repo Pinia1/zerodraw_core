@@ -3,8 +3,6 @@ import Konva from 'konva';
 import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../store/useDrawing';
-import useToolsStore from '../store/useTools';
-import { Actions } from '../types/Drawing';
 import { Fill as FillType, Layers } from '../types/Layers';
 import imageManager from '../utils/imageManager';
 import useBindRef from './useBindRef';
@@ -19,28 +17,11 @@ const useLayerToBitmap = () => {
     }))
   );
 
-  const { activeKey } = useToolsStore(
-    useShallow((state) => ({
-      activeKey: state.activeKey,
-    }))
-  );
-
-  // const { replaceCurrentHistory, layers } = useLayerStore(
-  //   useShallow((state) => ({
-  //     replaceCurrentHistory: state.replaceCurrentHistory,
-  //     layers: state.layers,
-  //   }))
-  // );
-
   const run = (layer: Layers, group: Konva.Group) => {
     try {
       setLoading(true);
       return new Promise(async (resolve) => {
         if (layer && !layer.diagrams?.length) {
-          resolve(layer);
-          return;
-        }
-        if (activeKey !== Actions.ROPE) {
           resolve(layer);
           return;
         }
@@ -125,7 +106,6 @@ const useLayerToBitmap = () => {
         }
 
         const layerCanvas = clonedGroup.toCanvas();
-
         const imageData = layerCanvas
           .getContext('2d')
           ?.getImageData(
