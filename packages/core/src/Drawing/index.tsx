@@ -751,8 +751,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           if (index === getDrawingLayerIndex) {
             return (
               <React.Fragment key={`drawing-${index}`}>
+                <DrawLayer key={layer.id + 'drawing'} />
                 {!!layer && <Layer key={layer.id} {...layer} />}
-                <DrawLayer />
               </React.Fragment>
             );
           }

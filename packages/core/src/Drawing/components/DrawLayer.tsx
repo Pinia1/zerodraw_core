@@ -116,7 +116,7 @@ const DrawLayer: React.FC = () => {
             }
 
             case 'image': {
-              return <Image {...(props as FillType)} draggable={false} />;
+              return <Image key={diagram.id} {...(props as FillType)} draggable={false} />;
             }
 
             case 'fill': {

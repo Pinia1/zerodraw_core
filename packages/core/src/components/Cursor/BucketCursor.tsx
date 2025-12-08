@@ -8,6 +8,7 @@ const Eraser = styled.div`
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: 1;
+  mix-blend-mode: difference;
 `;
 const BucketCursor: React.FC<{
   x: number;

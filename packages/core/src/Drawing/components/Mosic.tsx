@@ -34,8 +34,8 @@ const Mosic: React.FC = () => {
           layerConfig.backgroundVisible
             ? undefined
             : {
-                x: 0.16 / stageConfig.scale,
-                y: 0.16 / stageConfig.scale,
+                x: 0.18 / stageConfig.scale,
+                y: 0.18 / stageConfig.scale,
               }
         }
         fill={layerConfig.backgroundVisible ? layerConfig.backgroundColor : undefined}

@@ -48,7 +48,7 @@ const Layer: React.FC<Layers> = (props) => {
     h: number[];
     points: { x: number; y: number }[];
   }>({ v: [], h: [], points: [] });
-  const snapThreshold = 6;
+  const snapThreshold = 2;
 
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
@@ -71,13 +71,16 @@ const Layer: React.FC<Layers> = (props) => {
   );
 
   useEffect(() => {
-    requestAnimationFrame(() => {
-      handleBindTransformer();
-    });
-  }, [props.image]);
+    if (activeKey === Actions.ROPE) {
+      requestAnimationFrame(() => {
+        handleBindTransformer();
+      });
+    }
+  }, [props.image, activeKey]);
 
   const handleBindTransformer = useMemoizedFn(() => {
     if (drawingLayer?.id !== props.id) return;
+
     if (!trRef.current || !imageRef.current) return;
     trRef.current?.nodes([imageRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
@@ -280,6 +283,7 @@ const Layer: React.FC<Layers> = (props) => {
             case 'image': {
               return (
                 <Image
+                  key={diagram.id}
                   {...(props as FillType)}
                   onDragStart={handleDragStart}
                   onDragEnd={handleDragEnd}
