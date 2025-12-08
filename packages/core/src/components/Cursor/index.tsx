@@ -9,7 +9,11 @@ import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
 import BucketCursor from './BucketCursor';
 import EraserCursor from './EraserCursor';
 
-const Cursor = () => {
+interface CursorProps {
+  visible: boolean;
+}
+
+const Cursor: React.FC<CursorProps> = ({ visible }) => {
   const mouse = useMouse(document.getElementById(CANVAS_CONTAINER_ID));
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
@@ -21,6 +25,7 @@ const Cursor = () => {
       eraserConfig: state.eraserConfig,
     }))
   );
+  if (!visible) return null;
   if (activeKey === Actions.ERASER) {
     return createPortal(
       <EraserCursor r={eraserConfig.strokeWidth} x={mouse.elementX} y={mouse.elementY} />,

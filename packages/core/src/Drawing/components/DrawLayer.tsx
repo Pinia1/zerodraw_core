@@ -49,6 +49,10 @@ const DrawLayer: React.FC = () => {
   const { run: runBitmap } = useLayerToBitmap();
 
   const snapThreshold = 6;
+  const likeLayerRef = useRef<{ layer: Konva.Layer | null; opacity: number }>({
+    layer: null,
+    opacity: 0,
+  });
 
   const { activeKey, setActiveKey } = useToolsStore(
     useShallow((state) => ({
@@ -57,10 +61,11 @@ const DrawLayer: React.FC = () => {
     }))
   );
 
-  const { layerConfig, drawingId } = useDrawingStore(
+  const { layerConfig, drawingId, stageRef } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       drawingId: state.drawingId,
+      stageRef: state.stageRef,
     }))
   );
   const { drawingLayer, setDrawingLayer, pushHistory, layers } = useLayerStore(
@@ -240,12 +245,25 @@ const DrawLayer: React.FC = () => {
     });
   });
 
+  const getLikeLayer = useMemoizedFn(() => {
+    const layers = stageRef?.current?.getLayers();
+    const likeLayer = layers?.find(
+      (layer) => layer.attrs.id === drawingLayer?.id && !layer.attrs.isDrawing
+    );
+    likeLayerRef.current.layer = likeLayer as Konva.Layer;
+    likeLayerRef.current.opacity = likeLayer?.opacity() ?? 1;
+    return likeLayerRef.current;
+  });
+
   const handleDragStart = useMemoizedFn(() => {
     clearCache();
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = 'move';
     setGuideLines({ v: [], h: [], points: [] });
     handleBindTransformer();
+
+    const likeLayer = getLikeLayer();
+    likeLayer.layer?.opacity(0);
   });
 
   const handleDragEnd = useMemoizedFn((_e: unknown, rotation?: number) => {
@@ -288,6 +306,7 @@ const DrawLayer: React.FC = () => {
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = '';
     setGuideLines({ v: [], h: [], points: [] });
+    likeLayerRef.current.layer?.opacity(likeLayerRef.current.opacity);
   });
 
   return (

@@ -38,6 +38,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
 
+  const [cursorVisible, setCursorVisible] = useState(true);
+
   const [stageDraggable, setStageDraggable] = useState(false);
   const {
     stageConfig,
@@ -664,6 +666,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
     const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
     if (!isPointInLayer(pos)) return;
@@ -704,6 +707,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
   });
 
+  const handleMouseLeave = useMemoizedFn(() => {
+    setCursorVisible(false);
+  });
+
   return (
     <>
       <Stage
@@ -726,17 +733,15 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
       >
         <Mosic />
         {renderOrderLayers.map((layer) => {
-          if (layer && layer.id !== drawingLayer?.id) {
-            return <Layer key={layer.id} {...layer} />;
-          }
-          return null;
+          return <Layer key={layer.id} {...layer} />;
         })}
         <DrawLayer />
       </Stage>
-      <Cursor />
+      <Cursor visible={cursorVisible} />
       {tools?.includes(Tools.TOOL) && <Tool />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
       {tools?.includes(Tools.FLEXIBLE) && <Flexible init={init} />}
