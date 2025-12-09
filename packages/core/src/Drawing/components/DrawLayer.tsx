@@ -61,6 +61,7 @@ const DrawLayer: React.FC = () => {
       }
       case 'eraserLine': {
         const props = drawingLayer?.eraserLines.find((line) => line.id === id)!;
+
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
@@ -93,8 +94,9 @@ const DrawLayer: React.FC = () => {
         return null;
     }
   };
-
-  if (activeKey === Actions.ROPE) return null;
+  if (activeKey === Actions.ROPE) {
+    return null;
+  }
 
   return (
     <KonvaLayer

@@ -1,6 +1,6 @@
 import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Group,
   Layer as KonvaLayer,
@@ -257,9 +257,13 @@ const Layer: React.FC<Layers> = (props) => {
     }
   };
 
-  const isTopLayer = props.id === layers[layers.length - 1]?.id;
+  const isTopLayer = useMemo(() => {
+    return props.id === layers[layers.length - 1]?.id;
+  }, [layers]);
 
-  if (activeKey !== Actions.ROPE && isTopLayer) return null;
+  if (activeKey !== Actions.ROPE && isTopLayer) {
+    return null;
+  }
 
   return (
     <KonvaLayer

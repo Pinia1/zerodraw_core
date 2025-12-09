@@ -134,12 +134,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (stageDraggable) return 'grab';
     switch (activeKey) {
       case Actions.RECT:
-      case Actions.ELLIPSE:
       case Actions.LINE:
       case Actions.PEN:
+      case Actions.ERASER:
         return 'crosshair';
       case Actions.FILL:
-      case Actions.ERASER:
+      case Actions.ELLIPSE:
         return 'none';
       default:
         break;
@@ -409,17 +409,17 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const lines = drawingLayer[type] as Line[];
     const lastLine = lines[lines.length - 1];
 
-    // 创建新的 line 对象，而不是直接修改原始对象
     const updatedLine: Line = {
       ...lastLine,
       points: [...lastLine.points, point.x - layerConfig.x, point.y - layerConfig.y],
       pressure: [...lastLine.pressure, pressure],
     };
 
-    // 创建新的数组
     const newLines = [...lines.slice(0, -1), updatedLine];
 
-    setDrawingLayer({ ...drawingLayer, [type]: newLines });
+    requestAnimationFrame(() => {
+      setDrawingLayer({ ...drawingLayer, [type]: newLines });
+    });
   });
 
   const onRectMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -465,7 +465,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       height: pos.y - y - rect.y!,
     };
     rects.splice(rects.length - 1, 1, rect);
-    setDrawingLayer({ ...drawingLayer!, rects: rects });
+    requestAnimationFrame(() => {
+      setDrawingLayer({ ...drawingLayer!, rects: rects });
+    });
   });
 
   const onEllipseMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -518,7 +520,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: newY,
     };
     ellipses.splice(ellipses.length - 1, 1, ellipse);
-    setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
+    requestAnimationFrame(() => {
+      setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
+    });
   });
 
   const onLineMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -576,7 +580,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       points: [line.points[0], line.points[1], pos.x - x, pos.y - y],
     };
     lines.splice(lines.length - 1, 1, line);
-    setDrawingLayer({ ...drawingLayer!, lines: lines });
+    requestAnimationFrame(() => {
+      setDrawingLayer({ ...drawingLayer!, lines: lines });
+    });
   });
 
   const finishLine = useMemoizedFn(() => {
@@ -747,10 +753,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       >
         <Mosic />
 
-        {renderOrderLayers.map((layer, index) => {
-          if (index === getDrawingLayerIndex) {
+        {renderOrderLayers.map((layer) => {
+          const isDrawingLayer = topLayer?.id === layer.id;
+          if (isDrawingLayer) {
             return (
-              <React.Fragment key={`drawing-${index}`}>
+              <React.Fragment key={`drawing-${layer.id}`}>
                 <DrawLayer key={layer.id + 'drawing'} />
                 {!!layer && <Layer key={layer.id} {...layer} />}
               </React.Fragment>
