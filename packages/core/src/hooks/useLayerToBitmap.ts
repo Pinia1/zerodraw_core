@@ -164,7 +164,6 @@ const useLayerToBitmap = () => {
             paths: [],
             fills: [],
             diagrams: [{ id: image.id, type: 'image' as const }],
-            imageFull: true,
           };
 
           resolve(newDrawingLayer);

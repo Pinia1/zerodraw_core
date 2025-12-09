@@ -10,6 +10,7 @@ import {
   Transformer,
 } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
+import useLayerToBitmap from '../../hooks/useLayerToBitmap';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
@@ -43,6 +44,8 @@ const Layer: React.FC<Layers> = (props) => {
   const imageRef = useRef<Konva.Image>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
 
+  const { run: runBitmap } = useLayerToBitmap();
+
   const [guideLines, setGuideLines] = useState<{
     v: number[];
     h: number[];
@@ -56,11 +59,13 @@ const Layer: React.FC<Layers> = (props) => {
     }))
   );
 
-  const { drawingLayer, pushHistory, layers } = useLayerStore(
+  const { setDrawingLayer, pushHistory, layers, setLayers } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,
       pushHistory: state.pushHistory,
       layers: state.layers,
+      setLayers: state.setLayers,
+      setDrawingLayer: state.setDrawingLayer,
     }))
   );
 
@@ -79,8 +84,6 @@ const Layer: React.FC<Layers> = (props) => {
   }, [props.image, activeKey]);
 
   const handleBindTransformer = useMemoizedFn(() => {
-    if (drawingLayer?.id !== props.id) return;
-
     if (!trRef.current || !imageRef.current) return;
     trRef.current?.nodes([imageRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
@@ -212,6 +215,22 @@ const Layer: React.FC<Layers> = (props) => {
     setGuideLines({ v: [], h: [], points: [] });
   });
 
+  const handleGroupMouseDown = useMemoizedFn(async (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (activeKey === Actions.ROPE) {
+      const newLayer = (await runBitmap(props, groupRef.current as Konva.Group)) as Layers;
+
+      const newLayers = [...layers];
+      const index = newLayers.findIndex((item) => item.id === props.id);
+
+      if (index === newLayers.length - 1) return;
+      newLayers.splice(index, 1);
+      setDrawingLayer(newLayer);
+
+      setLayers([...newLayers, newLayer]);
+      handleBindTransformer();
+    }
+  });
+
   const getDiagramProps = <T extends Diagram['type']>(
     id: string,
     type: T
@@ -272,11 +291,17 @@ const Layer: React.FC<Layers> = (props) => {
       y={layerConfig.y}
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
-      listening={visible}
+      listening={true}
       visible={visible}
       id={props.id}
     >
-      <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
+      <Group
+        onClick={handleGroupMouseDown}
+        ref={groupRef}
+        clipWidth={layerConfig.width}
+        clipHeight={layerConfig.height}
+        listening
+      >
         {diagrams.map((diagram) => {
           const props = getDiagramProps(diagram.id, diagram.type)!;
 
@@ -294,7 +319,7 @@ const Layer: React.FC<Layers> = (props) => {
                   handleBindTransformer={handleBindTransformer}
                   handleDragMove={handleDragMove}
                   ref={imageRef}
-                  draggable={true}
+                  draggable={isTopLayer}
                 />
               );
             }

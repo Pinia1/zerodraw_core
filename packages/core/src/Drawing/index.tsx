@@ -94,11 +94,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return layers[layers.length - 1];
   }, [layers]);
 
-  const getDrawingLayerIndex = useMemo(() => {
-    if (!topLayer) return renderOrderLayers.length;
-    return renderOrderLayers.findIndex((layer) => layer.id === topLayer.id);
-  }, [renderOrderLayers, topLayer]);
-
   const init = useMemoizedFn(() => {
     const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
     const height = width / RATIO;
