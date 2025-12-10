@@ -11,7 +11,7 @@ export const sleep = (ms: number): Promise<void> => {
 };
 
 export const generateUUID = () => {
-  if (window.crypto) {
+  if (window.crypto && window.crypto.randomUUID) {
     return window.crypto.randomUUID();
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

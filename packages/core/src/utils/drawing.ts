@@ -23,7 +23,7 @@ export const INCREASE_SCALE = 0.02;
 export const CANVAS_CONTAINER_ID = 'canvas_container';
 
 export const generateUUID = () => {
-  if (window.crypto) {
+  if (window.crypto && window.crypto.randomUUID) {
     return window.crypto.randomUUID();
   }
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {

@@ -51,7 +51,7 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
 
   useDebounceEffect(
     () => {
-      requestIdleCallback(() => {
+      requestAnimationFrame(() => {
         const stage = stageRef?.current;
         const smallCanvas = smallCanvasRef.current;
         if (!stage || !smallCanvas) return;

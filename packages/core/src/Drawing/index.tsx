@@ -654,6 +654,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
     if (!isLeftMouseDown(e) || stageDraggable) return;
 
     const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
@@ -677,6 +678,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
     if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
     const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
@@ -696,7 +698,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
-  const handleMouseUp = useMemoizedFn(() => {
+  const handleMouseUp = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
@@ -718,7 +721,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
   });
 
-  const handleMouseLeave = useMemoizedFn(() => {
+  const handleMouseLeave = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
     setCursorVisible(false);
   });
 
@@ -741,10 +745,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         draggable={stageDraggable}
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
+        onPointerDown={handleMouseDown}
+        onPointerMove={handleMouseMove}
+        onPointerUp={handleMouseUp}
+        onPointerLeave={handleMouseLeave}
       >
         <Mosic />
 
