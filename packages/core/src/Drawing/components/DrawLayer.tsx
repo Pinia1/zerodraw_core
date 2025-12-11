@@ -106,7 +106,6 @@ const DrawLayer: React.FC = () => {
       clipHeight={layerConfig.height}
       isDrawing
       id={drawingLayer?.id}
-      opacity={drawingLayer?.opacity}
     >
       <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {drawingLayer?.diagrams.map((diagram) => {

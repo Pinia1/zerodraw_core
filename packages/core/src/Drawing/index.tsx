@@ -654,7 +654,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
-    e.evt.preventDefault();
     if (!isLeftMouseDown(e) || stageDraggable) return;
 
     const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;

@@ -18,7 +18,6 @@ const Wrapper = styled(Container)`
   -webkit-box-align: center;
   align-items: center;
   gap: 4px;
-  user-select: none;
   min-height: 64px;
   border: 1px solid transparent;
   border-radius: 8px;

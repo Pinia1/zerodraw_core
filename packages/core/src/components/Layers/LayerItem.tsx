@@ -1,5 +1,6 @@
 import Icon from '@ant-design/icons';
-import { Flex } from 'antd';
+import { useThrottleFn } from '@monorepo/common';
+import { Flex, Input, Popover, Slider } from 'antd';
 import Konva from 'konva';
 import React, { useMemo } from 'react';
 import styled from 'styled-components';
@@ -37,6 +38,18 @@ const Wrapper = styled(Container)<{ $active?: boolean }>`
   }
 `;
 
+const StyledInput = styled(Input)`
+  border: none;
+  box-shadow: none;
+  background-color: transparent;
+  padding-left: 2px;
+  user-select: text;
+
+  &:focus {
+    box-shadow: none;
+  }
+`;
+
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
@@ -45,6 +58,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
   const stageRef = useBindRef();
 
   const { run: runBitmap } = useLayerToBitmap();
+
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
@@ -65,16 +79,25 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     return drawingLayer?.id === props.id;
   }, [drawingLayer?.id, props.id]);
 
-  const handlerSetLayer = (key: keyof Layers, value: any) => {
-    const newLayers = layers.map((layer) => {
-      if (layer.id === id) {
-        return { ...layer, [key]: value };
+  const { run: handlerSetLayer } = useThrottleFn(
+    (key: keyof Layers, value: any, push?: boolean) => {
+      const newLayers = layers.map((layer) => {
+        if (layer.id === id) {
+          return { ...layer, [key]: value };
+        }
+        return layer;
+      });
+      if (drawingLayer?.id === id) {
+        setDrawingLayer({ ...drawingLayer, [key]: value });
       }
-      return layer;
-    });
-    pushHistory(newLayers);
-  };
-
+      if (push) {
+        pushHistory(newLayers);
+      } else {
+        setLayers(newLayers);
+      }
+    },
+    { wait: 16 }
+  );
   const handleBindLayer = async () => {
     const newLayers = [...layers];
     const index = newLayers.findIndex((item) => item.id === props.id);
@@ -106,7 +129,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
         <ToolItem
           onClick={(e) => {
             e.stopPropagation();
-            handlerSetLayer('visible', !visible);
+            handlerSetLayer('visible', !visible, true);
           }}
           style={{ aspectRatio: 1, fontSize: 16 }}
           $active={false}
@@ -135,8 +158,45 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
         vertical
         justify="space-around"
       >
-        <span>{name || `${order + 1}`}</span>
-        <span>{opacity}%</span>
+        <StyledInput
+          onPointerDown={(e) => e.stopPropagation()}
+          onBlur={(e) => handlerSetLayer('name', e.target.value, true)}
+          size="small"
+          defaultValue={name || `${order + 1}`}
+        />
+        <Popover
+          placement="bottom"
+          trigger="click"
+          styles={{
+            body: { padding: '3px 10px' },
+          }}
+          onOpenChange={(visible) => {
+            if (!visible) {
+              handlerSetLayer('opacity', opacity, true);
+            }
+          }}
+          content={
+            <Flex vertical onPointerDown={(e) => e.stopPropagation()}>
+              <span style={{ marginBottom: -6, marginTop: 4 }}>Opacity: </span>
+              <Slider
+                style={{
+                  width: '100px',
+                }}
+                min={0}
+                max={100}
+                step={1}
+                value={opacity}
+                onChange={(value) => {
+                  handlerSetLayer('opacity', value, false);
+                }}
+              />
+            </Flex>
+          }
+        >
+          <span onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }}>
+            {opacity}%
+          </span>
+        </Popover>
       </Flex>
       <Flex align="center" justify="center">
         <ToolItem style={{ aspectRatio: 1 }} $active={false}>

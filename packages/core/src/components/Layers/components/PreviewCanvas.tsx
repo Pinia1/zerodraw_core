@@ -66,7 +66,6 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
         const layerHeight = currentLayer.height();
         if (!layerWidth || !layerHeight) return;
 
-        // 使用离屏 Stage + 克隆 Layer，避免主画布缩放影响预览
         const clonedLayer = currentLayer.clone({ listening: false });
         const offscreenContainer = document.createElement('div');
         const offscreenStage = new Konva.Stage({
