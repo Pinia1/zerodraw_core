@@ -1,8 +1,8 @@
 import Icon from '@ant-design/icons';
-import { useThrottleFn } from '@monorepo/common';
+import { useMemoizedFn, useThrottleFn } from '@monorepo/common';
 import { Flex, Input, Popover, Slider } from 'antd';
 import Konva from 'konva';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useBindRef from '../../hooks/useBindRef';
@@ -14,6 +14,7 @@ import { Actions } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
 import Container from '../Container';
 import { ToolItem } from '../index';
+import Menus from './components/Menus';
 import PreviewCanvas from './components/PreviewCanvas';
 
 const Wrapper = styled(Container)<{ $active?: boolean }>`
@@ -53,9 +54,13 @@ const StyledInput = styled(Input)`
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
-  const { visible, order, name, opacity, id } = props;
+  const { visible, name, opacity, id } = props;
 
   const stageRef = useBindRef();
+  const opacityRef = useRef(opacity);
+  const nameRef = useRef(name);
+
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const { run: runBitmap } = useLayerToBitmap();
 
@@ -123,6 +128,14 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     }
   };
 
+  const onOpenChange = useMemoizedFn((visible: boolean) => {
+    if (!visible && opacityRef.current !== opacity) {
+      handlerSetLayer('opacity', opacity, true);
+    } else {
+      opacityRef.current = opacity;
+    }
+  });
+
   return (
     <Wrapper onClick={handleBindLayer} $active={isActive}>
       <Flex align="center" justify="center">
@@ -160,9 +173,14 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
       >
         <StyledInput
           onPointerDown={(e) => e.stopPropagation()}
-          onBlur={(e) => handlerSetLayer('name', e.target.value, true)}
+          onChange={(e) => handlerSetLayer('name', e.target.value, false)}
+          onBlur={(e) => {
+            if (nameRef.current === e.target.value) return;
+            handlerSetLayer('name', e.target.value, true);
+          }}
+          onFocus={() => (nameRef.current = name)}
           size="small"
-          defaultValue={name || `${order + 1}`}
+          value={name}
         />
         <Popover
           placement="bottom"
@@ -170,17 +188,14 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           styles={{
             body: { padding: '3px 10px' },
           }}
-          onOpenChange={(visible) => {
-            if (!visible) {
-              handlerSetLayer('opacity', opacity, true);
-            }
-          }}
+          destroyOnHidden
+          onOpenChange={onOpenChange}
           content={
             <Flex vertical onPointerDown={(e) => e.stopPropagation()}>
               <span style={{ marginBottom: -6, marginTop: 4 }}>Opacity: </span>
               <Slider
                 style={{
-                  width: '100px',
+                  width: '120px',
                 }}
                 min={0}
                 max={100}
@@ -199,9 +214,18 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
         </Popover>
       </Flex>
       <Flex align="center" justify="center">
-        <ToolItem style={{ aspectRatio: 1 }} $active={false}>
-          <Icon component={IconMore} />
-        </ToolItem>
+        <Popover
+          destroyOnHidden
+          trigger="click"
+          placement="right"
+          content={<Menus {...props} setMenuOpen={setMenuOpen} />}
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+        >
+          <ToolItem style={{ aspectRatio: 1 }} $active={false}>
+            <Icon component={IconMore} />
+          </ToolItem>
+        </Popover>
       </Flex>
     </Wrapper>
   );
