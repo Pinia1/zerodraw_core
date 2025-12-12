@@ -221,7 +221,7 @@ const Tool: React.FC = () => {
         disabled: !canRedo,
       },
     ];
-  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer]);
+  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer, layers]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
     if (item.disabled) return;

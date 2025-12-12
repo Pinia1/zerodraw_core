@@ -71,8 +71,8 @@ export interface Fill {
   img?: HTMLImageElement;
   src?: string;
   rotation?: number;
-  originWidth?: number;
-  originHeight?: number;
+  maxWidth?: number;
+  maxHeight?: number;
   visible: boolean;
 }
 
