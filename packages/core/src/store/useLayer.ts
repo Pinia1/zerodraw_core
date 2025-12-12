@@ -42,6 +42,7 @@ export const initialDrawingLayer: () => Layers = () => ({
   image: null,
   name: 'layer 1',
   order: 0,
+  blendMode: 'normal',
 });
 const init = initialDrawingLayer();
 

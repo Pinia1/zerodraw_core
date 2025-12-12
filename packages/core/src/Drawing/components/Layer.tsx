@@ -1,6 +1,6 @@
 import { useMemoizedFn } from '@monorepo/common';
 import Konva from 'konva';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Group,
   Layer as KonvaLayer,
@@ -24,6 +24,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import { blendModeToCssMixBlendMode } from '../../utils/BlendMode';
 import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
@@ -36,8 +37,19 @@ import Rect from './Diagram/Rect';
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 const Layer: React.FC<Layers> = (props) => {
-  const { opacity, diagrams, visible, paths, eraserLines, rects, ellipses, lines, fills, image } =
-    props;
+  const {
+    opacity,
+    diagrams,
+    visible,
+    paths,
+    eraserLines,
+    rects,
+    ellipses,
+    lines,
+    fills,
+    image,
+    blendMode,
+  } = props;
   const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const trRef = useRef<Konva.Transformer>(null);
@@ -83,13 +95,28 @@ const Layer: React.FC<Layers> = (props) => {
     }
   }, [props.image, activeKey]);
 
+  // 设置“图层之间”的混合模式：使用 CSS mix-blend-mode 作用于 Layer 的 canvas 元素
+  useLayoutEffect(() => {
+    const layer = layerRef.current;
+    if (!layer) return;
+
+    try {
+      const canvasEl = (layer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+      if (!canvasEl) return;
+
+      canvasEl.style.mixBlendMode = blendModeToCssMixBlendMode(blendMode);
+    } catch (error) {
+      console.warn('Failed to set css mix-blend-mode for Layer canvas:', error);
+    }
+  }, [blendMode, activeKey]);
+
   const handleBindTransformer = useMemoizedFn(() => {
     if (!trRef.current || !imageRef.current) return;
     trRef.current?.nodes([imageRef.current!]);
     trRef.current?.getLayer()?.batchDraw();
   });
 
-  const handleDragStart = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+  const handleDragStart = useMemoizedFn(() => {
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = 'move';
     setGuideLines({ v: [], h: [], points: [] });

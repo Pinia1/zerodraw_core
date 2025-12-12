@@ -12,6 +12,7 @@ import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
+import { blendModeToCssMixBlendMode } from '../../utils/BlendMode';
 import Container from '../Container';
 import { ToolItem } from '../index';
 import Menus from './components/Menus';
@@ -70,7 +71,7 @@ const StopPointerWrapper = ({ children }: { children: React.ReactNode }) => {
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
-  const { visible, name, opacity, id } = props;
+  const { visible, name, opacity, id, blendMode } = props;
 
   const stageRef = useBindRef();
   const opacityRef = useRef(opacity);
@@ -229,7 +230,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           }
         >
           <span onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }}>
-            {opacity}%
+            {blendModeToCssMixBlendMode(blendMode)[0].toUpperCase()} {opacity}%
           </span>
         </Popover>
       </Flex>

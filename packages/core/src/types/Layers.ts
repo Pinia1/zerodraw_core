@@ -1,5 +1,7 @@
 import type { Point2D } from './Drawing';
 
+export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay';
+
 export interface Layers {
   id: string;
   name?: string;
@@ -15,6 +17,7 @@ export interface Layers {
   fills: Fill[];
   image: Fill | null;
   imageFull?: boolean;
+  blendMode: BlendMode;
 }
 
 export interface DrawLayer extends Layers {

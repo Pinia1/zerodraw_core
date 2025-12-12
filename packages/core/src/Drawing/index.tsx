@@ -703,6 +703,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         style={{
           cursor: cursorStyle,
           position: 'relative',
+          isolation: 'isolate',
         }}
         id={CANVAS_CONTAINER_ID}
         width={size.width}

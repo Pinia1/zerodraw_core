@@ -3,6 +3,7 @@ import type { GetProp, MenuProps } from 'antd';
 import { Menu } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
+import useBlendMode from '../../../hooks/useBlendMode';
 import useCopyLayer from '../../../hooks/useCopyLayer';
 import useDeletedLayer from '../../../hooks/useDeletedLayer';
 import useMergeLayer from '../../../hooks/useMergeLayer';
@@ -40,6 +41,7 @@ const Menus: React.FC<MenusProps> = (props) => {
   const { mergeDown, mergeUp, canMergeDown, canMergeUp } = useMergeLayer(id);
   const { sendToFront, sendToBack, isAtFront, isAtBack } = useOrderLayer(id);
   const { toggleOthersVisibility } = useVisibled(id);
+  const { setBlendMode } = useBlendMode(id);
 
   const items: MenuItem[] = [
     {
@@ -122,10 +124,38 @@ const Menus: React.FC<MenusProps> = (props) => {
       key: 'Blend-mode',
       label: 'Blend mode',
       children: [
-        { key: 'normal', label: 'Normal' },
-        { key: 'multiply', label: 'Multiply' },
-        { key: 'screen', label: 'Screen' },
-        { key: 'overlay', label: 'Overlay' },
+        {
+          key: 'normal',
+          label: 'Normal',
+          onClick: () => {
+            setBlendMode('normal');
+            setMenuOpen(false);
+          },
+        },
+        {
+          key: 'multiply',
+          label: 'Multiply',
+          onClick: () => {
+            setBlendMode('multiply');
+            setMenuOpen(false);
+          },
+        },
+        {
+          key: 'screen',
+          label: 'Screen',
+          onClick: () => {
+            setBlendMode('screen');
+            setMenuOpen(false);
+          },
+        },
+        {
+          key: 'overlay',
+          label: 'Overlay',
+          onClick: () => {
+            setBlendMode('overlay');
+            setMenuOpen(false);
+          },
+        },
       ],
     },
 

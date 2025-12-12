@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import React, { useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -14,6 +14,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import { blendModeToCssMixBlendMode } from '../../utils/BlendMode';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
@@ -25,6 +26,7 @@ import Rect from './Diagram/Rect';
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 const DrawLayer: React.FC = () => {
+  const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
 
@@ -94,12 +96,29 @@ const DrawLayer: React.FC = () => {
         return null;
     }
   };
+
+  // 设置“图层之间”的混合模式：使用 CSS mix-blend-mode 作用于 Layer 的 canvas 元素
+  useLayoutEffect(() => {
+    const layer = layerRef.current;
+    if (!layer || !drawingLayer) return;
+
+    try {
+      const canvasEl = (layer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+      if (!canvasEl) return;
+
+      canvasEl.style.mixBlendMode = blendModeToCssMixBlendMode(drawingLayer.blendMode);
+    } catch (error) {
+      console.warn('Failed to set css mix-blend-mode for DrawLayer canvas:', error);
+    }
+  }, [drawingLayer?.blendMode, activeKey]);
+
   if (activeKey === Actions.ROPE) {
     return null;
   }
 
   return (
     <KonvaLayer
+      ref={layerRef}
       x={layerConfig.x}
       y={layerConfig.y}
       clipWidth={layerConfig.width}
