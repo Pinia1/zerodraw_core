@@ -13,6 +13,7 @@ function findMissingorder(layers: Layers[]): number {
 
 const useCreateLayer = () => {
   const [loading, setLoading] = useState(false);
+
   const { layerConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
@@ -26,12 +27,13 @@ const useCreateLayer = () => {
       pushHistory: state.pushHistory,
     }))
   );
-  const run = async (id: string, imageUrl?: string) => {
+  const run = async (id: string, imageUrl?: string, initLayer?: Partial<Layers>) => {
     return new Promise(async (resolve) => {
       setLoading(true);
       const order = findMissingorder(layers);
       const newLayer: Layers = {
         ...initialDrawingLayer(),
+        ...initLayer,
         name: `Layer ${order + 1}`,
         order,
       };

@@ -215,14 +215,13 @@ const Layer: React.FC<Layers> = (props) => {
     setGuideLines({ v: [], h: [], points: [] });
   });
 
-  const handleGroupMouseDown = useMemoizedFn(async (e: Konva.KonvaEventObject<MouseEvent>) => {
+  const handleGroupMouseDown = useMemoizedFn(async () => {
     if (activeKey === Actions.ROPE) {
       const newLayer = (await runBitmap(props, groupRef.current as Konva.Group)) as Layers;
 
       const newLayers = [...layers];
       const index = newLayers.findIndex((item) => item.id === props.id);
 
-      if (index === newLayers.length - 1) return;
       newLayers.splice(index, 1);
       setDrawingLayer(newLayer);
 

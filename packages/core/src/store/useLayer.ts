@@ -159,7 +159,7 @@ const useLayerStore = create<LayerState>()(
     }),
     {
       name: 'drawing-layers-storage',
-      partialize: (_state) => ({
+      partialize: (state) => ({
         // layers: state.layers,
         // drawingLayer: state.drawingLayer,
       }),

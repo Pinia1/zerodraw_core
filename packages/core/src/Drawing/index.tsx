@@ -1,4 +1,4 @@
-import { hexToRgba, useKeyPress, useMemoizedFn, useMount } from '@monorepo/common';
+import { hexToRgba, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
 import React, { useMemo, useRef, useState } from 'react';
@@ -11,6 +11,7 @@ import Flexible from '../components/Flexible';
 import LayersControl from '../components/Layers';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
+import useDrawingKeyboard from '../hooks/useKeyboard';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
@@ -125,16 +126,29 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     pushHistory(newLayers);
   };
 
+  const finishLine = useMemoizedFn(() => {
+    const drawingLayer = getDrawingLayer();
+    if (isDrawing.current && activeKey === Actions.LINE) {
+      isDrawing.current = false;
+      setDrawingId(null);
+      const lines = drawingLayer?.lines || [];
+      let line = lines[lines.length - 1];
+      line.points = line.points.slice(0, -2);
+      lines.splice(lines.length - 1, 1, line);
+      setDrawingLayer({ ...drawingLayer!, lines: lines });
+    }
+  });
+
   const cursorStyle = useMemo(() => {
     if (stageDraggable) return 'grab';
     switch (activeKey) {
       case Actions.RECT:
       case Actions.LINE:
       case Actions.PEN:
-      case Actions.ERASER:
+      case Actions.ELLIPSE:
         return 'crosshair';
       case Actions.FILL:
-      case Actions.ELLIPSE:
+      case Actions.ERASER:
         return 'none';
       default:
         break;
@@ -147,40 +161,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     initHistory();
   });
 
-  useKeyPress(
-    'space',
-    () => {
-      if (isDrawing.current) return;
-      setStageDraggable(true);
-    },
-    {
-      events: ['keydown'],
-    }
-  );
-  useKeyPress(
-    'space',
-    () => {
-      if (isDrawing.current) return;
-      setStageDraggable(false);
-    },
-    {
-      events: ['keyup'],
-    }
-  );
-  //windows chrome
-  useKeyPress('alt', (e) => e.preventDefault());
-
-  useKeyPress(
-    'esc',
-    () => {
-      finishLine();
-    },
-    {
-      events: ['keydown'],
-    }
-  );
-  useKeyPress('Escape', () => {}, {
-    events: ['keyup'],
+  useDrawingKeyboard({
+    isDrawing,
+    setStageDraggable,
+    finishLine,
   });
 
   //todo
@@ -578,19 +562,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     requestAnimationFrame(() => {
       setDrawingLayer({ ...drawingLayer!, lines: lines });
     });
-  });
-
-  const finishLine = useMemoizedFn(() => {
-    const drawingLayer = getDrawingLayer();
-    if (isDrawing.current && activeKey === Actions.LINE) {
-      isDrawing.current = false;
-      setDrawingId(null);
-      const lines = drawingLayer?.lines || [];
-      let line = lines[lines.length - 1];
-      line.points = line.points.slice(0, -2);
-      lines.splice(lines.length - 1, 1, line);
-      setDrawingLayer({ ...drawingLayer!, lines: lines });
-    }
   });
 
   const onFillMouseDown = useMemoizedFn(async (e: Konva.KonvaEventObject<MouseEvent>) => {

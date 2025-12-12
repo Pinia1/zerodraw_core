@@ -45,7 +45,7 @@ const Paths: React.FC<Line> = (props) => {
   }, []);
 
   //todo
-  return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;
+  return <Path data={path} stroke={stroke} fill={stroke} opacity={opacity} listening={true} />;
 
   if (activeKey === Actions.FILL || drawingId) {
     return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;

@@ -2,7 +2,7 @@ import Icon from '@ant-design/icons';
 import { useMemoizedFn, useThrottleFn } from '@monorepo/common';
 import { Flex, Input, Popover, Slider } from 'antd';
 import Konva from 'konva';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { isValidElement, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useBindRef from '../../hooks/useBindRef';
@@ -50,6 +50,22 @@ const StyledInput = styled(Input)`
     box-shadow: none;
   }
 `;
+
+const StopPointerWrapper = ({ children }: { children: React.ReactNode }) => {
+  if (isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement, {
+      onPointerDown: (e: React.PointerEvent) => {
+        e.stopPropagation();
+        children.props.onPointerDown?.(e);
+      },
+      onClick: (e: React.MouseEvent) => {
+        e.stopPropagation();
+        children.props.onClick?.(e);
+      },
+    });
+  }
+  return children;
+};
 
 interface LayerItemProps extends Layers {}
 
@@ -139,16 +155,17 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
   return (
     <Wrapper onClick={handleBindLayer} $active={isActive}>
       <Flex align="center" justify="center">
-        <ToolItem
-          onClick={(e) => {
-            e.stopPropagation();
-            handlerSetLayer('visible', !visible, true);
-          }}
-          style={{ aspectRatio: 1, fontSize: 16 }}
-          $active={false}
-        >
-          <Icon component={visible ? IconEyeOpen : IconEyeClose} />
-        </ToolItem>
+        <StopPointerWrapper>
+          <ToolItem
+            onClick={() => {
+              handlerSetLayer('visible', !visible, true);
+            }}
+            style={{ aspectRatio: 1, fontSize: 16 }}
+            $active={false}
+          >
+            <Icon component={visible ? IconEyeOpen : IconEyeClose} />
+          </ToolItem>
+        </StopPointerWrapper>
       </Flex>
 
       <Flex
@@ -171,17 +188,18 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
         vertical
         justify="space-around"
       >
-        <StyledInput
-          onPointerDown={(e) => e.stopPropagation()}
-          onChange={(e) => handlerSetLayer('name', e.target.value, false)}
-          onBlur={(e) => {
-            if (nameRef.current === e.target.value) return;
-            handlerSetLayer('name', e.target.value, true);
-          }}
-          onFocus={() => (nameRef.current = name)}
-          size="small"
-          value={name}
-        />
+        <StopPointerWrapper>
+          <StyledInput
+            onChange={(e) => handlerSetLayer('name', e.target.value, false)}
+            onBlur={(e) => {
+              if (nameRef.current === e.target.value) return;
+              handlerSetLayer('name', e.target.value, true);
+            }}
+            onFocus={() => (nameRef.current = name)}
+            size="small"
+            value={name}
+          />
+        </StopPointerWrapper>
         <Popover
           placement="bottom"
           trigger="click"
@@ -191,21 +209,23 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           destroyOnHidden
           onOpenChange={onOpenChange}
           content={
-            <Flex vertical onPointerDown={(e) => e.stopPropagation()}>
-              <span style={{ marginBottom: -6, marginTop: 4 }}>Opacity: </span>
-              <Slider
-                style={{
-                  width: '120px',
-                }}
-                min={0}
-                max={100}
-                step={1}
-                value={opacity}
-                onChange={(value) => {
-                  handlerSetLayer('opacity', value, false);
-                }}
-              />
-            </Flex>
+            <StopPointerWrapper>
+              <Flex vertical>
+                <span style={{ marginBottom: -6, marginTop: 4 }}>Opacity: </span>
+                <Slider
+                  style={{
+                    width: '120px',
+                  }}
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={opacity}
+                  onChange={(value) => {
+                    handlerSetLayer('opacity', value, false);
+                  }}
+                />
+              </Flex>
+            </StopPointerWrapper>
           }
         >
           <span onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }}>
