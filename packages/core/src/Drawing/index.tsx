@@ -1,7 +1,7 @@
 import { hexToRgba, useMemoizedFn, useMount } from '@monorepo/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -281,6 +281,16 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return { dx, dy };
   });
 
+  const isWindows = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /Win/i.test(navigator.platform) || /Windows/i.test(navigator.userAgent);
+  }, []);
+
+  const isMac = useMemo(() => {
+    if (typeof navigator === 'undefined') return false;
+    return /Mac/i.test(navigator.platform) || /Macintosh/i.test(navigator.userAgent);
+  }, []);
+
   /**
    * 统一 wheel 行为：
    * - 触控板：默认平移（dx/dy），pinch 通常会带 ctrlKey -> 触发缩放
@@ -288,17 +298,25 @@ const Drawing: React.FC<DrawingProps> = (props) => {
    */
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
+    // 某些浏览器/系统下即使 preventDefault，也可能继续冒泡导致页面滚动；这里额外 stopPropagation
+    e.evt.stopPropagation();
     const stage = e.target.getStage();
     if (!stage) return;
 
     const pointer = stage.getPointerPosition() ?? { x: 0, y: 0 };
     const { dx, dy } = normalizeWheelDelta(e.evt);
 
-    const isLikelyMouseWheel = e.evt.deltaMode !== 0;
+    // Windows 下 mouse wheel 往往 deltaMode=0 且 dy 值较大（约 100），触控板 dy 更小且更连续
+    const isLikelyMouseWheel =
+      e.evt.deltaMode !== 0 ||
+      (isWindows && Math.abs(dy) >= 30 && Math.abs(dx) < 1) ||
+      // 兜底：wheelDeltaY 在 mac 触控板上也经常存在，不能作为通用判据；仅在 Windows 上作为辅助
+      (isWindows && typeof (e.evt as any).wheelDeltaY === 'number');
     const isPinchZoomGesture = !!(e.evt.ctrlKey || e.evt.metaKey);
 
     // 缩放优先级：pinch(通常 ctrlKey) > mouse wheel
-    const shouldZoom = isPinchZoomGesture || isLikelyMouseWheel;
+    // mac 触控板：默认平移；只有 pinch 才缩放
+    const shouldZoom = isPinchZoomGesture || (!isMac && isLikelyMouseWheel);
 
     if (shouldZoom) {
       if (dy === 0) return;
@@ -315,6 +333,25 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: stageConfig.y - dy,
     });
   });
+
+  // 确保 wheel 在画布上不会滚动页面：绑定一个 passive:false 的原生监听器
+  useEffect(() => {
+    const stage = stageRef?.current;
+    if (!stage) return;
+
+    const container = stage.container();
+    if (!container) return;
+
+    const handler = (evt: WheelEvent) => {
+      // 只在指针在 container 上时阻止页面滚动（事件目标就是 container 内部）
+      evt.preventDefault();
+    };
+
+    container.addEventListener('wheel', handler, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handler as any);
+    };
+  }, [stageRef]);
 
   const getTouchCenterAndDistance = useMemoizedFn((stage: Konva.Stage, touches: TouchList) => {
     const rect = stage.container().getBoundingClientRect();
