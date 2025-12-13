@@ -19,6 +19,10 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
       input.type = 'file';
       input.accept = accept || 'image/*';
       input.multiple = multiple || false;
+      input.style.position = 'fixed';
+      input.style.left = '-9999px';
+      input.style.top = '-9999px';
+      document.body.appendChild(input);
       input.onchange = async () => {
         const files = input.files;
 
@@ -51,7 +55,10 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
         }
       };
       input.click();
-      input.remove();
+      requestAnimationFrame(() => {
+        input.remove();
+        document.body.removeChild(input);
+      });
     });
   };
 
