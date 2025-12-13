@@ -10,7 +10,9 @@ import useMergeLayer from '../../../hooks/useMergeLayer';
 import useOrderLayer from '../../../hooks/useOrderLayer';
 import useVisibled from '../../../hooks/useVisibled';
 import { useDrawingStore } from '../../../store/useDrawing';
+import useLayerStore from '../../../store/useLayer';
 import { Layers } from '../../../types/Layers';
+import { exportStageWithBlendModes } from '../../../utils/BlendMode';
 
 const DangerText = styled.span`
   color: red;
@@ -43,10 +45,17 @@ const Menus: React.FC<MenusProps> = (props) => {
   const { sendToFront, sendToBack, isAtFront, isAtBack } = useOrderLayer(id);
   const { toggleOthersVisibility } = useVisibled(id);
 
-  const { stageRef, layerConfig } = useDrawingStore(
+  const { stageRef, layerConfig, stageConfig } = useDrawingStore(
     useShallow((state) => ({
       stageRef: state.stageRef,
       layerConfig: state.layerConfig,
+      stageConfig: state.stageConfig,
+    }))
+  );
+
+  const { layers } = useLayerStore(
+    useShallow((state) => ({
+      layers: state.layers,
     }))
   );
 
@@ -136,20 +145,114 @@ const Menus: React.FC<MenusProps> = (props) => {
           key: 'export-original',
           label: 'Image (Original)',
           onClick: async () => {
-            const dataURL = stageRef?.current?.toDataURL({
+            if (!stageRef?.current) return;
+
+            const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
               mimeType: 'image/png',
               quality: 1,
-              width: layerConfig.width,
-              height: layerConfig.height,
-              x: layerConfig.x,
-              y: layerConfig.y,
+              cropWidth: layerConfig.width,
+              cropHeight: layerConfig.height,
+              cropX: layerConfig.x,
+              cropY: layerConfig.y,
+              targetWidth: 1920,
+              backgroundColor: layerConfig.backgroundVisible
+                ? layerConfig.backgroundColor
+                : 'transparent',
+              // 默认导出“画布内容”不受缩放/拖拽影响；如需所见即所得，可改为 true
+              applyStageTransform: false,
+              stageScale: stageConfig.scale,
+              stageX: stageConfig.x,
+              stageY: stageConfig.y,
             });
-            console.log(dataURL, 'dataURL');
+
+            // 下载
+            const a = document.createElement('a');
+            a.download = `export-1920.png`;
+            a.href = dataURL;
+            a.click();
           },
         },
-        { key: 'export-2x', label: 'Image (2x)' },
-        { key: 'export-4x', label: 'Image (4x)' },
-        { key: 'export-8x', label: 'Image (8x)' },
+        {
+          key: 'export-2x',
+          label: 'Image (2x)',
+          onClick: async () => {
+            if (!stageRef?.current) return;
+            const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
+              mimeType: 'image/png',
+              quality: 1,
+              cropWidth: layerConfig.width,
+              cropHeight: layerConfig.height,
+              cropX: layerConfig.x,
+              cropY: layerConfig.y,
+              targetWidth: 1920 * 2,
+              backgroundColor: layerConfig.backgroundVisible
+                ? layerConfig.backgroundColor
+                : 'transparent',
+              applyStageTransform: false,
+              stageScale: stageConfig.scale,
+              stageX: stageConfig.x,
+              stageY: stageConfig.y,
+            });
+            const a = document.createElement('a');
+            a.download = `export-3840.png`;
+            a.href = dataURL;
+            a.click();
+          },
+        },
+        {
+          key: 'export-4x',
+          label: 'Image (4x)',
+          onClick: async () => {
+            if (!stageRef?.current) return;
+            const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
+              mimeType: 'image/png',
+              quality: 1,
+              cropWidth: layerConfig.width,
+              cropHeight: layerConfig.height,
+              cropX: layerConfig.x,
+              cropY: layerConfig.y,
+              targetWidth: 1920 * 4,
+              backgroundColor: layerConfig.backgroundVisible
+                ? layerConfig.backgroundColor
+                : 'transparent',
+              applyStageTransform: false,
+              stageScale: stageConfig.scale,
+              stageX: stageConfig.x,
+              stageY: stageConfig.y,
+            });
+            const a = document.createElement('a');
+            a.download = `export-7680.png`;
+            a.href = dataURL;
+            a.click();
+          },
+        },
+        {
+          key: 'export-8x',
+          label: 'Image (8x)',
+          onClick: async () => {
+            if (!stageRef?.current) return;
+            const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
+              mimeType: 'image/png',
+              quality: 1,
+              cropWidth: layerConfig.width,
+              cropHeight: layerConfig.height,
+              cropX: layerConfig.x,
+              cropY: layerConfig.y,
+              targetWidth: 1920 * 8,
+              backgroundColor: layerConfig.backgroundVisible
+                ? layerConfig.backgroundColor
+                : 'transparent',
+              applyStageTransform: false,
+              stageScale: stageConfig.scale,
+              stageX: stageConfig.x,
+              stageY: stageConfig.y,
+            });
+            const a = document.createElement('a');
+            a.download = `export-15360.png`;
+            a.href = dataURL;
+            a.click();
+          },
+        },
       ],
     },
     {
