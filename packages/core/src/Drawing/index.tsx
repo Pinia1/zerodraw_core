@@ -12,6 +12,11 @@ import LayersControl from '../components/Layers';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import useDrawingKeyboard from '../hooks/useKeyboard';
+import {
+  isPointInCanvasBounds,
+  normalizeKonvaPointerEvent,
+} from '../input/normalizeKonvaPointerEvent';
+import type { NormalizedPointerEvent } from '../input/types';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
@@ -233,9 +238,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return pos;
   };
 
-  const isLeftMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
-    return e.evt.button === 0;
-  });
+  // 旧逻辑已被 input adapter 统一吸收：按钮判断在 `normalizeKonvaPointerEvent` 内处理
 
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
@@ -291,24 +294,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: e.target.y(),
     });
   });
-  const getDrawingInfo = (e: Konva.KonvaEventObject<MouseEvent>) => {
-    const pos = e?.target?.getStage()?.getRelativePointerPosition() as Vector2d;
-    let config: LineConfigTypes | EraserConfigTypes = lineConfig;
-    const isEraser = activeKey === Actions.ERASER;
-    if (isEraser) {
-      config = eraserConfig;
-    }
-    return {
-      pos,
-      config: {
-        ...config,
-        stabilizer: isEraser ? undefined : lineConfig.stabilizer,
-        hardness: isEraser ? undefined : lineConfig.hardness,
-        fill: isEraser ? undefined : lineConfig.fill,
-        eraser: isEraser,
-      },
-    };
-  };
+
   const getDrawingTypes = (): {
     diagrams: Diagram['type'];
     type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths'>;
@@ -347,30 +333,36 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   };
 
-  const onPenMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
+    if (!input.canvasPoint) return;
+
     isDrawing.current = true;
-    const { pos, config } = getDrawingInfo(e);
-    const { x, y } = layerConfig;
-    const { scale } = stageConfig;
+
+    let config: LineConfigTypes | EraserConfigTypes = lineConfig;
+    const isEraser = activeKey === Actions.ERASER;
+    if (isEraser) config = eraserConfig;
+
     const id = generateUUID();
     setDrawingId(id);
+
     const line: Line = {
-      points: [pos.x - x, pos.y - y],
+      points: [input.canvasPoint.x, input.canvasPoint.y],
       strokeWidth: config.strokeWidth,
       stroke: fillColor,
       opacity: config.opacity,
-      stabilizer: config.stabilizer || 0,
-      hardness: config.hardness || 1,
-      tension: Math.max(config.stabilizer ? config.stabilizer / 4 : 0, 0.7),
-      eraser: config.eraser,
+      stabilizer: isEraser ? 0 : lineConfig.stabilizer || 0,
+      hardness: isEraser ? 1 : lineConfig.hardness || 1,
+      tension: Math.max(!isEraser && lineConfig.stabilizer ? lineConfig.stabilizer / 4 : 0, 0.7),
+      eraser: isEraser,
       id,
-      pressure: [0],
+      pressure: [input.pressure || 0],
       suppress: false,
-      scale: scale,
-      fill: !!config.fill,
+      scale: stageConfig.scale,
+      fill: !isEraser ? !!lineConfig.fill : false,
     };
+
     const { type, diagrams } = getDrawingTypes();
 
     setDrawingLayer({
@@ -380,19 +372,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
-  const onPenMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onPenInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer || !isDrawing.current) return;
-    const { pos: point } = getDrawingInfo(e);
-    const pressure = (e.evt as unknown as TouchEvent).touches?.[0]?.force || 0;
+    if (!input.canvasPoint) return;
+
     const { type } = getDrawingTypes();
     const lines = drawingLayer[type] as Line[];
     const lastLine = lines[lines.length - 1];
+    if (!lastLine) return;
 
     const updatedLine: Line = {
       ...lastLine,
-      points: [...lastLine.points, point.x - layerConfig.x, point.y - layerConfig.y],
-      pressure: [...lastLine.pressure, pressure],
+      points: [...lastLine.points, input.canvasPoint.x, input.canvasPoint.y],
+      pressure: [...lastLine.pressure, input.pressure || 0],
     };
 
     const newLines = [...lines.slice(0, -1), updatedLine];
@@ -402,27 +395,28 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
-  const onRectMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onRectInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
+    if (!input.canvasPoint) return;
     isDrawing.current = true;
-    const { pos } = getDrawingInfo(e);
-    const { x, y } = layerConfig;
-    const { scale } = stageConfig;
+
     const id = generateUUID();
     setDrawingId(id);
+
     const rect = {
-      x: pos.x - x,
-      y: pos.y - y,
+      x: input.canvasPoint.x,
+      y: input.canvasPoint.y,
       width: 0,
       height: 0,
       strokeWidth: graphConfig.strokeWidth,
       stroke: fillColor,
       opacity: graphConfig.opacity,
       fill: graphConfig.fill ? fillColor : '',
-      scale: scale,
+      scale: stageConfig.scale,
       id,
     };
+
     const { type, diagrams } = getDrawingTypes();
     setDrawingLayer({
       ...drawingLayer,
@@ -431,48 +425,50 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
-  const onRectMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onRectInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
-    if (!isDrawing.current) return;
-    const rects = drawingLayer?.rects || [];
+    if (!isDrawing.current || !drawingLayer) return;
+    if (!input.canvasPoint) return;
+
+    const rects = drawingLayer.rects || [];
     let rect = rects[rects.length - 1];
     if (!rect) return;
-    const { x, y } = layerConfig;
-    const { pos } = getDrawingInfo(e);
+
     rect = {
       ...rect,
-      width: pos.x - x - rect.x!,
-      height: pos.y - y - rect.y!,
+      width: input.canvasPoint.x - (rect.x ?? 0),
+      height: input.canvasPoint.y - (rect.y ?? 0),
     };
     rects.splice(rects.length - 1, 1, rect);
     requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer!, rects: rects });
+      setDrawingLayer({ ...drawingLayer, rects });
     });
   });
 
-  const onEllipseMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onEllipseInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
+    if (!input.canvasPoint) return;
     isDrawing.current = true;
-    const { pos } = getDrawingInfo(e);
-    const { x, y } = layerConfig;
-    const { scale } = stageConfig;
+
     const id = generateUUID();
     setDrawingId(id);
+
     const ellipse = {
-      x: pos.x - x,
-      y: pos.y - y,
+      x: input.canvasPoint.x,
+      y: input.canvasPoint.y,
       width: 0,
       height: 0,
       strokeWidth: graphConfig.strokeWidth,
       stroke: fillColor,
       opacity: graphConfig.opacity,
       fill: graphConfig.fill ? fillColor : '',
-      scale: scale,
+      scale: stageConfig.scale,
       id: id,
-      mouseX: pos.x - x,
-      mouseY: pos.y - y,
+      mouseX: input.canvasPoint.x,
+      mouseY: input.canvasPoint.y,
     };
+
     const { type, diagrams } = getDrawingTypes();
     setDrawingLayer({
       ...drawingLayer,
@@ -480,18 +476,21 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
     });
   });
-  const onEllipseMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+
+  const onEllipseInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
-    if (!isDrawing.current) return;
-    const ellipses = drawingLayer?.ellipses || [];
+    if (!isDrawing.current || !drawingLayer) return;
+    if (!input.canvasPoint) return;
+
+    const ellipses = drawingLayer.ellipses || [];
     let ellipse = ellipses[ellipses.length - 1];
     if (!ellipse) return;
-    const { x, y } = layerConfig;
-    const { pos } = getDrawingInfo(e);
-    const width = pos.x - x - ellipse.mouseX;
-    const height = pos.y - y - ellipse.mouseY;
-    const newX = ellipse.mouseX + width / 2;
-    const newY = ellipse.mouseY + height / 2;
+
+    const width = input.canvasPoint.x - (ellipse.mouseX ?? 0);
+    const height = input.canvasPoint.y - (ellipse.mouseY ?? 0);
+    const newX = (ellipse.mouseX ?? 0) + width / 2;
+    const newY = (ellipse.mouseY ?? 0) + height / 2;
+
     ellipse = {
       ...ellipse,
       width: Math.abs(width),
@@ -499,20 +498,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       x: newX,
       y: newY,
     };
+
     ellipses.splice(ellipses.length - 1, 1, ellipse);
     requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer!, ellipses: ellipses });
+      setDrawingLayer({ ...drawingLayer, ellipses });
     });
   });
 
-  const onLineMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onLineInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
-    const { pos } = getDrawingInfo(e);
-    const { x, y } = layerConfig;
-    const { scale } = stageConfig;
-    let startX = pos.x - x;
-    let startY = pos.y - y;
+    if (!input.canvasPoint) return;
+
+    let startX = input.canvasPoint.x;
+    let startY = input.canvasPoint.y;
     if (isDrawing.current && activeKey === Actions.LINE) {
       const lines = drawingLayer.lines || [];
       const lastLine = lines[lines.length - 1];
@@ -521,9 +520,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         startY = lastLine.points[3];
       }
     }
+
     isDrawing.current = true;
     const id = generateUUID();
     setDrawingId(id);
+
     const line: Line = {
       points: [startX, startY, startX, startY],
       strokeWidth: graphConfig.strokeWidth,
@@ -534,11 +535,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       tension: 0,
       eraser: false,
       id,
-      pressure: [0],
+      pressure: [input.pressure || 0],
       suppress: false,
-      scale: scale,
+      scale: stageConfig.scale,
       fill: false,
     };
+
     const { type, diagrams } = getDrawingTypes();
     setDrawingLayer({
       ...drawingLayer,
@@ -547,21 +549,22 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
-  const onLineMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+  const onLineInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
     const drawingLayer = getDrawingLayer();
     if (!isDrawing.current || !drawingLayer) return;
-    const lines = drawingLayer?.lines || [];
+    if (!input.canvasPoint) return;
+
+    const lines = drawingLayer.lines || [];
     let line = lines[lines.length - 1];
     if (!line) return;
-    const { x, y } = layerConfig;
-    const { pos } = getDrawingInfo(e);
+
     line = {
       ...line,
-      points: [line.points[0], line.points[1], pos.x - x, pos.y - y],
+      points: [line.points[0], line.points[1], input.canvasPoint.x, input.canvasPoint.y],
     };
     lines.splice(lines.length - 1, 1, line);
     requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer!, lines: lines });
+      setDrawingLayer({ ...drawingLayer, lines });
     });
   });
 
@@ -617,30 +620,34 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
-  // is point in layer
-  const isPointInLayer = (pos: Vector2d | null): boolean => {
-    if (!pos) return false;
-    const { x, y, width, height } = layerConfig;
-    return pos.x >= x && pos.x <= x + width && pos.y >= y && pos.y <= y + height;
-  };
+  // 旧逻辑已被 input adapter 统一吸收：边界判断使用 `isPointInCanvasBounds`
+
+  /**
+   * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
+   * 后续可以把所有“设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
+   */
+  const toInputEvent = useMemoizedFn(
+    (e: Konva.KonvaEventObject<MouseEvent>, phase: NormalizedPointerEvent['phase']) => {
+      return normalizeKonvaPointerEvent(e, phase, layerConfig, stageConfig);
+    }
+  );
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
-    if (!isLeftMouseDown(e) || stageDraggable) return;
-
-    const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
-    if (!isPointInLayer(pos)) return;
+    const input = toInputEvent(e, 'down');
+    if (!input.isPrimaryButton || stageDraggable) return;
+    if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;
 
     switch (activeKey) {
       case Actions.ERASER:
       case Actions.PEN:
-        return onPenMouseDown(e);
+        return onPenInputDown(input);
       case Actions.RECT:
-        return onRectMouseDown(e);
+        return onRectInputDown(input);
       case Actions.ELLIPSE:
-        return onEllipseMouseDown(e);
+        return onEllipseInputDown(input);
       case Actions.LINE:
-        return onLineMouseDown(e);
+        return onLineInputDown(input);
       case Actions.FILL:
         return onFillMouseDown(e);
       default:
@@ -652,18 +659,18 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     e.evt.preventDefault();
     if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
-    const pos = e.target.getStage()?.getRelativePointerPosition() ?? null;
-    if (!isPointInLayer(pos)) return;
+    const input = toInputEvent(e, 'move');
+    if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
-        return onPenMouseMove(e);
+        return onPenInputMove(input);
       case Actions.RECT:
-        return onRectMouseMove(e);
+        return onRectInputMove(input);
       case Actions.ELLIPSE:
-        return onEllipseMouseMove(e);
+        return onEllipseInputMove(input);
       case Actions.LINE:
-        return onLineMouseMove(e);
+        return onLineInputMove(input);
       default:
         break;
     }
