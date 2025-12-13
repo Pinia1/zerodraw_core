@@ -1,4 +1,4 @@
-import type { BlendMode } from '../types/Layers';
+import type { BlendMode, LayerFilter } from '../types/Layers';
 
 import Konva from 'konva';
 import type { Layers } from '../types/Layers';
@@ -26,6 +26,51 @@ export const blendModeToCompositeOperation = (blendMode: BlendMode = 'normal'): 
  */
 export const blendModeToCssMixBlendMode = (blendMode: BlendMode = 'normal'): BlendMode => {
   return blendMode;
+};
+
+const DEFAULT_FILTER: Required<LayerFilter> = {
+  blur: 0,
+  brightness: 100,
+  contrast: 100,
+  saturate: 100,
+  hueRotate: 0,
+  sepia: 0,
+  grayscale: 0,
+  invert: 0,
+};
+
+const normalizeFilter = (filter?: LayerFilter): Required<LayerFilter> => {
+  return { ...DEFAULT_FILTER, ...(filter ?? {}) };
+};
+
+/**
+ * 将 LayerFilter 转成 CSS filter 字符串（用于 UI 渲染阶段）。
+ * 返回 'none' 表示不应用滤镜。
+ */
+export const layerFilterToCssFilter = (filter?: LayerFilter): string => {
+  const f = normalizeFilter(filter);
+  const isDefault =
+    f.blur === 0 &&
+    f.brightness === 100 &&
+    f.contrast === 100 &&
+    f.saturate === 100 &&
+    f.hueRotate === 0 &&
+    f.sepia === 0 &&
+    f.grayscale === 0 &&
+    f.invert === 0;
+
+  if (isDefault) return 'none';
+
+  return [
+    `blur(${f.blur}px)`,
+    `brightness(${f.brightness}%)`,
+    `contrast(${f.contrast}%)`,
+    `saturate(${f.saturate}%)`,
+    `hue-rotate(${f.hueRotate}deg)`,
+    `sepia(${f.sepia}%)`,
+    `grayscale(${f.grayscale}%)`,
+    `invert(${f.invert}%)`,
+  ].join(' ');
 };
 
 /**
@@ -193,6 +238,10 @@ export const exportStageWithBlendModes = async (
       !hasBackdrop && i === 0 ? 'source-over' : blendModeToCompositeOperation(layer.blendMode);
     outCtx.save();
     outCtx.globalCompositeOperation = composite as any;
+
+    // 导出阶段烘焙 filter：使用 CanvasRenderingContext2D.filter
+    // 注意：这里是对整层 canvas 应用滤镜，语义与 UI 的 CSS filter（对 layer canvas DOM）一致。
+    outCtx.filter = layerFilterToCssFilter(layer.filter);
 
     /**
      * 重要：你的图层透明度不是通过 `Konva.Layer.opacity` 实现，而是用一个全屏 `destination-out` Rect 把 alpha “挖掉”。

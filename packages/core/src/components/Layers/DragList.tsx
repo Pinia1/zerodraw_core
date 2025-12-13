@@ -38,10 +38,11 @@ const SortableListItem: React.FC<GetProps<typeof List.Item> & { itemKey: string 
 };
 
 const DragList: React.FC = () => {
-  const { layers, pushHistory } = useLayerStore(
+  const { layers, pushHistory, setDrawingLayer } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
       pushHistory: state.pushHistory,
+      setDrawingLayer: state.setDrawingLayer,
     }))
   );
 
@@ -77,6 +78,7 @@ const DragList: React.FC = () => {
       });
 
       pushHistory(nextLayers);
+      setDrawingLayer(nextLayers[nextLayers.length - 1]);
     }
   };
 

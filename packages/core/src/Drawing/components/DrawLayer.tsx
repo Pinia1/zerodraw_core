@@ -14,6 +14,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import { layerFilterToCssFilter } from '../../utils/BlendMode';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
@@ -106,10 +107,11 @@ const DrawLayer: React.FC = () => {
       if (!canvasEl) return;
 
       canvasEl.style.mixBlendMode = drawingLayer.blendMode;
+      canvasEl.style.filter = layerFilterToCssFilter(drawingLayer.filter);
     } catch (error) {
       console.warn('Failed to set css mix-blend-mode for DrawLayer canvas:', error);
     }
-  }, [drawingLayer?.blendMode, activeKey]);
+  }, [drawingLayer?.blendMode, drawingLayer?.filter, activeKey]);
 
   if (activeKey === Actions.ROPE) {
     return null;

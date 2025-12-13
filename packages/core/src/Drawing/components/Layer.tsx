@@ -24,6 +24,7 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
+import { layerFilterToCssFilter } from '../../utils/BlendMode';
 import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
@@ -48,6 +49,7 @@ const Layer: React.FC<Layers> = (props) => {
     fills,
     image,
     blendMode,
+    filter,
   } = props;
   const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
@@ -104,10 +106,11 @@ const Layer: React.FC<Layers> = (props) => {
       if (!canvasEl) return;
 
       canvasEl.style.mixBlendMode = blendMode;
+      canvasEl.style.filter = layerFilterToCssFilter(filter);
     } catch (error) {
       console.warn('Failed to set css mix-blend-mode for Layer canvas:', error);
     }
-  }, [blendMode, activeKey]);
+  }, [blendMode, filter, activeKey]);
 
   const handleBindTransformer = useMemoizedFn(() => {
     if (!trRef.current || !imageRef.current) return;

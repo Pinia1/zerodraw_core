@@ -88,6 +88,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const renderOrderLayers = useMemo(() => {
     const newLayers = [...layers];
     newLayers.sort((a, b) => a.order - b.order);
+
     return newLayers;
   }, [layers]);
 

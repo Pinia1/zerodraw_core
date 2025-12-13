@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../../store/useDrawing';
 import { Layers } from '../../../types/Layers';
+import { layerFilterToCssFilter } from '../../../utils/BlendMode';
 
 const PREVIEW_WIDTH = 62;
 const PREVIEW_HEIGHT = 35;
@@ -46,7 +47,10 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
     const offsetX = (LARGE_PREVIEW_WIDTH - drawW) / 2;
     const offsetY = (LARGE_PREVIEW_HEIGHT - drawH) / 2;
 
+    ctx.save();
+    ctx.filter = layerFilterToCssFilter(props.filter);
     ctx.drawImage(layerCanvas, 0, 0, srcW, srcH, offsetX, offsetY, drawW, drawH);
+    ctx.restore();
   };
 
   useDebounceEffect(
@@ -105,6 +109,8 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
         const smallDrawH = srcH * smallScale;
         const smallOffsetX = (PREVIEW_WIDTH - smallDrawW) / 2;
         const smallOffsetY = (PREVIEW_HEIGHT - smallDrawH) / 2;
+        smallCtx.save();
+        smallCtx.filter = layerFilterToCssFilter(props.filter);
         smallCtx.drawImage(
           layerCanvas,
           0,
@@ -116,6 +122,7 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
           smallDrawW,
           smallDrawH
         );
+        smallCtx.restore();
 
         layerCanvasRef.current = layerCanvas;
 

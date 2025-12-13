@@ -2,6 +2,25 @@ import type { Point2D } from './Drawing';
 
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'color-dodge';
 
+export interface LayerFilter {
+  /** px */
+  blur?: number;
+  /** percent, 100 means no-op */
+  brightness?: number;
+  /** percent, 100 means no-op */
+  contrast?: number;
+  /** percent, 100 means no-op */
+  saturate?: number;
+  /** degrees */
+  hueRotate?: number;
+  /** percent */
+  sepia?: number;
+  /** percent */
+  grayscale?: number;
+  /** percent */
+  invert?: number;
+}
+
 export interface Layers {
   id: string;
   name?: string;
@@ -18,6 +37,7 @@ export interface Layers {
   image: Fill | null;
   imageFull?: boolean;
   blendMode: BlendMode;
+  filter?: LayerFilter;
 }
 
 export interface DrawLayer extends Layers {

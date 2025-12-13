@@ -43,6 +43,16 @@ export const initialDrawingLayer: () => Layers = () => ({
   name: 'layer 1',
   order: 0,
   blendMode: 'normal',
+  filter: {
+    blur: 0,
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    hueRotate: 0,
+    sepia: 0,
+    grayscale: 0,
+    invert: 0,
+  },
 });
 const init = initialDrawingLayer();
 
@@ -160,7 +170,7 @@ const useLayerStore = create<LayerState>()(
     }),
     {
       name: 'drawing-layers-storage',
-      partialize: (state) => ({
+      partialize: () => ({
         // layers: state.layers,
         // drawingLayer: state.drawingLayer,
       }),

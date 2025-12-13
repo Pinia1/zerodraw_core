@@ -11,7 +11,8 @@ import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions } from '../../types/Drawing';
-import { Layers } from '../../types/Layers';
+import type { LayerFilter, Layers } from '../../types/Layers';
+import { FILTER_PRESETS } from '../../utils/Filter';
 import Container from '../Container';
 import { ToolItem } from '../index';
 import Menus from './components/Menus';
@@ -70,7 +71,7 @@ const StopPointerWrapper = ({ children }: { children: React.ReactNode }) => {
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
-  const { visible, name, opacity, id, blendMode } = props;
+  const { visible, name, opacity, id, blendMode, filter } = props;
 
   const stageRef = useBindRef();
   const opacityRef = useRef(opacity);
@@ -150,6 +151,41 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
     } else {
       opacityRef.current = opacity;
     }
+  });
+
+  const normalizedFilter: Required<LayerFilter> = useMemo(() => {
+    return {
+      blur: 0,
+      brightness: 100,
+      contrast: 100,
+      saturate: 100,
+      hueRotate: 0,
+      sepia: 0,
+      grayscale: 0,
+      invert: 0,
+      ...(filter ?? {}),
+    };
+  }, [filter]);
+
+  const selectedPresetKey = useMemo(() => {
+    const hit = FILTER_PRESETS.find((p) => {
+      const v = p.value;
+      return (
+        v.blur === normalizedFilter.blur &&
+        v.brightness === normalizedFilter.brightness &&
+        v.contrast === normalizedFilter.contrast &&
+        v.saturate === normalizedFilter.saturate &&
+        v.hueRotate === normalizedFilter.hueRotate &&
+        v.sepia === normalizedFilter.sepia &&
+        v.grayscale === normalizedFilter.grayscale &&
+        v.invert === normalizedFilter.invert
+      );
+    });
+    return hit?.key ?? 'custom';
+  }, [normalizedFilter]);
+
+  const updateFilter = useMemoizedFn((patch: Partial<LayerFilter>, push?: boolean) => {
+    handlerSetLayer('filter', { ...normalizedFilter, ...patch }, push);
   });
 
   return (
@@ -257,6 +293,75 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                       value: 'color-dodge',
                     },
                   ]}
+                />
+
+                <span style={{ marginBottom: 2, marginTop: 8 }}>Filter preset: </span>
+                <Select
+                  value={selectedPresetKey}
+                  options={[
+                    ...FILTER_PRESETS.map((p) => ({ label: p.label, value: p.key })),
+                    { label: 'Custom', value: 'custom' },
+                  ]}
+                  onChange={(key) => {
+                    const preset = FILTER_PRESETS.find((p) => p.key === key);
+                    if (!preset) return;
+                    handlerSetLayer('filter', preset.value, true);
+                  }}
+                />
+
+                <span style={{ marginBottom: -6, marginTop: 6 }}>Blur: </span>
+                <Slider
+                  style={{ width: '120px' }}
+                  min={0}
+                  max={50}
+                  step={1}
+                  value={normalizedFilter.blur}
+                  onChange={(value) => updateFilter({ blur: value as number }, false)}
+                  onAfterChange={(value) => updateFilter({ blur: value as number }, true)}
+                />
+
+                <span style={{ marginBottom: -6 }}>Brightness: </span>
+                <Slider
+                  style={{ width: '120px' }}
+                  min={0}
+                  max={200}
+                  step={1}
+                  value={normalizedFilter.brightness}
+                  onChange={(value) => updateFilter({ brightness: value as number }, false)}
+                  onAfterChange={(value) => updateFilter({ brightness: value as number }, true)}
+                />
+
+                <span style={{ marginBottom: -6 }}>Contrast: </span>
+                <Slider
+                  style={{ width: '120px' }}
+                  min={0}
+                  max={200}
+                  step={1}
+                  value={normalizedFilter.contrast}
+                  onChange={(value) => updateFilter({ contrast: value as number }, false)}
+                  onAfterChange={(value) => updateFilter({ contrast: value as number }, true)}
+                />
+
+                <span style={{ marginBottom: -6 }}>Saturate: </span>
+                <Slider
+                  style={{ width: '120px' }}
+                  min={0}
+                  max={200}
+                  step={1}
+                  value={normalizedFilter.saturate}
+                  onChange={(value) => updateFilter({ saturate: value as number }, false)}
+                  onAfterChange={(value) => updateFilter({ saturate: value as number }, true)}
+                />
+
+                <span style={{ marginBottom: -6 }}>Hue rotate: </span>
+                <Slider
+                  style={{ width: '120px' }}
+                  min={-180}
+                  max={180}
+                  step={1}
+                  value={normalizedFilter.hueRotate}
+                  onChange={(value) => updateFilter({ hueRotate: value as number }, false)}
+                  onAfterChange={(value) => updateFilter({ hueRotate: value as number }, true)}
                 />
               </Flex>
             </StopPointerWrapper>
