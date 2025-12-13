@@ -559,11 +559,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const newLines = [...lines.slice(0, -1), updatedLine];
 
     if (isMobile) {
+      setDrawingLayer({ ...drawingLayer, [type]: newLines });
+    } else {
       requestAnimationFrame(() => {
         setDrawingLayer({ ...drawingLayer, [type]: newLines });
       });
-    } else {
-      setDrawingLayer({ ...drawingLayer, [type]: newLines });
     }
   });
 

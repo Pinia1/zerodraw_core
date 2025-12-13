@@ -1,35 +1,51 @@
 import Konva from 'konva';
 import React, { useCallback, useMemo } from 'react';
-import { Path, Shape } from 'react-konva';
-import { useShallow } from 'zustand/react/shallow';
-import { useDrawingStore } from '../../../store/useDrawing';
-import useToolsStore from '../../../store/useTools';
-import { Actions } from '../../../types/Drawing';
+import { Rect, Shape } from 'react-konva';
 import type { Line } from '../../../types/Layers';
 import { pint2DToPath } from '../../../utils/drawing';
 
-//todo Performance comparison
 const Paths: React.FC<Line> = (props) => {
-  const { points, stroke, opacity } = props;
+  const { points, opacity } = props;
 
-  const { activeKey } = useToolsStore(
-    useShallow((state) => ({
-      activeKey: state.activeKey,
-    }))
-  );
-  const { drawingId } = useDrawingStore(
-    useShallow((state) => ({
-      drawingId: state.drawingId,
-    }))
-  );
-
-  const path = useMemo(() => {
-    return pint2DToPath(points, props);
+  const path2D = useMemo(() => {
+    return new Path2D(pint2DToPath(points, props));
   }, [points]);
 
-  const renderAllPaths = useCallback((ctx: Konva.Context, path: string, line: Line) => {
+  const bounds = useMemo(() => {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (let i = 0; i < points.length; i += 2) {
+      const x = points[i];
+      const y = points[i + 1];
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(maxY)
+    ) {
+      return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    const pad = Math.max(2, props.strokeWidth);
+    return {
+      x: minX - pad,
+      y: minY - pad,
+      width: maxX - minX + pad * 2,
+      height: maxY - minY + pad * 2,
+    };
+  }, [points, props.strokeWidth]);
+
+  const renderAllPaths = useCallback((ctx: Konva.Context, path2D: Path2D, line: Line) => {
     ctx.imageSmoothingEnabled = false;
-    const path2D = new Path2D(path);
     ctx.save();
 
     ctx.globalAlpha = line.opacity;
@@ -40,18 +56,36 @@ const Paths: React.FC<Line> = (props) => {
       ctx.strokeStyle = line.stroke;
       ctx.stroke(path2D);
     }
-
     ctx.restore();
   }, []);
 
-  if (points.length < 6) return null;
-  //todo
-  return <Path data={path} stroke={stroke} fill={stroke} opacity={opacity} listening={true} />;
+  if (points.length < 4) return null;
 
-  if (activeKey === Actions.FILL || drawingId) {
-    return <Path data={path} fill={stroke} opacity={opacity} listening={false} />;
-  }
-  return <Shape sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path, props)} />;
+  return (
+    <>
+      <Shape
+        opacity={opacity}
+        listening={true}
+        hitFunc={(ctx, shape) => {
+          ctx.beginPath();
+          ctx.rect(bounds.x, bounds.y, bounds.width, bounds.height);
+          ctx.closePath();
+          ctx.fillStrokeShape(shape);
+        }}
+        sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path2D, props)}
+      />
+      <Rect
+        x={bounds.x}
+        y={bounds.y}
+        width={bounds.width}
+        height={bounds.height}
+        fillEnabled={false}
+        strokeEnabled={false}
+        perfectDrawEnabled={false}
+        listening={true}
+      />
+    </>
+  );
 };
 
 export default React.memo(Paths);

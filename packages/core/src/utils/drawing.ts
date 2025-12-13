@@ -49,7 +49,8 @@ export function getSvgPathFromStroke(points: number[][]): string {
     .reduce(
       (acc, point, i, arr) => {
         if (i === max) {
-          acc.push(point, med(point, arr[0]), 'L', arr[0], 'Z');
+          // acc.push(point, med(point, arr[0]), 'L', arr[0], 'Z');
+          acc.push(point, med(point, arr[0]), 'Z');
         } else {
           acc.push(point, med(point, arr[i + 1]));
         }
