@@ -23,6 +23,8 @@ const useLayerToBitmap = () => {
       return new Promise(async (resolve) => {
         if (layer && !layer.diagrams?.length) {
           resolve(layer);
+          console.log('return 1');
+
           return;
         }
 
@@ -34,6 +36,7 @@ const useLayerToBitmap = () => {
           layer.image?.rotation === undefined
         ) {
           resolve(layer);
+          console.log('return 2');
           return;
         }
 
@@ -63,6 +66,17 @@ const useLayerToBitmap = () => {
 
         // 在离屏 Stage 上获取坐标（未缩放）
         const groupRect = clonedGroup.getClientRect();
+
+        const isFiniteRect =
+          Number.isFinite(groupRect.x) &&
+          Number.isFinite(groupRect.y) &&
+          Number.isFinite(groupRect.width) &&
+          Number.isFinite(groupRect.height);
+
+        if (!isFiniteRect) {
+          resolve(layer);
+          return;
+        }
 
         let relativeX = 0;
         let relativeY = 0;
@@ -168,6 +182,9 @@ const useLayerToBitmap = () => {
 
           resolve(newDrawingLayer);
           // replaceCurrentHistory(layers.map((i) => (i.id === layer.id ? newDrawingLayer : i)));
+        };
+        img.onerror = () => {
+          console.log('return error');
         };
       });
     } catch (error) {

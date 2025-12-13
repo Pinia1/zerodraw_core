@@ -1,4 +1,5 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
+import { useLockFn } from '@monorepo/common';
 import { Divider, Popover } from 'antd';
 import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -96,6 +97,24 @@ const Tool: React.FC = () => {
       }))
     );
 
+  const handleRope = useLockFn(async () => {
+    try {
+      const currentLayer = stageRef?.current?.getLayers().find((layer) => layer.attrs.isDrawing);
+      const group = currentLayer?.findOne('Group');
+
+      const newDrawingLayer = await runLayerToBitmap(
+        drawingLayer! as unknown as Layers,
+        group as Konva.Group
+      );
+
+      setLayers(
+        layers.map((layer) => (layer.id === drawingLayer?.id ? (newDrawingLayer as Layers) : layer))
+      );
+    } catch (error) {
+      console.log(error, 'errorrrr');
+    }
+  });
+
   const toolMenus: {
     key: Actions;
     icon?: React.ReactNode;
@@ -120,7 +139,6 @@ const Tool: React.FC = () => {
       },
       {
         key: Actions.None,
-        icon: <Icon component={IconAdd} />,
         type: ToolTypes.DIVIDER,
       },
       {
@@ -130,21 +148,7 @@ const Tool: React.FC = () => {
         get isActive() {
           return activeKey === Actions.ROPE;
         },
-        onClick: async () => {
-          const currentLayer = stageRef?.current
-            ?.getLayers()
-            .find((layer) => layer.attrs.isDrawing);
-          const group = currentLayer?.findOne('Group');
-          const newDrawingLayer = await runLayerToBitmap(
-            drawingLayer! as unknown as Layers,
-            group as Konva.Group
-          );
-          setLayers(
-            layers.map((layer) =>
-              layer.id === drawingLayer?.id ? (newDrawingLayer as Layers) : layer
-            )
-          );
-        },
+        onClick: handleRope,
       },
       {
         key: Actions.PEN,
@@ -221,7 +225,7 @@ const Tool: React.FC = () => {
         disabled: !canRedo,
       },
     ];
-  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer, layers]);
+  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
     if (item.disabled) return;

@@ -35,6 +35,7 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
+import { isMac, isMobile, isWindows } from '../utils/platform';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
@@ -280,16 +281,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
     return { dx, dy };
   });
-
-  const isWindows = useMemo(() => {
-    if (typeof navigator === 'undefined') return false;
-    return /Win/i.test(navigator.platform) || /Windows/i.test(navigator.userAgent);
-  }, []);
-
-  const isMac = useMemo(() => {
-    if (typeof navigator === 'undefined') return false;
-    return /Mac/i.test(navigator.platform) || /Macintosh/i.test(navigator.userAgent);
-  }, []);
 
   /**
    * 统一 wheel 行为：
@@ -567,9 +558,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const newLines = [...lines.slice(0, -1), updatedLine];
 
-    requestAnimationFrame(() => {
+    if (isMobile) {
+      requestAnimationFrame(() => {
+        setDrawingLayer({ ...drawingLayer, [type]: newLines });
+      });
+    } else {
       setDrawingLayer({ ...drawingLayer, [type]: newLines });
-    });
+    }
   });
 
   const onRectInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
