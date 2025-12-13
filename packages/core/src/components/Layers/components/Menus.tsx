@@ -3,12 +3,13 @@ import type { GetProp, MenuProps } from 'antd';
 import { Menu } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
-import useBlendMode from '../../../hooks/useBlendMode';
+import { useShallow } from 'zustand/react/shallow';
 import useCopyLayer from '../../../hooks/useCopyLayer';
 import useDeletedLayer from '../../../hooks/useDeletedLayer';
 import useMergeLayer from '../../../hooks/useMergeLayer';
 import useOrderLayer from '../../../hooks/useOrderLayer';
 import useVisibled from '../../../hooks/useVisibled';
+import { useDrawingStore } from '../../../store/useDrawing';
 import { Layers } from '../../../types/Layers';
 
 const DangerText = styled.span`
@@ -41,7 +42,13 @@ const Menus: React.FC<MenusProps> = (props) => {
   const { mergeDown, mergeUp, canMergeDown, canMergeUp } = useMergeLayer(id);
   const { sendToFront, sendToBack, isAtFront, isAtBack } = useOrderLayer(id);
   const { toggleOthersVisibility } = useVisibled(id);
-  const { setBlendMode } = useBlendMode(id);
+
+  const { stageRef, layerConfig } = useDrawingStore(
+    useShallow((state) => ({
+      stageRef: state.stageRef,
+      layerConfig: state.layerConfig,
+    }))
+  );
 
   const items: MenuItem[] = [
     {
@@ -120,50 +127,26 @@ const Menus: React.FC<MenusProps> = (props) => {
         setMenuOpen(false);
       },
     },
-    {
-      key: 'Blend-mode',
-      label: 'Blend mode',
-      children: [
-        {
-          key: 'normal',
-          label: 'Normal',
-          onClick: () => {
-            setBlendMode('normal');
-            setMenuOpen(false);
-          },
-        },
-        {
-          key: 'multiply',
-          label: 'Multiply',
-          onClick: () => {
-            setBlendMode('multiply');
-            setMenuOpen(false);
-          },
-        },
-        {
-          key: 'screen',
-          label: 'Screen',
-          onClick: () => {
-            setBlendMode('screen');
-            setMenuOpen(false);
-          },
-        },
-        {
-          key: 'overlay',
-          label: 'Overlay',
-          onClick: () => {
-            setBlendMode('overlay');
-            setMenuOpen(false);
-          },
-        },
-      ],
-    },
 
     {
       key: 'Export',
       label: 'Export',
       children: [
-        { key: 'export-original', label: 'Image (Original)' },
+        {
+          key: 'export-original',
+          label: 'Image (Original)',
+          onClick: async () => {
+            const dataURL = stageRef?.current?.toDataURL({
+              mimeType: 'image/png',
+              quality: 1,
+              width: layerConfig.width,
+              height: layerConfig.height,
+              x: layerConfig.x,
+              y: layerConfig.y,
+            });
+            console.log(dataURL, 'dataURL');
+          },
+        },
         { key: 'export-2x', label: 'Image (2x)' },
         { key: 'export-4x', label: 'Image (4x)' },
         { key: 'export-8x', label: 'Image (8x)' },

@@ -1,6 +1,6 @@
 import Icon from '@ant-design/icons';
 import { useMemoizedFn, useThrottleFn } from '@monorepo/common';
-import { Flex, Input, Popover, Slider } from 'antd';
+import { Flex, Input, Popover, Select, Slider } from 'antd';
 import Konva from 'konva';
 import React, { isValidElement, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
@@ -12,7 +12,6 @@ import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
-import { blendModeToCssMixBlendMode } from '../../utils/BlendMode';
 import Container from '../Container';
 import { ToolItem } from '../index';
 import Menus from './components/Menus';
@@ -211,8 +210,13 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           onOpenChange={onOpenChange}
           content={
             <StopPointerWrapper>
-              <Flex vertical>
-                <span style={{ marginBottom: -6, marginTop: 4 }}>Opacity: </span>
+              <Flex
+                style={{
+                  padding: '4px 0px',
+                }}
+                vertical
+              >
+                <span style={{ marginBottom: -6 }}>Opacity: </span>
                 <Slider
                   style={{
                     width: '120px',
@@ -225,12 +229,41 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                     handlerSetLayer('opacity', value, false);
                   }}
                 />
+                <span style={{ marginBottom: 2 }}>Blend mode: </span>
+                <Select
+                  onChange={(value) => {
+                    handlerSetLayer('blendMode', value, true);
+                  }}
+                  value={blendMode}
+                  options={[
+                    {
+                      label: 'Normal',
+                      value: 'normal',
+                    },
+                    {
+                      label: 'Multiply',
+                      value: 'multiply',
+                    },
+                    {
+                      label: 'Screen',
+                      value: 'screen',
+                    },
+                    {
+                      label: 'Overlay',
+                      value: 'overlay',
+                    },
+                    {
+                      label: 'Color Dodge',
+                      value: 'color-dodge',
+                    },
+                  ]}
+                />
               </Flex>
             </StopPointerWrapper>
           }
         >
           <span onClick={(e) => e.stopPropagation()} style={{ cursor: 'pointer' }}>
-            {blendModeToCssMixBlendMode(blendMode)[0].toUpperCase()} {opacity}%
+            {blendMode[0].toUpperCase()} {opacity}%
           </span>
         </Popover>
       </Flex>

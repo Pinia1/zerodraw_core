@@ -1,6 +1,6 @@
 import type { Point2D } from './Drawing';
 
-export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay';
+export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'color-dodge';
 
 export interface Layers {
   id: string;

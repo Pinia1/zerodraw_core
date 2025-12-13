@@ -24,7 +24,6 @@ import {
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
-import { blendModeToCssMixBlendMode } from '../../utils/BlendMode';
 import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
@@ -104,7 +103,7 @@ const Layer: React.FC<Layers> = (props) => {
       const canvasEl = (layer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
       if (!canvasEl) return;
 
-      canvasEl.style.mixBlendMode = blendModeToCssMixBlendMode(blendMode);
+      canvasEl.style.mixBlendMode = blendMode;
     } catch (error) {
       console.warn('Failed to set css mix-blend-mode for Layer canvas:', error);
     }

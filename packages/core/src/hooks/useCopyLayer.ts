@@ -51,6 +51,7 @@ const useCopyLayer = (id?: string) => {
   return {
     copy: useMemoizedFn(onCopy),
     paste: useMemoizedFn(onPaste),
+    layers,
   };
 };
 
