@@ -24,6 +24,7 @@ const Paths: React.FC<Line> = (props) => {
   );
 
   const path = useMemo(() => {
+    if (points.length < 6) return '';
     return pint2DToPath(points, props);
   }, [points]);
 

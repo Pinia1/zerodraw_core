@@ -47,6 +47,15 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const [cursorVisible, setCursorVisible] = useState(true);
 
   const [stageDraggable, setStageDraggable] = useState(false);
+  // iPad/触屏：多指手势期间禁用绘制，避免误触
+  const isMultiTouchRef = useRef(false);
+
+  // ===== iPad/触屏：双指平移 + 捏合缩放 =====
+  const lastTwoFinger = useRef<{
+    distance: number;
+    center: { x: number; y: number };
+  } | null>(null);
+
   const {
     stageConfig,
     setStageConfig,
@@ -258,28 +267,159 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setStageConfig({ scale: newScale, x: newPos.x, y: newPos.y });
   });
 
+  const normalizeWheelDelta = useMemoizedFn((evt: WheelEvent) => {
+    // deltaMode: 0=pixel, 1=line, 2=page
+    let dx = evt.deltaX;
+    let dy = evt.deltaY;
+    if (evt.deltaMode === 1) {
+      dx *= 16;
+      dy *= 16;
+    } else if (evt.deltaMode === 2) {
+      dx *= layerConfig.height || 800;
+      dy *= layerConfig.height || 800;
+    }
+    return { dx, dy };
+  });
+
+  /**
+   * 统一 wheel 行为：
+   * - 触控板：默认平移（dx/dy），pinch 通常会带 ctrlKey -> 触发缩放
+   * - 鼠标滚轮：默认缩放（更符合绘图软件习惯）
+   */
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
     const stage = e.target.getStage();
+    if (!stage) return;
 
-    const pointer = stage?.getPointerPosition() ?? { x: 0, y: 0 };
-    const deltaY = e.evt.deltaY;
+    const pointer = stage.getPointerPosition() ?? { x: 0, y: 0 };
+    const { dx, dy } = normalizeWheelDelta(e.evt);
 
-    // 垂直滚动始终触发缩放
-    if (deltaY !== 0) {
-      // 根据 deltaY 大小动态调整缩放速度
-      const scaleStep = Math.min(Math.abs(deltaY) / 500, REDUCE_SCALE);
-      const { scale, x, y } = getScaleAndPosition(deltaY, scaleStep, pointer);
+    const isLikelyMouseWheel = e.evt.deltaMode !== 0;
+    const isPinchZoomGesture = !!(e.evt.ctrlKey || e.evt.metaKey);
+
+    // 缩放优先级：pinch(通常 ctrlKey) > mouse wheel
+    const shouldZoom = isPinchZoomGesture || isLikelyMouseWheel;
+
+    if (shouldZoom) {
+      if (dy === 0) return;
+      const scaleStep = Math.min(Math.abs(dy) / 500, REDUCE_SCALE);
+      const { scale, x, y } = getScaleAndPosition(dy, scaleStep, pointer);
       return scaling(scale, { x, y });
     }
 
-    // 水平滚动触发平移（触控板）
-    if (e.evt.deltaX !== 0) {
-      const newPosition = {
-        x: stageConfig.x - e.evt.deltaX,
-        y: stageConfig.y,
-      };
-      setStageConfig({ ...stageConfig, x: newPosition.x, y: newPosition.y });
+    // 触控板平移：同时支持 x/y（Windows/mac 触控板差异在 normalizeWheelDelta 吸收）
+    if (dx === 0 && dy === 0) return;
+    setStageConfig({
+      ...stageConfig,
+      x: stageConfig.x - dx,
+      y: stageConfig.y - dy,
+    });
+  });
+
+  const getTouchCenterAndDistance = useMemoizedFn((stage: Konva.Stage, touches: TouchList) => {
+    const rect = stage.container().getBoundingClientRect();
+    const t0 = touches[0];
+    const t1 = touches[1];
+    const p0 = { x: t0.clientX - rect.left, y: t0.clientY - rect.top };
+    const p1 = { x: t1.clientX - rect.left, y: t1.clientY - rect.top };
+    const center = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+    const dx = p0.x - p1.x;
+    const dy = p0.y - p1.y;
+    const distance = Math.hypot(dx, dy);
+    return { center, distance };
+  });
+
+  const onStageTouchStart = useMemoizedFn((e: Konva.KonvaEventObject<TouchEvent>) => {
+    const stage = e.target.getStage();
+    if (!stage) return;
+    const touches = e.evt.touches;
+
+    // 多指（>=2）视为手势：禁用绘制，防误触
+    if (touches.length >= 2) {
+      e.evt.preventDefault();
+      isMultiTouchRef.current = true;
+
+      // 如果正在绘制：直接“取消当前未完成图形”，不入历史、不留点，避免误触产生脏数据
+      if (isDrawing.current) {
+        const drawingLayer = getDrawingLayer();
+        if (drawingLayer) {
+          const { type, diagrams } = getDrawingTypes();
+          // 按当前工具类型移除最后一个临时图元，并同步移除 diagrams 的最后一项（如果匹配）
+          const arr = [...(drawingLayer[type] as any[])];
+          const removed = arr.pop();
+          const newDiagrams = [...drawingLayer.diagrams];
+          const lastDiagram = newDiagrams[newDiagrams.length - 1];
+          if (
+            lastDiagram &&
+            removed?.id &&
+            lastDiagram.id === removed.id &&
+            lastDiagram.type === diagrams
+          ) {
+            newDiagrams.pop();
+          }
+          setDrawingLayer({ ...drawingLayer, [type]: arr, diagrams: newDiagrams } as any);
+        }
+        isDrawing.current = false;
+        setDrawingId(null);
+      }
+
+      lastTwoFinger.current = getTouchCenterAndDistance(stage, touches);
+      return;
+    }
+  });
+
+  const onStageTouchMove = useMemoizedFn((e: Konva.KonvaEventObject<TouchEvent>) => {
+    const stage = e.target.getStage();
+    if (!stage) return;
+    const touches = e.evt.touches;
+    if (touches.length < 2) return;
+    e.evt.preventDefault();
+
+    const curr = getTouchCenterAndDistance(stage, touches);
+    const prev = lastTwoFinger.current;
+    if (!prev) {
+      lastTwoFinger.current = curr;
+      return;
+    }
+
+    const scaleBy = prev.distance ? curr.distance / prev.distance : 1;
+    const centerDelta = { x: curr.center.x - prev.center.x, y: curr.center.y - prev.center.y };
+
+    // 更稳的判定：优先“平移”，只有当距离变化足够大且不是位移噪声时才触发缩放
+    const distanceDelta = curr.distance - prev.distance;
+    const distanceDeltaAbs = Math.abs(distanceDelta);
+    const moveDelta = Math.hypot(centerDelta.x, centerDelta.y);
+
+    // 死区：小于 6px 或者小于 1.5% 的距离变化，一律按平移处理
+    const DIST_PX_DEADZONE = 6;
+    const DIST_RATIO_DEADZONE = 0.015;
+    const isZoom =
+      distanceDeltaAbs > DIST_PX_DEADZONE &&
+      distanceDeltaAbs > prev.distance * DIST_RATIO_DEADZONE &&
+      // 如果主要是位移（moveDelta 很大），仍然偏向平移
+      !(moveDelta > distanceDeltaAbs * 2);
+
+    if (isZoom) {
+      const newScale = stageConfig.scale * scaleBy;
+      const newX = curr.center.x - (curr.center.x - stageConfig.x) * scaleBy;
+      const newY = curr.center.y - (curr.center.y - stageConfig.y) * scaleBy;
+      scaling(newScale, { x: newX, y: newY });
+    } else {
+      setStageConfig({
+        ...stageConfig,
+        x: stageConfig.x + centerDelta.x,
+        y: stageConfig.y + centerDelta.y,
+      });
+    }
+
+    lastTwoFinger.current = curr;
+  });
+
+  const onStageTouchEnd = useMemoizedFn((e: Konva.KonvaEventObject<TouchEvent>) => {
+    const touches = e.evt.touches;
+    if (touches.length < 2) {
+      lastTwoFinger.current = null;
+      isMultiTouchRef.current = false;
     }
   });
 
@@ -620,8 +760,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
-  // 旧逻辑已被 input adapter 统一吸收：边界判断使用 `isPointInCanvasBounds`
-
   /**
    * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
    * 后续可以把所有“设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
@@ -635,6 +773,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     const input = toInputEvent(e, 'down');
+    if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!input.isPrimaryButton || stageDraggable) return;
     if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;
 
@@ -660,6 +799,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
     const input = toInputEvent(e, 'move');
+    if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;
     switch (activeKey) {
       case Actions.PEN:
@@ -676,11 +816,50 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
+  // points 存的是 [x1,y1,x2,y2,...]，这里按“点”（pair）计数
+  const getPointCount = (points: number[]) => {
+    return Math.floor(points.length / 2);
+  };
+
+  const discardLastStrokeIfTooShort = useMemoizedFn(() => {
+    const drawingLayer = getDrawingLayer();
+    if (!drawingLayer) return false;
+
+    const { type, diagrams } = getDrawingTypes();
+    const arr = drawingLayer[type] as any[];
+    if (!arr?.length) return false;
+
+    const last = arr[arr.length - 1] as { id?: string; points?: number[] } | undefined;
+    const points = last?.points ?? [];
+    const pointCount = getPointCount(points);
+
+    // 少于 6 个点：丢弃本次 stroke（不入历史、不留点）
+    if (pointCount < 6) {
+      const newArr = arr.slice(0, -1);
+      const newDiagrams = [...drawingLayer.diagrams];
+      const lastDiagram = newDiagrams[newDiagrams.length - 1];
+      if (lastDiagram && last?.id && lastDiagram.id === last.id && lastDiagram.type === diagrams) {
+        newDiagrams.pop();
+      }
+      setDrawingLayer({ ...(drawingLayer as any), [type]: newArr, diagrams: newDiagrams });
+      isDrawing.current = false;
+      setDrawingId(null);
+      return true;
+    }
+
+    return false;
+  });
+
   const handleMouseUp = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
+    const input = toInputEvent(e, 'up');
+    if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
+        // 点太少直接丢弃，不入历史
+        if (discardLastStrokeIfTooShort()) return;
+        return pushDrawingHistory();
       case Actions.RECT:
       case Actions.ELLIPSE:
         return pushDrawingHistory();
@@ -712,6 +891,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           cursor: cursorStyle,
           position: 'relative',
           isolation: 'isolate',
+          // 允许我们在 iPad 上接管双指手势（否则 Safari 会缩放页面）
+          touchAction: 'none',
         }}
         id={CANVAS_CONTAINER_ID}
         width={size.width}
@@ -724,6 +905,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         draggable={stageDraggable}
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}
+        onTouchStart={onStageTouchStart}
+        onTouchMove={onStageTouchMove}
+        onTouchEnd={onStageTouchEnd}
+        onTouchCancel={onStageTouchEnd}
         onPointerDown={handleMouseDown}
         onPointerMove={handleMouseMove}
         onPointerUp={handleMouseUp}
