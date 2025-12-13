@@ -54,6 +54,17 @@ export const initialDrawingLayer: () => Layers = () => ({
     invert: 0,
   },
 });
+
+export const emptyDrawingLayer: () => Partial<Layers> = () => ({
+  fills: [],
+  lines: [],
+  rects: [],
+  ellipses: [],
+  paths: [],
+  eraserLines: [],
+  diagrams: [],
+  image: null,
+});
 const init = initialDrawingLayer();
 
 interface LayerState {

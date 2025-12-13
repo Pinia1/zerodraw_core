@@ -10,7 +10,7 @@ import useMergeLayer from '../../../hooks/useMergeLayer';
 import useOrderLayer from '../../../hooks/useOrderLayer';
 import useVisibled from '../../../hooks/useVisibled';
 import { useDrawingStore } from '../../../store/useDrawing';
-import useLayerStore from '../../../store/useLayer';
+import useLayerStore, { emptyDrawingLayer } from '../../../store/useLayer';
 import { Layers } from '../../../types/Layers';
 import { exportStageWithBlendModes } from '../../../utils/BlendMode';
 
@@ -53,9 +53,12 @@ const Menus: React.FC<MenusProps> = (props) => {
     }))
   );
 
-  const { layers } = useLayerStore(
+  const { layers, setDrawingLayer, drawingLayer, pushHistory } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
+      setDrawingLayer: state.setDrawingLayer,
+      drawingLayer: state.drawingLayer,
+      pushHistory: state.pushHistory,
     }))
   );
 
@@ -256,22 +259,19 @@ const Menus: React.FC<MenusProps> = (props) => {
       ],
     },
     {
-      key: 'Filter',
-      label: 'Filter',
-      children: [
-        { key: 'filter-blur', label: 'Blur' },
-        { key: 'filter-brightness', label: 'Brightness' },
-        { key: 'filter-contrast', label: 'Contrast' },
-        { key: 'filter-grayscale', label: 'Grayscale' },
-        { key: 'filter-hue-rotate', label: 'Hue Rotate' },
-        { key: 'filter-invert', label: 'Invert' },
-        { key: 'filter-saturate', label: 'Saturate' },
-        { key: 'filter-sepia', label: 'Sepia' },
-      ],
-    },
-    {
       key: 'Clear',
       label: <DangerText>Clear</DangerText>,
+      onClick: () => {
+        const emptyLayer = emptyDrawingLayer();
+        const newLayer = {
+          ...drawingLayer!,
+          ...emptyLayer,
+        };
+
+        setDrawingLayer(newLayer);
+        pushHistory(layers.map((layer) => (layer.id === id ? newLayer : layer)));
+        setMenuOpen(false);
+      },
     },
     {
       key: 'Delete',
