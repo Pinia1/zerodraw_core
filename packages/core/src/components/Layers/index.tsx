@@ -8,7 +8,8 @@ import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
 import { IconAdd } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
-import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
+import { CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
+import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import DragList from './DragList';
 
@@ -53,12 +54,14 @@ const Layers: React.FC = () => {
         left: 12,
         top: 80,
         height: 'calc(100% - 170px)',
-        width: ASIDE_WIDTH,
+        width: 250,
         borderRadius: 16,
         padding: 12,
         fontSize: 14,
         display: shrinkTools ? 'none' : 'block',
         cursor: 'default',
+        transformOrigin: 'left top',
+        transform: isMobile ? 'scale(0.7)' : 'scale(1)',
       }}
     >
       <Flex style={{ position: 'relative', height: '100%' }}>

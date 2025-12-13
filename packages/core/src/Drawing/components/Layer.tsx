@@ -74,7 +74,6 @@ const Layer: React.FC<Layers> = (props) => {
 
   const { setDrawingLayer, pushHistory, layers, setLayers } = useLayerStore(
     useShallow((state) => ({
-      drawingLayer: state.drawingLayer,
       pushHistory: state.pushHistory,
       layers: state.layers,
       setLayers: state.setLayers,
@@ -319,7 +318,6 @@ const Layer: React.FC<Layers> = (props) => {
       y={layerConfig.y}
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
-      listening={true}
       visible={visible}
       id={props.id}
     >
@@ -328,7 +326,6 @@ const Layer: React.FC<Layers> = (props) => {
         ref={groupRef}
         clipWidth={layerConfig.width}
         clipHeight={layerConfig.height}
-        listening
       >
         {diagrams.map((diagram) => {
           const props = getDiagramProps(diagram.id, diagram.type)!;

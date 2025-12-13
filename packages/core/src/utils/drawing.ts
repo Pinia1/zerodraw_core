@@ -1,10 +1,11 @@
 import { getStroke } from 'perfect-freehand';
 import type { Line } from '../types/Layers';
+import { isMobile } from './platform';
 
 /**图层控制宽度 */
-export const PROMPT_WIDTH = 250;
+export const PROMPT_WIDTH = isMobile ? 175 : 250;
 /**右侧aside宽度 */
-export const ASIDE_WIDTH = 250;
+export const ASIDE_WIDTH = isMobile ? 175 : 250;
 /**宽高比 */
 export const RATIO = 16 / 9;
 /**最大缩放比例 */
