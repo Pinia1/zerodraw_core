@@ -22,7 +22,7 @@ import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
 import { Actions, EraserConfigTypes, LineConfigTypes } from '../types/Drawing';
-import type { Diagram, Layers, Line } from '../types/Layers';
+import type { Diagram, Lasso, Layers, Line } from '../types/Layers';
 import {
   ASIDE_WIDTH,
   CANVAS_CONTAINER_ID,
@@ -66,6 +66,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     eraserConfig,
     fillColor,
     graphConfig,
+    lassoConfig,
     setBrushDetailConfPosition,
     setDrawingId,
     workerRef,
@@ -80,6 +81,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       setBrushDetailConfPosition: state.setBrushDetailConfPosition,
       eraserConfig: state.eraserConfig,
       graphConfig: state.graphConfig,
+      lassoConfig: state.lassoConfig,
       setDrawingId: state.setDrawingId,
       workerRef: state.workerRef,
     }))
@@ -452,7 +454,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const getDrawingTypes = (): {
     diagrams: Diagram['type'];
-    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths'>;
+    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths' | 'lassos'>;
   } => {
     switch (activeKey) {
       case Actions.ERASER:
@@ -479,6 +481,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return {
           diagrams: 'ellipse',
           type: 'ellipses',
+        };
+      case Actions.LASSO:
+        return {
+          diagrams: 'lasso',
+          type: 'lassos',
         };
       default:
         return {
@@ -779,6 +786,59 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
+  const onLassoInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
+    const drawingLayer = getDrawingLayer();
+    if (!drawingLayer) return;
+    if (!input.canvasPoint) return;
+
+    isDrawing.current = true;
+
+    const id = generateUUID();
+    setDrawingId(id);
+
+    const line: Lasso = {
+      points: [input.canvasPoint.x, input.canvasPoint.y],
+      stroke: fillColor,
+      id,
+      scale: stageConfig.scale,
+      mode: lassoConfig.type,
+    };
+
+    const { type, diagrams } = getDrawingTypes();
+
+    setDrawingLayer({
+      ...drawingLayer,
+      [type]: [...drawingLayer[type], line],
+      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    });
+  });
+
+  const onLassoInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
+    const drawingLayer = getDrawingLayer();
+    if (!drawingLayer || !isDrawing.current) return;
+    if (!input.canvasPoint) return;
+
+    const { type } = getDrawingTypes();
+    const lassos = drawingLayer[type] as Lasso[];
+    const lastLasso = lassos[lassos.length - 1];
+    if (!lastLasso) return;
+
+    const updatedLine: Lasso = {
+      ...lastLasso,
+      points: [...lastLasso.points, input.canvasPoint.x, input.canvasPoint.y],
+    };
+
+    const newLines = [...lassos.slice(0, -1), updatedLine];
+
+    if (isMobile) {
+      setDrawingLayer({ ...drawingLayer, [type]: newLines });
+    } else {
+      requestAnimationFrame(() => {
+        setDrawingLayer({ ...drawingLayer, [type]: newLines });
+      });
+    }
+  });
+
   /**
    * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
    * 后续可以把所有“设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
@@ -808,6 +868,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onLineInputDown(input);
       case Actions.FILL:
         return onFillMouseDown(e);
+      case Actions.LASSO:
+        return onLassoInputDown(input);
       default:
         break;
     }
@@ -830,6 +892,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onEllipseInputMove(input);
       case Actions.LINE:
         return onLineInputMove(input);
+      case Actions.LASSO:
+        return onLassoInputMove(input);
       default:
         break;
     }
@@ -881,6 +945,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return pushDrawingHistory();
       case Actions.RECT:
       case Actions.ELLIPSE:
+      case Actions.LASSO:
         return pushDrawingHistory();
       case Actions.LINE:
         return;

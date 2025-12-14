@@ -1,4 +1,4 @@
-import type { Point2D } from './Drawing';
+import { LassoMode, type Point2D } from './Drawing';
 
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'color-dodge';
 
@@ -34,6 +34,7 @@ export interface Layers {
   ellipses: Ellipse[];
   paths: Line[];
   fills: Fill[];
+  lassos: Lasso[];
   image: Fill | null;
   imageFull?: boolean;
   blendMode: BlendMode;
@@ -63,7 +64,8 @@ export interface Diagram {
     | 'shape'
     | 'path'
     | 'fill'
-    | 'image';
+    | 'image'
+    | 'lasso';
 }
 
 export interface Line {
@@ -80,6 +82,15 @@ export interface Line {
   stabilizer: number; //平滑度 0 - 4
   scale: number;
   fill: boolean;
+}
+
+export interface Lasso {
+  id: string;
+  points: number[];
+  stroke: string;
+  scale: number;
+  /** 套索选区的布尔操作类型 */
+  mode: LassoMode;
 }
 
 export interface Fill {
@@ -113,6 +124,7 @@ export type DiagramPropsMap = {
   shape: Shape;
   path: Line;
   fill: Fill;
+  lasso: Lasso;
 };
 export interface Rect extends Point2D {
   width: number;

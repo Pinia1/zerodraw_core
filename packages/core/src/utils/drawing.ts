@@ -61,7 +61,7 @@ export function getSvgPathFromStroke(points: number[][]): string {
     .replace(TO_FIXED_PRECISION, '$1');
 }
 
-export const pint2DToPath = (points: number[], line: Line) => {
+export const pint2DToPath = (points: number[], line: Partial<Line>) => {
   const pathPoint = [];
 
   // 调整这个值：1=不抽稀，2=50%，3=33%
@@ -77,9 +77,9 @@ export const pint2DToPath = (points: number[], line: Line) => {
   const path = getSvgPathFromStroke(
     getStroke(pathPoint as number[][], {
       simulatePressure: true,
-      size: line.strokeWidth / 2,
+      size: line.strokeWidth ? line.strokeWidth / 2 : 2,
       thinning: line.suppress ? 0.6 : 0,
-      smoothing: line.stabilizer,
+      smoothing: line.stabilizer || 0.2,
       streamline: 0.5,
       easing: (t: number) => Math.sin((t * Math.PI) / 2),
       start: { taper },

@@ -15,6 +15,7 @@ const Mosic: React.FC = () => {
     }))
   );
   const [image] = useImage(windowTheme === 'dark' ? msk : mskWhite);
+
   return (
     <Layer
       x={layerConfig.x}

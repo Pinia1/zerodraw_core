@@ -19,6 +19,7 @@ import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import Fill from './Diagram/Fill';
 import Image from './Diagram/Image';
+import Lasso from './Diagram/Lasso';
 import Line from './Diagram/Lines';
 import Paths from './Diagram/Paths';
 import Rect from './Diagram/Rect';
@@ -58,6 +59,11 @@ const DrawLayer: React.FC = () => {
     switch (type) {
       case 'path': {
         const props = drawingLayer?.paths.find((line) => line.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
+      case 'lasso': {
+        const props = drawingLayer?.lassos.find((lasso) => lasso.id === id)!;
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
@@ -160,6 +166,8 @@ const DrawLayer: React.FC = () => {
           }
         })}
       </Group>
+
+      <Lasso lassos={drawingLayer?.lassos} />
 
       <KonvaRect
         x={0}
