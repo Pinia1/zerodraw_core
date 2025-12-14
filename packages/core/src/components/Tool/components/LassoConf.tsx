@@ -1,6 +1,6 @@
 import Icon, { ClearOutlined } from '@ant-design/icons';
 import { useMemoizedFn } from '@monorepo/common';
-import { Divider } from 'antd';
+import { Divider, message, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { IconLassoAdd, IconLassoCopy, IconLassoInvert, IconLassoRemove } from '../../../icons';
@@ -95,6 +95,10 @@ const LassoConf = () => {
     });
   });
 
+  const handleCopyLasso = useMemoizedFn(() => {
+    message.success('');
+  });
+
   const menus = useMemo(() => {
     return [
       {
@@ -104,6 +108,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.type === LassoMode.ADD;
         },
+        tip: 'The overlapping and merging areas',
       },
       {
         key: LassoMode.REMOVE,
@@ -115,6 +120,7 @@ const LassoConf = () => {
         get disabled(): boolean {
           return drawingLayer?.lassos?.length === 0;
         },
+        tip: 'Subtract the overlapping parts',
       },
       {
         key: 'invert',
@@ -123,14 +129,28 @@ const LassoConf = () => {
         get isActive(): boolean {
           return false;
         },
+        tip: 'inversion',
+      },
+      {
+        key: 'Divider',
       },
       {
         key: 'copy',
         icon: <Icon component={IconLassoCopy} />,
-        onClick: () => {},
+        onClick: handleCopyLasso,
         get isActive(): boolean {
           return false;
         },
+        tip: 'Copy to new layer',
+      },
+      {
+        key: 'clear',
+        icon: <Icon component={ClearOutlined as any} />,
+        onClick: handleClearLasso,
+        get isActive(): boolean {
+          return false;
+        },
+        tip: 'Clear selection area',
       },
     ];
   }, [lassoConfig.type, drawingLayer?.lassos?.length]);
@@ -138,23 +158,22 @@ const LassoConf = () => {
   return (
     <Container style={ContainerStyle}>
       {menus.map((item) => {
+        if (item.key === 'Divider') {
+          return <Divider style={{ fontSize: 18 }} type="vertical" />;
+        }
         return (
-          <ToolItem
-            key={item.key}
-            onClick={item.onClick}
-            style={ToolItemStyle}
-            $active={item.isActive}
-            $disabled={item.disabled}
-          >
-            {item.icon}
-          </ToolItem>
+          <Tooltip key={item.key} title={item.tip}>
+            <ToolItem
+              onClick={item.onClick}
+              style={ToolItemStyle}
+              $active={item.isActive}
+              $disabled={item.disabled}
+            >
+              {item.icon}
+            </ToolItem>
+          </Tooltip>
         );
       })}
-
-      <Divider style={{ fontSize: 18 }} type="vertical" />
-      <ToolItem onClick={handleClearLasso} style={ToolItemStyle} $active={false}>
-        <Icon component={ClearOutlined as any} />
-      </ToolItem>
     </Container>
   );
 };

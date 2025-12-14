@@ -270,6 +270,29 @@ export function mergeLassos(lassos: Array<{ points: number[]; mode: LassoMode }>
     mask[i] = img.data[i * 4 + 3] > 0 ? 1 : 0;
   }
 
+  // 如果结果几乎把 bbox 填满，则直接“吸附”为 bbox 的精确矩形轮廓，避免输出上千点的近似边界，
+  // 并避免后续反选/再合并出现边缘残留。
+  {
+    const margin = 2;
+    const x0 = margin;
+    const y0 = margin;
+    const x1 = Math.max(x0, w - margin);
+    const y1 = Math.max(y0, h - margin);
+
+    let missingInner = 0;
+    let totalInner = 0;
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        totalInner++;
+        if (mask[y * w + x] === 0) missingInner++;
+      }
+    }
+    const allowanceInner = Math.max(16, Math.floor(totalInner * 0.0005));
+    if (missingInner <= allowanceInner) {
+      return [minX, minY, maxX, minY, maxX, maxY, minX, maxY];
+    }
+  }
+
   // marching squares 提取轮廓
   const segs = marchingSquares(mask, w, h);
   if (!segs.length) return [];
@@ -333,6 +356,58 @@ export function invertLassos(
     return rings;
   };
 
+  const selectionCoversRect = () => {
+    // 用离屏 mask 检测“当前选区是否几乎覆盖整个 rect”
+    // 只用于判定，不用于输出轮廓，避免 marching-squares 的量化误差影响互逆性。
+    const res = 2; // 判定分辨率：2 world units / px
+    const pad = 2;
+    const w = Math.max(3, Math.ceil(rw / res) + pad * 2 + 1);
+    const h = Math.max(3, Math.ceil(rh / res) + pad * 2 + 1);
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return false;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.save();
+    ctx.setTransform(1 / res, 0, 0, 1 / res, -rx / res + pad, -ry / res + pad);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#fff';
+    for (const l of lassos) {
+      const pts = l.points ?? [];
+      if (pts.length < 4) continue;
+      fillPointsPath(ctx, pts, 'evenodd');
+    }
+    ctx.restore();
+
+    const img = ctx.getImageData(0, 0, w, h);
+
+    // 关键：残留通常发生在“边缘若干像素”没填满，或 merge 量化导致外轮廓略微内缩。
+    // 因此这里用“忽略边缘 margin 的内部区域覆盖率”作为全选判定（更鲁棒）。
+    const margin = 4; // mask 像素。res=2 时约等于 8 个世界单位
+    const x0 = margin;
+    const y0 = margin;
+    const x1 = Math.max(x0, w - margin);
+    const y1 = Math.max(y0, h - margin);
+
+    let missingInner = 0;
+    let totalInner = 0;
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        totalInner++;
+        const i = (y * w + x) * 4 + 3;
+        if (img.data[i] === 0) missingInner++;
+      }
+    }
+
+    // 用覆盖率判断：只要内部区域几乎全满，就认为“全选”
+    if (totalInner <= 0) return false;
+    const missingRatio = missingInner / totalInner;
+    // 允许最多 0.3% 缺失（主要覆盖量化导致的边缘内缩/锯齿洞）
+    return missingRatio <= 0.003;
+  };
+
   const flattenLassos = () => {
     const out: number[] = [];
     for (const l of lassos) {
@@ -345,38 +420,37 @@ export function invertLassos(
   };
 
   const ringMatchesRect = (ring: number[]) => {
-    // 允许从任意角开始、顺/逆时针
+    // 匹配“画布矩形外轮廓”的鲁棒判定：
+    // - marching-squares 输出的外轮廓会有很多点，不一定包含精确角点/顺序
+    // - 因此用 bounding box 接近 rectRing 的方式识别
     if (ring.length < 8) return false;
-    const eps = 1e-3;
-    const corners = [
-      { x: rectRing[0], y: rectRing[1] },
-      { x: rectRing[2], y: rectRing[3] },
-      { x: rectRing[4], y: rectRing[5] },
-      { x: rectRing[6], y: rectRing[7] },
-    ];
-    const used = new Array(4).fill(false);
-    // 取 ring 的前 4 个点（通常就是 4 个角点），并允许重复点/多余点存在
-    const pts: Array<{ x: number; y: number }> = [];
-    for (let i = 0; i < ring.length && pts.length < 4; i += 2) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (let i = 0; i < ring.length; i += 2) {
       const x = ring[i];
       const y = ring[i + 1];
       if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-      pts.push({ x, y });
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
     }
-    if (pts.length !== 4) return false;
-    for (const pt of pts) {
-      let ok = false;
-      for (let i = 0; i < corners.length; i++) {
-        if (used[i]) continue;
-        if (Math.abs(pt.x - corners[i].x) <= eps && Math.abs(pt.y - corners[i].y) <= eps) {
-          used[i] = true;
-          ok = true;
-          break;
-        }
-      }
-      if (!ok) return false;
+    if (
+      !Number.isFinite(minX) ||
+      !Number.isFinite(minY) ||
+      !Number.isFinite(maxX) ||
+      !Number.isFinite(maxY)
+    ) {
+      return false;
     }
-    return used.every(Boolean);
+    const tol = 4; // world units 容差（覆盖 marching-squares 的 0.5/1/2 步进误差）
+    if (Math.abs(minX - rectRing[0]) > tol) return false;
+    if (Math.abs(minY - rectRing[1]) > tol) return false;
+    if (Math.abs(maxX - rectRing[4]) > tol) return false;
+    if (Math.abs(maxY - rectRing[5]) > tol) return false;
+    return true;
   };
 
   const selectionPoints = flattenLassos();
@@ -385,11 +459,15 @@ export function invertLassos(
   // 空选反选：直接返回精确矩形环（确定性，无误差）
   if (selectionRings.length === 0) return rectRing;
 
-  // 如果当前已经包含“画布矩形环”，反选就等价于把它移除（XOR 取消）
+  const outerRings = selectionRings.filter((r) => ringMatchesRect(r));
   const remainingRings = selectionRings.filter((r) => !ringMatchesRect(r));
-  if (remainingRings.length !== selectionRings.length) {
-    // 说明包含 rectRing：移除后返回剩余环（可能为空）
-    if (!remainingRings.length) return [];
+
+  // 1) 当前是“全选矩形”（只有一个外轮廓）：反选直接清空
+  // 2) 当前是“矩形外轮廓 + 若干洞”（例如：全选后减去一块）：反选结果就是这些洞本身
+  if (outerRings.length > 0) {
+    // 只有外轮廓（无洞） => 清空
+    if (remainingRings.length === 0) return [];
+    // 有洞 => 返回洞（这对应：空白->反选(全选)->减选->反选  应只剩减选区域）
     const out: number[] = [];
     for (let i = 0; i < remainingRings.length; i++) {
       if (i > 0) out.push(NaN, NaN);
@@ -397,6 +475,9 @@ export function invertLassos(
     }
     return out;
   }
+
+  // 仅在“单一大轮廓”时使用覆盖判定作为兜底（避免把“矩形外轮廓 + 小洞”误判为全选）
+  if (selectionRings.length === 1 && selectionCoversRect()) return [];
 
   // 普通情况：rectRing + 所有选区环（even-odd 下表示 rect\selection）
   return [
