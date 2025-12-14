@@ -307,6 +307,10 @@ const Layer: React.FC<Layers> = (props) => {
     return props.id === layers[layers.length - 1]?.id;
   }, [layers]);
 
+  const showTransformer = useMemo(() => {
+    return activeKey === Actions.ROPE && isTopLayer;
+  }, [activeKey, isTopLayer]);
+
   if (activeKey !== Actions.ROPE && isTopLayer) {
     return null;
   }
@@ -420,7 +424,7 @@ const Layer: React.FC<Layers> = (props) => {
         );
       })}
 
-      {activeKey === Actions.ROPE && isTopLayer && (
+      {showTransformer && (
         <Transformer
           rotationSnaps={[0, 45, 90, 135, 180, 225, 270, 315]}
           enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}

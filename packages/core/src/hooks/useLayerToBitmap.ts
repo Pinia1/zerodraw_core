@@ -163,7 +163,7 @@ const useLayerToBitmap = () => {
             img,
             src: img.src,
             visible: true,
-            maxWidth: img.width,
+            maxWidth: Math.min(3000, img.width),
           };
 
           /**

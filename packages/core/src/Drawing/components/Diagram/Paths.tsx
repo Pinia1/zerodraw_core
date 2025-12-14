@@ -57,12 +57,6 @@ const Paths: React.FC<Line> = (props) => {
     ctx.imageSmoothingEnabled = false;
     ctx.save();
 
-    const nativeCtx = ctx._context;
-    if (nativeCtx) {
-      //阴影
-      nativeCtx.filter = 'drop-shadow(2px 2px 4px rgba(0,0,0,0.6))';
-    }
-
     ctx.globalAlpha = line.opacity;
     if (line.fill) {
       ctx.fillStyle = line.stroke;
@@ -71,10 +65,7 @@ const Paths: React.FC<Line> = (props) => {
       ctx.strokeStyle = line.stroke;
       ctx.stroke(path2D);
     }
-    // 恢复时也要重置 filter
-    if (nativeCtx) {
-      nativeCtx.filter = 'none';
-    }
+
     ctx.restore();
   }, []);
 
