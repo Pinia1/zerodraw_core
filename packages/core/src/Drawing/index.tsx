@@ -21,7 +21,7 @@ import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
-import { Actions, EraserConfigTypes, LineConfigTypes } from '../types/Drawing';
+import { Actions, EraserConfigTypes, LassoMode, LineConfigTypes } from '../types/Drawing';
 import type { Diagram, Lasso, Layers, Line } from '../types/Layers';
 import {
   ASIDE_WIDTH,
@@ -35,6 +35,7 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
+import { hasIntersection, mergeLassos } from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
@@ -143,6 +144,90 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     pushHistory(newLayers);
   };
+
+  const finishLasso = useMemoizedFn(() => {
+    const drawingLayer = getDrawingLayer();
+    if (!drawingLayer || !isDrawing.current) {
+      pushDrawingHistory();
+      return;
+    }
+
+    const lassos = drawingLayer.lassos ?? [];
+    if (lassos.length === 0) {
+      pushDrawingHistory();
+      return;
+    }
+
+    const newStroke = lassos[lassos.length - 1];
+
+    // 找到所有与新 stroke 有交集的 lassos（包括新 stroke 自己）
+    const intersectingIndices: number[] = [];
+    for (let i = 0; i < lassos.length; i++) {
+      if (i === lassos.length - 1) {
+        // 新 stroke 自己
+        intersectingIndices.push(i);
+      } else if (hasIntersection(lassos[i].points, newStroke.points)) {
+        intersectingIndices.push(i);
+      }
+    }
+
+    // 如果没有交集：REMOVE 不应产生新的选区（否则渲染端会把它当“新增”）
+    if (intersectingIndices.length === 1) {
+      if ((newStroke.mode ?? LassoMode.ADD) === LassoMode.REMOVE) {
+        const removedId = newStroke.id;
+        setDrawingLayer({
+          ...drawingLayer,
+          lassos: lassos.slice(0, -1),
+          diagrams: drawingLayer.diagrams.filter((d) => d.id !== removedId),
+        });
+      }
+      isDrawing.current = false;
+      pushDrawingHistory();
+      return;
+    }
+
+    // 有交集（除了自己之外），进行合并
+    if (intersectingIndices.length > 1) {
+      // 收集需要合并的 lassos（按绘制顺序）
+      const toMerge = intersectingIndices.map((idx) => ({
+        points: lassos[idx].points,
+        mode: lassos[idx].mode ?? LassoMode.ADD,
+      }));
+
+      // 合并算法
+      const mergedPoints = mergeLassos(toMerge);
+
+      // 保留非交集的 lassos + 新的合并 lasso
+      const newLassos: Lasso[] = lassos
+        .filter((_, idx) => !intersectingIndices.includes(idx))
+        .concat(
+          mergedPoints.length >= 4
+            ? [
+                {
+                  id: generateUUID(),
+                  points: mergedPoints,
+                  stroke: fillColor,
+                  scale: stageConfig.scale,
+                  mode: LassoMode.ADD, // 合并后统一为 ADD（因为已经是最终轮廓）
+                },
+              ]
+            : []
+        );
+
+      // 更新 diagrams：移除被合并的 lasso diagrams
+      const removedIds = new Set(intersectingIndices.map((idx) => lassos[idx].id));
+      const newDiagrams = drawingLayer.diagrams.filter((d) => !removedIds.has(d.id));
+
+      setDrawingLayer({
+        ...drawingLayer,
+        lassos: newLassos,
+        diagrams: newDiagrams,
+      });
+    }
+
+    isDrawing.current = false;
+    pushDrawingHistory();
+  });
 
   const finishLine = useMemoizedFn(() => {
     const drawingLayer = getDrawingLayer();
@@ -830,13 +915,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const newLines = [...lassos.slice(0, -1), updatedLine];
 
-    if (isMobile) {
-      setDrawingLayer({ ...drawingLayer, [type]: newLines });
-    } else {
-      requestAnimationFrame(() => {
-        setDrawingLayer({ ...drawingLayer, [type]: newLines });
-      });
-    }
+    setDrawingLayer({ ...drawingLayer, [type]: newLines });
   });
 
   /**
@@ -946,7 +1025,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.RECT:
       case Actions.ELLIPSE:
       case Actions.LASSO:
-        return pushDrawingHistory();
+        return finishLasso();
       case Actions.LINE:
         return;
       default:

@@ -166,8 +166,10 @@ const DrawLayer: React.FC = () => {
           }
         })}
       </Group>
-
-      <Lasso lassos={drawingLayer?.lassos} />
+      {activeKey === Actions.LASSO &&
+        drawingLayer?.lassos.map((lasso) => {
+          return <Lasso key={lasso.id} {...lasso} />;
+        })}
 
       <KonvaRect
         x={0}

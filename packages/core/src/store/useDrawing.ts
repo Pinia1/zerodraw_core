@@ -135,6 +135,9 @@ export const useDrawingStore = create<DrawingState>()(
         brushDetailConfPosition: defaultBrushDetailConfPosition,
         stageConfig: defaultStageConfig,
         stageRef: null,
+        lassoConfig: {
+          type: LassoMode.ADD,
+        },
       }),
     }
   )

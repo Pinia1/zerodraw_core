@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { IconLassoAdd, IconLassoCopy, IconLassoInvert, IconLassoRemove } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
+import useLayerStore from '../../../store/useLayer';
 import { LassoConfigTypes, LassoMode } from '../../../types/Drawing';
 import Container from '../../Container';
 import { ToolItem } from '../../index';
@@ -14,6 +15,12 @@ const LassoConf = () => {
     useShallow((state) => ({
       lassoConfig: state.lassoConfig,
       setLassoConfig: state.setLassoConfig,
+    }))
+  );
+
+  const { lassos } = useLayerStore(
+    useShallow((state) => ({
+      lassos: state.drawingLayer?.lassos,
     }))
   );
 
@@ -38,6 +45,9 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.type === LassoMode.REMOVE;
         },
+        get disabled(): boolean {
+          return lassos?.length === 0;
+        },
       },
       {
         key: 'copy',
@@ -56,7 +66,7 @@ const LassoConf = () => {
         },
       },
     ];
-  }, [lassoConfig.type]);
+  }, [lassoConfig.type, lassos?.length]);
 
   return (
     <Container style={ContainerStyle}>
@@ -67,6 +77,7 @@ const LassoConf = () => {
             onClick={item.onClick}
             style={ToolItemStyle}
             $active={item.isActive}
+            $disabled={item.disabled}
           >
             {item.icon}
           </ToolItem>
