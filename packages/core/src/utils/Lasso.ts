@@ -294,3 +294,122 @@ export function mergeLassos(lassos: Array<{ points: number[]; mode: LassoMode }>
 
   return result;
 }
+
+/**
+ * 反选：在给定画布矩形范围内，对当前选区取补集。
+ * - 如果当前没有选区：结果为“全画布选中”（轮廓为画布边框）
+ * - 如果当前有选区：结果为“全画布 - 选区”（包含画布边框 + 选区洞的轮廓）
+ *
+ * @param lassos 当前选区（通常都是 ADD 的最终轮廓；points 允许 NaN 分段）
+ * @param rect 画布范围（通常为 {x:0,y:0,width,height}）
+ */
+export function invertLassos(
+  lassos: Array<{ points: number[] }>,
+  rect: { x: number; y: number; width: number; height: number }
+): number[] {
+  const { x: rx, y: ry, width: rw, height: rh } = rect;
+  if (rw <= 0 || rh <= 0) return [];
+
+  // 反选在“even-odd 填充语义”下可以用纯几何 XOR 实现：
+  // 反选 = (画布矩形环) ⊕ (当前选区的所有环)
+  // 这样可保证“有内容 -> 反选 -> 再反选”严格回到原选区，不会因 mask 量化产生边缘残留。
+
+  const rectRing = [rx, ry, rx + rw, ry, rx + rw, ry + rh, rx, ry + rh];
+
+  const splitRings = (points: number[]) => {
+    const rings: number[][] = [];
+    let cur: number[] = [];
+    for (let i = 0; i < points.length; i += 2) {
+      const x = points[i];
+      const y = points[i + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) {
+        if (cur.length >= 4) rings.push(cur);
+        cur = [];
+        continue;
+      }
+      cur.push(x, y);
+    }
+    if (cur.length >= 4) rings.push(cur);
+    return rings;
+  };
+
+  const flattenLassos = () => {
+    const out: number[] = [];
+    for (const l of lassos) {
+      const pts = l.points ?? [];
+      if (pts.length < 4) continue;
+      if (out.length) out.push(NaN, NaN);
+      out.push(...pts);
+    }
+    return out;
+  };
+
+  const ringMatchesRect = (ring: number[]) => {
+    // 允许从任意角开始、顺/逆时针
+    if (ring.length < 8) return false;
+    const eps = 1e-3;
+    const corners = [
+      { x: rectRing[0], y: rectRing[1] },
+      { x: rectRing[2], y: rectRing[3] },
+      { x: rectRing[4], y: rectRing[5] },
+      { x: rectRing[6], y: rectRing[7] },
+    ];
+    const used = new Array(4).fill(false);
+    // 取 ring 的前 4 个点（通常就是 4 个角点），并允许重复点/多余点存在
+    const pts: Array<{ x: number; y: number }> = [];
+    for (let i = 0; i < ring.length && pts.length < 4; i += 2) {
+      const x = ring[i];
+      const y = ring[i + 1];
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      pts.push({ x, y });
+    }
+    if (pts.length !== 4) return false;
+    for (const pt of pts) {
+      let ok = false;
+      for (let i = 0; i < corners.length; i++) {
+        if (used[i]) continue;
+        if (Math.abs(pt.x - corners[i].x) <= eps && Math.abs(pt.y - corners[i].y) <= eps) {
+          used[i] = true;
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) return false;
+    }
+    return used.every(Boolean);
+  };
+
+  const selectionPoints = flattenLassos();
+  const selectionRings = splitRings(selectionPoints);
+
+  // 空选反选：直接返回精确矩形环（确定性，无误差）
+  if (selectionRings.length === 0) return rectRing;
+
+  // 如果当前已经包含“画布矩形环”，反选就等价于把它移除（XOR 取消）
+  const remainingRings = selectionRings.filter((r) => !ringMatchesRect(r));
+  if (remainingRings.length !== selectionRings.length) {
+    // 说明包含 rectRing：移除后返回剩余环（可能为空）
+    if (!remainingRings.length) return [];
+    const out: number[] = [];
+    for (let i = 0; i < remainingRings.length; i++) {
+      if (i > 0) out.push(NaN, NaN);
+      out.push(...remainingRings[i]);
+    }
+    return out;
+  }
+
+  // 普通情况：rectRing + 所有选区环（even-odd 下表示 rect\selection）
+  return [
+    rectRing[0],
+    rectRing[1],
+    rectRing[2],
+    rectRing[3],
+    rectRing[4],
+    rectRing[5],
+    rectRing[6],
+    rectRing[7],
+    NaN,
+    NaN,
+    ...selectionPoints,
+  ];
+}
