@@ -183,18 +183,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     finishLine,
   });
 
-  //todo
-  // useKeyPress(
-  //   'ctrl.z',
-  //   (e) => {
-  //     e.preventDefault();
-  //     // finishLine();
-  //   },
-  //   {
-  //     events: ['keydown'],
-  //   }
-  // );
-
   const getGroupPos = (stage: Konva.Stage) => {
     let pos: any = null;
     const layersDom = stage.children;
@@ -249,7 +237,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   // 旧逻辑已被 input adapter 统一吸收：按钮判断在 `normalizeKonvaPointerEvent` 内处理
-
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
     const newScale = stageConfig.scale * scaleBy;
@@ -933,8 +920,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         y={stageConfig.y}
         scaleX={stageConfig.scale}
         scaleY={stageConfig.scale}
-        onContextMenu={handleContextMenu}
         draggable={stageDraggable}
+        onContextMenu={handleContextMenu}
         onWheel={onStageWheel}
         onDragEnd={onDragEnd}
         onTouchStart={onStageTouchStart}

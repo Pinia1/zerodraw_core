@@ -49,8 +49,7 @@ export function getSvgPathFromStroke(points: number[][]): string {
     .reduce(
       (acc, point, i, arr) => {
         if (i === max) {
-          // acc.push(point, med(point, arr[0]), 'L', arr[0], 'Z');
-          acc.push(point, med(point, arr[0]), 'Z');
+          acc.push(point, med(point, arr[0]), 'L', arr[0], 'Z');
         } else {
           acc.push(point, med(point, arr[i + 1]));
         }
@@ -64,11 +63,17 @@ export function getSvgPathFromStroke(points: number[][]): string {
 
 export const pint2DToPath = (points: number[], line: Line) => {
   const pathPoint = [];
-  for (let i = 0; i < points.length; i += 2) {
+
+  // 调整这个值：1=不抽稀，2=50%，3=33%
+  //TODO 可以调整两端尖锐度
+  const step = 1;
+  for (let i = 0; i < points.length; i += 2 * step) {
     pathPoint.push([points[i], points[i + 1]]);
   }
 
-  const taper = 1 - (line.hardness ?? 0) < 0.1 ? false : 1 - (line.hardness ?? 0);
+  const hardness = Math.max(0.1, line.hardness ?? 0);
+
+  const taper = 1 - hardness < 0.1 ? false : 1 - hardness;
   const path = getSvgPathFromStroke(
     getStroke(pathPoint as number[][], {
       simulatePressure: true,

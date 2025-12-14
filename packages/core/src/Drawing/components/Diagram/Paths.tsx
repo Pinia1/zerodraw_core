@@ -1,11 +1,20 @@
 import Konva from 'konva';
 import React, { useCallback, useMemo } from 'react';
 import { Rect, Shape } from 'react-konva';
+import { useShallow } from 'zustand/react/shallow';
+import useToolsStore from '../../../store/useTools';
+import { Actions } from '../../../types/Drawing';
 import type { Line } from '../../../types/Layers';
 import { pint2DToPath } from '../../../utils/drawing';
 
 const Paths: React.FC<Line> = (props) => {
   const { points, opacity } = props;
+
+  const { activeKey } = useToolsStore(
+    useShallow((state) => ({
+      activeKey: state.activeKey,
+    }))
+  );
 
   const path2D = useMemo(() => {
     return new Path2D(pint2DToPath(points, props));
@@ -48,6 +57,12 @@ const Paths: React.FC<Line> = (props) => {
     ctx.imageSmoothingEnabled = false;
     ctx.save();
 
+    const nativeCtx = ctx._context;
+    if (nativeCtx) {
+      //阴影
+      nativeCtx.filter = 'drop-shadow(2px 2px 4px rgba(0,0,0,0.6))';
+    }
+
     ctx.globalAlpha = line.opacity;
     if (line.fill) {
       ctx.fillStyle = line.stroke;
@@ -55,6 +70,10 @@ const Paths: React.FC<Line> = (props) => {
     } else {
       ctx.strokeStyle = line.stroke;
       ctx.stroke(path2D);
+    }
+    // 恢复时也要重置 filter
+    if (nativeCtx) {
+      nativeCtx.filter = 'none';
     }
     ctx.restore();
   }, []);
@@ -65,7 +84,7 @@ const Paths: React.FC<Line> = (props) => {
     <>
       <Shape
         opacity={opacity}
-        listening={true}
+        listening={activeKey === Actions.ROPE}
         hitFunc={(ctx, shape) => {
           ctx.beginPath();
           ctx.rect(bounds.x, bounds.y, bounds.width, bounds.height);

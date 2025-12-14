@@ -322,7 +322,7 @@ const Layer: React.FC<Layers> = (props) => {
       id={props.id}
     >
       <Group
-        onClick={handleGroupMouseDown}
+        onPointerDown={handleGroupMouseDown}
         ref={groupRef}
         clipWidth={layerConfig.width}
         clipHeight={layerConfig.height}
