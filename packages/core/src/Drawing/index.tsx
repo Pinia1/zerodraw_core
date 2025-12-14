@@ -1025,6 +1025,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.RECT:
       case Actions.ELLIPSE:
       case Actions.LASSO:
+        if (discardLastStrokeIfTooShort()) return;
         return finishLasso();
       case Actions.LINE:
         return;
