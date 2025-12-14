@@ -120,20 +120,21 @@ const useLayerToBitmap = () => {
         }
 
         const layerCanvas = clonedGroup.toCanvas();
+
+        const trueWidth = groupRect.width - clipWidth;
         const imageData = layerCanvas
           .getContext('2d')
-          ?.getImageData(
-            clipLeft,
-            clipTop,
-            groupRect.width - clipWidth,
-            groupRect.height - clipHeight
-          );
+          ?.getImageData(clipLeft, clipTop, trueWidth, groupRect.height - clipHeight);
+
+        if (layer.image?.maxWidth) {
+          pixelRatio = Math.max(layer.image.maxWidth / trueWidth, pixelRatio);
+        }
 
         const { bounds } = cropTransparentBorder(imageData!);
 
         const blob = (await clonedGroup.toBlob({
           pixelRatio: pixelRatio,
-          mimeType: 'image/png',
+          mimeType: 'image/webp',
           quality: 1,
           x: Math.max(groupRect.x, layerX) + bounds.left,
           y: Math.max(groupRect.y, layerY) + bounds.top,
@@ -162,6 +163,7 @@ const useLayerToBitmap = () => {
             img,
             src: img.src,
             visible: true,
+            maxWidth: img.width,
           };
 
           /**
