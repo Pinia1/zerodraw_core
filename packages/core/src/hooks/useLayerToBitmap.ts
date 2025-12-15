@@ -185,7 +185,9 @@ const useLayerToBitmap = () => {
         };
       });
     } catch (error) {
+      Promise.resolve(layer);
       console.log(error, 'error');
+      return;
     } finally {
       setLoading(false);
     }
