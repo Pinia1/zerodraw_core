@@ -247,7 +247,7 @@ const Layer: React.FC<Layers> = (props) => {
   });
 
   const handleGroupMouseDown = useMemoizedFn(async () => {
-    if (activeKey === Actions.ROPE) {
+    if (activeKey === Actions.ROPE && !isTopLayer) {
       const newLayer = (await runBitmap(props, groupRef.current as Konva.Group)) as Layers;
 
       const newLayers = [...layers];
