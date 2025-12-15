@@ -40,6 +40,7 @@ export const initialDrawingLayer: () => Layers = () => ({
   paths: [],
   fills: [],
   lassos: [],
+  eraseLassos: [],
   image: null,
   name: 'layer 1',
   order: 0,

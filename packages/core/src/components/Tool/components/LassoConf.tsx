@@ -1,6 +1,6 @@
 import Icon, { ClearOutlined } from '@ant-design/icons';
 import { cropTransparentBorder, useMemoizedFn } from '@monorepo/common';
-import { Divider, Tooltip } from 'antd';
+import { Divider, message, Tooltip } from 'antd';
 import Konva from 'konva';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -275,11 +275,43 @@ const LassoConf = () => {
       newLayer,
     ]);
     setActiveKey(Actions.ROPE);
+    message.success('It has been copied to a new layer!');
   });
 
   const handleClipLasso = useMemoizedFn(async () => {
     const newLayer = (await getClipBitmp()) as Layers;
     if (!newLayer) return;
+
+    const selectionPoints = getSelectionPoints();
+    if (!drawingLayer || !selectionPoints.length) return;
+
+    const eraseId = generateUUID();
+    const eraseLasso: Lasso = {
+      id: eraseId,
+      points: selectionPoints,
+      stroke: fillColor,
+      scale: stageConfig.scale,
+      mode: LassoMode.ADD,
+    };
+
+    const updatedCurrentLayer: Layers = {
+      ...(drawingLayer as Layers),
+      lassos: [],
+      eraseLassos: [...((drawingLayer as Layers).eraseLassos ?? []), eraseLasso],
+      diagrams: [
+        ...(drawingLayer as Layers).diagrams.filter((d) => d.type !== 'lasso'),
+        { id: eraseId, type: 'eraseLasso' },
+      ],
+    };
+
+    setDrawingLayer(newLayer);
+    pushHistory([
+      ...layers.map((l) => (l.id === (drawingLayer as Layers).id ? updatedCurrentLayer : l)),
+      newLayer,
+    ]);
+    setActiveKey(Actions.ROPE);
+
+    message.success('It has been trimmed into a new layer!');
   });
 
   const menus = useMemo(() => {

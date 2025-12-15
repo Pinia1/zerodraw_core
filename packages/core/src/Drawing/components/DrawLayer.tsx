@@ -11,12 +11,14 @@ import {
   DiagramPropsMap,
   Ellipse as EllipseType,
   Fill as FillType,
+  Lasso as LassoType,
   Line as LineType,
   Rect as RectType,
 } from '../../types/Layers';
 import { layerFilterToCssFilter } from '../../utils/BlendMode';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
+import EraserLasso from './Diagram/EraserLasso';
 import Fill from './Diagram/Fill';
 import Image from './Diagram/Image';
 import Lasso from './Diagram/Lasso';
@@ -67,9 +69,13 @@ const DrawLayer: React.FC = () => {
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
+      case 'eraseLasso': {
+        const props = drawingLayer?.eraseLassos.find((eraseLasso) => eraseLasso.id === id)!;
+        diagramMap.current.set(id, props);
+        return props as DiagramProps<T>;
+      }
       case 'eraserLine': {
         const props = drawingLayer?.eraserLines.find((line) => line.id === id)!;
-
         diagramMap.current.set(id, props);
         return props as DiagramProps<T>;
       }
@@ -160,6 +166,10 @@ const DrawLayer: React.FC = () => {
             }
             case 'line': {
               return <Line key={diagram.id} {...(props as Konva.LineConfig)} />;
+            }
+
+            case 'eraseLasso': {
+              return <EraserLasso key={diagram.id} {...(props as LassoType)} />;
             }
             default:
               return null;

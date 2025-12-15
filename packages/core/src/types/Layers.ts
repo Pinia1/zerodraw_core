@@ -35,6 +35,7 @@ export interface Layers {
   paths: Line[];
   fills: Fill[];
   lassos: Lasso[];
+  eraseLassos: Lasso[];
   image: Fill | null;
   imageFull?: boolean;
   blendMode: BlendMode;
@@ -65,7 +66,8 @@ export interface Diagram {
     | 'path'
     | 'fill'
     | 'image'
-    | 'lasso';
+    | 'lasso'
+    | 'eraseLasso';
 }
 
 export interface Line {
@@ -125,6 +127,7 @@ export type DiagramPropsMap = {
   path: Line;
   fill: Fill;
   lasso: Lasso;
+  eraseLasso: Lasso;
 };
 export interface Rect extends Point2D {
   width: number;
