@@ -1,13 +1,15 @@
 import Icon from '@ant-design/icons';
 import { useMount } from '@monorepo/common';
-import { Button, Flex, Tabs, TabsProps, Tooltip } from 'antd';
+import { Button, Dropdown, Flex, Tabs, TabsProps } from 'antd';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
+import useUpload from '../../hooks/useUpload';
 import { IconAdd } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
+import useToolsStore from '../../store/useTools';
 import { CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
 import { isMobile } from '../../utils/platform';
 import Container from '../Container';
@@ -29,7 +31,22 @@ const Layers: React.FC = () => {
     }))
   );
 
+  const { setReferencePicture } = useToolsStore(
+    useShallow((state) => ({
+      setReferencePicture: state.setReferencePicture,
+    }))
+  );
+
   const { run: createLayerRun } = useCreateLayer();
+
+  const { run: createReferencePictureRun } = useUpload({
+    accept: 'image/*',
+    multiple: false,
+    onSuccess: ({ url }) => {
+      setReferencePicture(url);
+    },
+  });
+
   useMount(() => {
     const el =
       (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
@@ -66,21 +83,28 @@ const Layers: React.FC = () => {
     >
       <Flex style={{ position: 'relative', height: '100%' }}>
         <StyledTabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
-        <Button
-          type="text"
-          variant="link"
-          style={{
-            position: 'absolute',
-            right: 0,
-            transform: 'translateY(calc(17px - 50%))',
-            fontSize: 14,
+        <Dropdown
+          trigger={['click']}
+          menu={{
+            items: [
+              { label: 'Empty layer', key: 'layer', onClick: handleCreateLayer },
+              { label: 'Reference picture', key: 'Reference', onClick: createReferencePictureRun },
+            ],
           }}
-          onClick={handleCreateLayer}
         >
-          <Tooltip title="New Layer">
+          <Button
+            type="text"
+            variant="link"
+            style={{
+              position: 'absolute',
+              right: 0,
+              transform: 'translateY(calc(17px - 50%))',
+              fontSize: 14,
+            }}
+          >
             <Icon component={IconAdd} />
-          </Tooltip>
-        </Button>
+          </Button>
+        </Dropdown>
       </Flex>
     </Container>,
     container

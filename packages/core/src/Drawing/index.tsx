@@ -9,6 +9,7 @@ import { Tools } from '..';
 import Cursor from '../components/Cursor';
 import Flexible from '../components/Flexible';
 import LayersControl from '../components/Layers';
+import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import useDrawingKeyboard from '../hooks/useKeyboard';
@@ -1096,6 +1097,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         })}
       </Stage>
       <Cursor visible={cursorVisible} />
+      <ReferencePicture />
       {tools?.includes(Tools.TOOL) && <Tool />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
       {tools?.includes(Tools.FLEXIBLE) && <Flexible init={init} />}

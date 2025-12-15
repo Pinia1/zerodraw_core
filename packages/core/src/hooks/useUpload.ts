@@ -22,10 +22,37 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
       input.style.position = 'fixed';
       input.style.left = '-9999px';
       input.style.top = '-9999px';
-      document.body.appendChild(input);
-      input.onchange = async () => {
-        const files = input.files;
 
+      // iOS Safari 兼容：必须先 append 到 DOM，且在选择完成前不能移除
+      document.body.appendChild(input);
+
+      let resolved = false;
+      const cleanup = () => {
+        if (resolved) return;
+        resolved = true;
+        try {
+          input.onchange = null;
+          input.remove();
+        } catch {}
+        window.removeEventListener('focus', checkCancel, true);
+      };
+
+      // iOS 用户取消选择时可能不触发 onchange，通过 focus 事件检测
+      const checkCancel = () => {
+        setTimeout(() => {
+          if (!resolved && (!input.files || input.files.length === 0)) {
+            setLoading(false);
+            cleanup();
+            resolve(null);
+          }
+        }, 300);
+      };
+
+      window.addEventListener('focus', checkCancel, true);
+
+      input.onchange = async () => {
+        window.removeEventListener('focus', checkCancel, true);
+        const files = input.files;
         if (files && files.length > 0) {
           setLoading(true);
           Promise.allSettled(
@@ -33,7 +60,8 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
               try {
                 const id = generateUUID();
                 const url = URL.createObjectURL(file);
-                imageManager.saveImage(id, await file.arrayBuffer());
+                // 保存时带上 mimeType，iOS 更严格
+                await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
                 onSuccess?.({ id, url });
                 return { id, url };
               } catch (error) {
@@ -46,19 +74,20 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
               onComplete?.(r);
             })
             .finally(() => {
-              resolve(null);
               setLoading(false);
+              cleanup();
+              resolve(null);
             });
         } else {
-          resolve(null);
           setLoading(false);
+          cleanup();
+          resolve(null);
         }
       };
+
+      // 允许重复选择同一文件
+      input.value = '';
       input.click();
-      requestAnimationFrame(() => {
-        input.remove();
-        document.body.removeChild(input);
-      });
     });
   };
 
