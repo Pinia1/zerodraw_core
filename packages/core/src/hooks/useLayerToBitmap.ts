@@ -29,12 +29,7 @@ const useLayerToBitmap = () => {
         }
 
         // If there is no change.
-        if (
-          layer.diagrams.length === 1 &&
-          layer.diagrams[0].type === 'image' &&
-          layer.image &&
-          layer.image?.rotation === undefined
-        ) {
+        if (layer.diagrams.length === 1 && layer.diagrams[0].type === 'image' && layer.image) {
           resolve(layer);
           console.log('return 2');
           return;

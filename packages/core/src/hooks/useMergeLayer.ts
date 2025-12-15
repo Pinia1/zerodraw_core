@@ -131,18 +131,35 @@ const useMergeLayer = (id?: string) => {
       const cropH = Math.max(0, unionMaxY - unionMinY);
       if (cropW <= 0 || cropH <= 0) return targetLayer;
 
-      // 统一按 order 从底到顶传入导出函数，保证合成顺序正确
       const bottomFirst = [sourceLayer, targetLayer].sort((a, b) => a.order - b.order);
 
-      // 裁剪到“位图并集包围盒”（不是整个画布/viewport），避免烘焙多余空白
+      // 质量优先：用像素密度推导 pixelRatio（而不是固定 targetWidth），尽量避免二次缩放导致的模糊
+      const density1 = Math.max(
+        0,
+        (sourceLayer.image?.maxWidth ?? 0) / Math.max(1, sourceLayer.image?.width ?? 1)
+      );
+      const density2 = Math.max(
+        0,
+        (targetLayer.image?.maxWidth ?? 0) / Math.max(1, targetLayer.image?.width ?? 1)
+      );
+      let pixelRatio = Math.max(1, Math.max(density1, density2) * 1.2);
+
+      // 保护：限制导出尺寸（避免内存/性能问题）。由于我们已经裁剪到 cropW/cropH，直接用最大输出边限制即可。
+      const maxOutDim = 3000;
+      pixelRatio = Math.min(
+        pixelRatio,
+        maxOutDim / Math.max(1, cropW),
+        maxOutDim / Math.max(1, cropH)
+      );
+
       const dataUrl = await exportStageWithBlendModes(stage, bottomFirst, {
-        targetWidth: 1920,
+        pixelRatio,
         backgroundColor: 'transparent',
         cropX: layerConfig.x + unionMinX,
         cropY: layerConfig.y + unionMinY,
         cropWidth: cropW,
         cropHeight: cropH,
-        mimeType: 'image/webp',
+        mimeType: 'image/png',
         quality: 1,
       });
 
@@ -151,7 +168,7 @@ const useMergeLayer = (id?: string) => {
       const blob = await (await fetch(dataUrl)).blob();
       const imageId = generateUUID();
       blob.arrayBuffer().then((buffer) => {
-        imageManager.saveImage(imageId, buffer);
+        imageManager.saveImage(imageId, buffer, 'image/png');
       });
 
       const merged = await new Promise<Layers>((resolve) => {
@@ -173,10 +190,9 @@ const useMergeLayer = (id?: string) => {
               img,
               src: img.src,
               visible: true,
-              maxWidth: Math.min(3000, img.naturalWidth || img.width),
-              maxHeight: Math.min(3000, img.naturalHeight || img.height),
+              maxWidth: img.naturalWidth || img.width,
+              maxHeight: img.naturalHeight || img.height,
             },
-            // 避免重复应用：混合/滤镜/透明度都已经在导出阶段烘焙到像素里
             blendMode: 'normal',
             opacity: 100,
             filter: base.filter,
