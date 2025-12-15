@@ -4,7 +4,7 @@ import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../store/useLayer';
 import { Fill, Layers } from '../types/Layers';
 
-function findMissingorder(layers: Layers[]): number {
+export function findMissingorder(layers: Layers[]): number {
   if (!layers.length) return 1;
   const arr = [...layers];
   arr.sort((a, b) => a.order - b.order);

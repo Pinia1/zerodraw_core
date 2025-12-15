@@ -494,3 +494,75 @@ export function invertLassos(
     ...selectionPoints,
   ];
 }
+
+type Bounds = { x: number; y: number; width: number; height: number };
+
+export function calcBounds(points: number[]): Bounds {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (let i = 0; i < points.length; i += 2) {
+    const x = points[i];
+    const y = points[i + 1];
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(maxY)
+  ) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+
+  const pad = 2;
+  return {
+    x: minX - pad,
+    y: minY - pad,
+    width: maxX - minX + pad * 2,
+    height: maxY - minY + pad * 2,
+  };
+}
+
+export function clampBoundsToCanvas(b: Bounds, w: number, h: number): Bounds {
+  const x = Math.max(0, Math.min(w, b.x));
+  const y = Math.max(0, Math.min(h, b.y));
+  const x2 = Math.max(0, Math.min(w, b.x + b.width));
+  const y2 = Math.max(0, Math.min(h, b.y + b.height));
+  return { x, y, width: Math.max(0, x2 - x), height: Math.max(0, y2 - y) };
+}
+
+export function clipPathFromPoints(ctx: CanvasRenderingContext2D, points: number[]) {
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i < points.length; i += 2) {
+    const x = points[i];
+    const y = points[i + 1];
+    if (!Number.isFinite(x) || !Number.isFinite(y)) {
+      if (started) ctx.closePath();
+      started = false;
+      continue;
+    }
+    if (!started) {
+      started = true;
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  if (started) ctx.closePath();
+
+  // even-odd 支持“外轮廓 + 内洞”，也能表达 invertLassos 的“矩形环 + 洞”
+  try {
+    (ctx as unknown as { clip: (fillRule?: CanvasFillRule) => void }).clip('evenodd');
+  } catch {
+    ctx.clip();
+  }
+}

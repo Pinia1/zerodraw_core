@@ -17,7 +17,7 @@ const useLayerToBitmap = () => {
     }))
   );
 
-  const run = (layer: Layers, group: Konva.Group) => {
+  const run = async (layer: Layers, group: Konva.Group) => {
     try {
       setLoading(true);
       return new Promise(async (resolve) => {
