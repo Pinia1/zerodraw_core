@@ -989,7 +989,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const { type, diagrams } = getDrawingTypes();
     const arr = drawingLayer[type] as any[];
-    if (!arr?.length) return false;
+
+    if (!arr?.length) return true;
 
     const last = arr[arr.length - 1] as { id?: string; points?: number[] } | undefined;
     const points = last?.points ?? [];
@@ -1016,6 +1017,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     e.evt.preventDefault();
     const input = toInputEvent(e, 'up');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
+
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
