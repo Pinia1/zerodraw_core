@@ -192,32 +192,26 @@ const BrushDetail = () => {
           </div>
         </Flex>
       </Flex>
-      <Flex style={{ width: '100%', padding: 12, gap: 12 }}>
-        <Flex align="center" gap={6}>
-          <span>Fill</span>
-          <Switch
-            size="small"
-            checked={lineConfig.fill}
-            onChange={(value: boolean) => handleSetConfig('fill', value)}
-          />
+      {activeKey === Actions.PEN && (
+        <Flex style={{ width: '100%', padding: 12, gap: 12 }}>
+          <Flex align="center" gap={6}>
+            <span>Fill</span>
+            <Switch
+              size="small"
+              checked={lineConfig.fill}
+              onChange={(value: boolean) => handleSetConfig('fill', value)}
+            />
+          </Flex>
+          <Flex align="center" gap={6}>
+            <span>Pressure</span>
+            <Switch
+              size="small"
+              checked={lineConfig.suppress}
+              onChange={(value: boolean) => handleSetConfig('suppress', value)}
+            />
+          </Flex>
         </Flex>
-        <Flex align="center" gap={6}>
-          <span>Pressure</span>
-          <Switch
-            size="small"
-            checked={lineConfig.suppress}
-            onChange={(value: boolean) => handleSetConfig('suppress', value)}
-          />
-        </Flex>
-        {/* <Flex align="center" gap={6}>
-          <span>Correction</span>
-          <Switch
-            size="small"
-            checked={lineConfig.fill}
-            onChange={(value: boolean) => handleSetConfig('fill', value ? 1 : 0)}
-          />
-        </Flex> */}
-      </Flex>
+      )}
     </Container>
   );
 };

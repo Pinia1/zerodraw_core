@@ -13,8 +13,7 @@ const useCopyLayer = (id?: string) => {
     }))
   );
   const { run: runCreateLayer } = useCreateLayer();
-  const onCopy = (e?: any) => {
-    e?.preventDefault?.();
+  const onCopy = () => {
     if (!layers.length) return;
     if (id) {
       const layer = layers.find((layer) => layer.id === id);
@@ -27,8 +26,7 @@ const useCopyLayer = (id?: string) => {
     copyLayerRef.current = layers[layers.length - 1];
   };
 
-  const onPaste = (e?: any) => {
-    e?.preventDefault?.();
+  const onPaste = () => {
     if (!copyLayerRef.current) {
       return;
     }

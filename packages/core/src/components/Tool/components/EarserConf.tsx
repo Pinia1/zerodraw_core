@@ -17,12 +17,15 @@ const EarserConf = () => {
       setActiveKey: state.setActiveKey,
     }))
   );
-  const { eraserConfig, setEraserConfig } = useDrawingStore(
-    useShallow((state) => ({
-      eraserConfig: state.eraserConfig,
-      setEraserConfig: state.setEraserConfig,
-    }))
-  );
+  const { eraserConfig, brushDetailConfPosition, setBrushDetailConfPosition, setEraserConfig } =
+    useDrawingStore(
+      useShallow((state) => ({
+        brushDetailConfPosition: state.brushDetailConfPosition,
+        setBrushDetailConfPosition: state.setBrushDetailConfPosition,
+        setEraserConfig: state.setEraserConfig,
+        eraserConfig: state.eraserConfig,
+      }))
+    );
 
   const handleSetLineConfig = (key: keyof LineConfigTypes, value: number) => {
     setEraserConfig({ ...eraserConfig, [key]: value });
@@ -77,7 +80,19 @@ const EarserConf = () => {
         />
       </ActionFlex>
       <Divider style={{ fontSize: 18 }} type="vertical" />
-      <ToolItem style={ToolItemStyle} $active={false}>
+      <ToolItem
+        style={ToolItemStyle}
+        $active={brushDetailConfPosition.visible}
+        onClick={(e: React.MouseEvent) => {
+          const rect = (e.target as HTMLElement).getBoundingClientRect();
+          setBrushDetailConfPosition({
+            visible: !brushDetailConfPosition.visible,
+            position: brushDetailConfPosition.visible
+              ? { x: 0, y: 0 }
+              : { x: rect.x + rect.width / 2, y: rect.y + rect.height },
+          });
+        }}
+      >
         <Icon component={IconConf} />
       </ToolItem>
     </Container>

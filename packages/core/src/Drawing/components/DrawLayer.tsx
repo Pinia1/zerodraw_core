@@ -147,7 +147,6 @@ const DrawLayer: React.FC = () => {
             case 'path': {
               return <Paths key={diagram.id} {...(props as LineType)} />;
             }
-
             case 'image': {
               return <Image key={diagram.id} {...(props as FillType)} draggable={false} />;
             }

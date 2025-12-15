@@ -13,9 +13,7 @@ const useDeletedLayer = (id?: string) => {
     }))
   );
 
-  const onDelete = (e?: any) => {
-    e?.preventDefault?.();
-
+  const onDelete = () => {
     if (!layers.length) return;
 
     // 确定要删除的 layer id

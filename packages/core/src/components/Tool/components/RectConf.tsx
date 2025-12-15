@@ -2,7 +2,7 @@ import Icon from '@ant-design/icons';
 import { Divider, Input, Slider } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { IconConf, IconElli, IconLine, IconRect } from '../../../icons';
+import { IconElli, IconLine, IconRect } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, GraphConfigTypes } from '../../../types/Drawing';
@@ -111,10 +111,10 @@ const RectConf = () => {
           suffix="%"
         />
       </ActionFlex>
-      <Divider style={{ fontSize: 18 }} type="vertical" />
+      {/* <Divider style={{ fontSize: 18 }} type="vertical" />
       <ToolItem style={ToolItemStyle} $active={false}>
         <Icon component={IconConf} />
-      </ToolItem>
+      </ToolItem> */}
     </Container>
   );
 };
