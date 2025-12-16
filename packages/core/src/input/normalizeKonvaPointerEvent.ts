@@ -54,6 +54,10 @@ export function normalizeKonvaPointerEvent(
   const { button, buttons, isPrimaryButton } = getButtons(evtAny);
   const pointerId = typeof evtAny?.pointerId === 'number' ? evtAny.pointerId : undefined;
   const timeStamp = typeof evtAny?.timeStamp === 'number' ? evtAny.timeStamp : undefined;
+  const shiftKey = typeof evtAny?.shiftKey === 'boolean' ? evtAny.shiftKey : false;
+  const altKey = typeof evtAny?.altKey === 'boolean' ? evtAny.altKey : false;
+  const ctrlKey = typeof evtAny?.ctrlKey === 'boolean' ? evtAny.ctrlKey : false;
+  const metaKey = typeof evtAny?.metaKey === 'boolean' ? evtAny.metaKey : false;
 
   return {
     konvaEvent: e,
@@ -68,6 +72,10 @@ export function normalizeKonvaPointerEvent(
     button,
     buttons,
     timeStamp,
+    shiftKey,
+    altKey,
+    ctrlKey,
+    metaKey,
   };
 }
 

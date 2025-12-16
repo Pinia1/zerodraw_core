@@ -33,4 +33,10 @@ export interface NormalizedPointerEvent {
 
   /** 时间戳（如有） */
   timeStamp?: number;
+
+  /** 修饰键：便于工具逻辑（例如 Shift 锁比例） */
+  shiftKey?: boolean;
+  altKey?: boolean;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
 }

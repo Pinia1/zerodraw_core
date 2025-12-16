@@ -28,6 +28,7 @@ import {
   ASIDE_WIDTH,
   CANVAS_CONTAINER_ID,
   generateUUID,
+  getTouchCenterAndDistance,
   MAX_SCALE,
   MIN_SCALE,
   PROMPT_WIDTH,
@@ -36,7 +37,14 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
-import { hasIntersection, mergeLassos } from '../utils/Lasso';
+import {
+  buildEllipseLassoPoints,
+  buildRectLassoPoints,
+  getPointCount,
+  hasIntersection,
+  lockSquareEndPoint,
+  mergeLassos,
+} from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
@@ -46,6 +54,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL } = props;
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
+  const lassoStartRef = useRef<Point2D | null>(null);
 
   const [cursorVisible, setCursorVisible] = useState(true);
 
@@ -327,7 +336,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return pos;
   };
 
-  // 旧逻辑已被 input adapter 统一吸收：按钮判断在 `normalizeKonvaPointerEvent` 内处理
   const getScaleAndPosition = useMemoizedFn((deltaY: number, num: number, pointer: Point2D) => {
     const scaleBy = deltaY > 0 ? 1 - num : 1 + num;
     const newScale = stageConfig.scale * scaleBy;
@@ -421,19 +429,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       container.removeEventListener('wheel', handler as any);
     };
   }, [stageRef]);
-
-  const getTouchCenterAndDistance = useMemoizedFn((stage: Konva.Stage, touches: TouchList) => {
-    const rect = stage.container().getBoundingClientRect();
-    const t0 = touches[0];
-    const t1 = touches[1];
-    const p0 = { x: t0.clientX - rect.left, y: t0.clientY - rect.top };
-    const p1 = { x: t1.clientX - rect.left, y: t1.clientY - rect.top };
-    const center = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
-    const dx = p0.x - p1.x;
-    const dy = p0.y - p1.y;
-    const distance = Math.hypot(dx, dy);
-    return { center, distance };
-  });
 
   const onStageTouchStart = useMemoizedFn((e: Konva.KonvaEventObject<TouchEvent>) => {
     const stage = e.target.getStage();
@@ -885,12 +880,32 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (!input.canvasPoint) return;
 
     isDrawing.current = true;
+    lassoStartRef.current = input.canvasPoint;
 
     const id = generateUUID();
     setDrawingId(id);
 
+    const getLassoEndPoint = (shape: typeof lassoConfig.shape, start: Point2D, end: Point2D) => {
+      if (!input.shiftKey) return end;
+      if (shape === 'rect' || shape === 'ellipse') return lockSquareEndPoint(start, end);
+      return end;
+    };
+    const buildLassoPoints = (
+      shape: typeof lassoConfig.shape,
+      start: Point2D,
+      end: Point2D,
+      prevPoints: number[]
+    ) => {
+      if (shape === 'rect') return buildRectLassoPoints(start, end);
+      if (shape === 'ellipse') return buildEllipseLassoPoints(start, end);
+      return [...prevPoints, end.x, end.y];
+    };
+
+    const end = getLassoEndPoint(lassoConfig.shape, input.canvasPoint, input.canvasPoint);
+    const initPoints = buildLassoPoints(lassoConfig.shape, input.canvasPoint, end, []);
+
     const line: Lasso = {
-      points: [input.canvasPoint.x, input.canvasPoint.y],
+      points: initPoints,
       stroke: fillColor,
       id,
       scale: stageConfig.scale,
@@ -916,10 +931,27 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const lastLasso = lassos[lassos.length - 1];
     if (!lastLasso) return;
 
-    const updatedLine: Lasso = {
-      ...lastLasso,
-      points: [...lastLasso.points, input.canvasPoint.x, input.canvasPoint.y],
+    const start = lassoStartRef.current ?? input.canvasPoint;
+
+    const getLassoEndPoint = (shape: typeof lassoConfig.shape, end: Point2D) => {
+      if (!input.shiftKey) return end;
+      if (shape === 'rect' || shape === 'ellipse') return lockSquareEndPoint(start, end);
+      return end;
     };
+    const buildLassoPoints = (
+      shape: typeof lassoConfig.shape,
+      end: Point2D,
+      prevPoints: number[]
+    ) => {
+      if (shape === 'rect') return buildRectLassoPoints(start, end);
+      if (shape === 'ellipse') return buildEllipseLassoPoints(start, end);
+      return [...prevPoints, end.x, end.y];
+    };
+
+    const end = getLassoEndPoint(lassoConfig.shape, input.canvasPoint);
+    const nextPoints = buildLassoPoints(lassoConfig.shape, end, lastLasso.points ?? []);
+
+    const updatedLine: Lasso = { ...lastLasso, points: nextPoints };
 
     const newLines = [...lassos.slice(0, -1), updatedLine];
 
@@ -987,11 +1019,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
   });
 
-  // points 存的是 [x1,y1,x2,y2,...]，这里按“点”（pair）计数
-  const getPointCount = (points: number[]) => {
-    return Math.floor(points.length / 2);
-  };
-
   const discardLastStrokeIfTooShort = useMemoizedFn(() => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return false;
@@ -1004,6 +1031,44 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const last = arr[arr.length - 1] as { id?: string; points?: number[] } | undefined;
     const points = last?.points ?? [];
     const pointCount = getPointCount(points);
+
+    // LASSO 的 rect/ellipse：点数固定，不能用 pointCount 判短；改为用 bounds 尺寸兜底
+    if (activeKey === Actions.LASSO && lassoConfig.shape !== 'default') {
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (let i = 0; i < points.length; i += 2) {
+        const x = points[i];
+        const y = points[i + 1];
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+      const w = Number.isFinite(minX) && Number.isFinite(maxX) ? maxX - minX : 0;
+      const h = Number.isFinite(minY) && Number.isFinite(maxY) ? maxY - minY : 0;
+      const MIN_SIZE = 6; // px：太小的框选/椭圆直接丢弃
+      if (w < MIN_SIZE && h < MIN_SIZE) {
+        const newArr = arr.slice(0, -1);
+        const newDiagrams = [...drawingLayer.diagrams];
+        const lastDiagram = newDiagrams[newDiagrams.length - 1];
+        if (
+          lastDiagram &&
+          last?.id &&
+          lastDiagram.id === last.id &&
+          lastDiagram.type === diagrams
+        ) {
+          newDiagrams.pop();
+        }
+        setDrawingLayer({ ...(drawingLayer as any), [type]: newArr, diagrams: newDiagrams });
+        isDrawing.current = false;
+        setDrawingId(null);
+        return true;
+      }
+      return false;
+    }
 
     // 少于 6 个点：丢弃本次 stroke（不入历史、不留点）
     if (pointCount < 6) {
@@ -1031,6 +1096,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.PEN:
       case Actions.ERASER:
       case Actions.LASSO:
+        lassoStartRef.current = null;
         if (discardLastStrokeIfTooShort()) return;
         return finishLasso();
       case Actions.RECT:

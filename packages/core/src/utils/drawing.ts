@@ -1,3 +1,4 @@
+import type Konva from 'konva';
 import { getStroke } from 'perfect-freehand';
 import type { Line } from '../types/Layers';
 import { isMobile } from './platform';
@@ -88,4 +89,17 @@ export const pint2DToPath = (points: number[], line: Partial<Line>) => {
     })
   );
   return path;
+};
+
+export const getTouchCenterAndDistance = (stage: Konva.Stage, touches: TouchList) => {
+  const rect = stage.container().getBoundingClientRect();
+  const t0 = touches[0];
+  const t1 = touches[1];
+  const p0 = { x: t0.clientX - rect.left, y: t0.clientY - rect.top };
+  const p1 = { x: t1.clientX - rect.left, y: t1.clientY - rect.top };
+  const center = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+  const dx = p0.x - p1.x;
+  const dy = p0.y - p1.y;
+  const distance = Math.hypot(dx, dy);
+  return { center, distance };
 };

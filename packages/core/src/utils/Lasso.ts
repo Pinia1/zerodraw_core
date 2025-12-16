@@ -2,7 +2,7 @@
  * 套索工具函数
  */
 
-import { LassoMode } from '../types/Drawing';
+import { LassoMode, Point2D } from '../types/Drawing';
 
 type Segment = { x1: number; y1: number; x2: number; y2: number };
 
@@ -566,3 +566,41 @@ export function clipPathFromPoints(ctx: CanvasRenderingContext2D, points: number
     ctx.clip();
   }
 }
+
+const LASSO_ELLIPSE_SEGMENTS = 48;
+
+export const buildRectLassoPoints = (a: Point2D, b: Point2D) => {
+  const x0 = Math.min(a.x, b.x);
+  const x1 = Math.max(a.x, b.x);
+  const y0 = Math.min(a.y, b.y);
+  const y1 = Math.max(a.y, b.y);
+  const xm = (x0 + x1) / 2;
+  const ym = (y0 + y1) / 2;
+  return [x0, y0, xm, y0, x1, y0, x1, ym, x1, y1, xm, y1, x0, y1, x0, ym, x0, y0];
+};
+export const buildEllipseLassoPoints = (a: Point2D, b: Point2D) => {
+  const cx = (a.x + b.x) / 2;
+  const cy = (a.y + b.y) / 2;
+  const rx = Math.abs(b.x - a.x) / 2;
+  const ry = Math.abs(b.y - a.y) / 2;
+  const pts: number[] = [];
+  for (let i = 0; i <= LASSO_ELLIPSE_SEGMENTS; i++) {
+    const t = (i / LASSO_ELLIPSE_SEGMENTS) * Math.PI * 2;
+    pts.push(cx + rx * Math.cos(t), cy + ry * Math.sin(t));
+  }
+  return pts;
+};
+
+export const lockSquareEndPoint = (start: Point2D, end: Point2D) => {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const size = Math.max(Math.abs(dx), Math.abs(dy));
+  const sx = dx === 0 ? 1 : Math.sign(dx);
+  const sy = dy === 0 ? 1 : Math.sign(dy);
+  return { x: start.x + sx * size, y: start.y + sy * size };
+};
+
+// points 存的是 [x1,y1,x2,y2,...]，这里按“点”（pair）计数
+export const getPointCount = (points: number[]) => {
+  return Math.floor(points.length / 2);
+};
