@@ -1,4 +1,4 @@
-import { cropTransparentBorder, generateUUID } from '@monorepo/common';
+import { cropTransparentBorder, generateUUID, useLockFn } from '@monorepo/common';
 import Konva from 'konva';
 import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
@@ -17,7 +17,7 @@ const useLayerToBitmap = () => {
     }))
   );
 
-  const run = async (layer: Layers, group: Konva.Group) => {
+  const run = useLockFn(async (layer: Layers, group: Konva.Group) => {
     try {
       setLoading(true);
       return new Promise(async (resolve) => {
@@ -189,9 +189,10 @@ const useLayerToBitmap = () => {
       console.log(error, 'error');
       return;
     } finally {
+      Promise.resolve(layer);
       setLoading(false);
     }
-  };
+  });
 
   return {
     loading,

@@ -19,6 +19,10 @@ const defaultStageConfig: StageConfigTypes = {
   x: 0,
   y: 0,
 };
+const defaultLassoConfig: LassoConfigTypes = {
+  type: LassoMode.ADD,
+  shape: 'default',
+};
 
 const defaultLayerConfig: LayerConfigTypes = {
   width: 0,
@@ -111,9 +115,7 @@ export const useDrawingStore = create<DrawingState>()(
       },
       setGraphConfig: (config: GraphConfigTypes) => set({ graphConfig: config }),
       //lasso config
-      lassoConfig: {
-        type: LassoMode.ADD,
-      },
+      lassoConfig: defaultLassoConfig,
       setLassoConfig: (config: LassoConfigTypes) => set({ lassoConfig: config }),
       //brush detail conf position
       brushDetailConfPosition: defaultBrushDetailConfPosition,
@@ -135,9 +137,6 @@ export const useDrawingStore = create<DrawingState>()(
         brushDetailConfPosition: defaultBrushDetailConfPosition,
         stageConfig: defaultStageConfig,
         stageRef: null,
-        lassoConfig: {
-          type: LassoMode.ADD,
-        },
       }),
     }
   )

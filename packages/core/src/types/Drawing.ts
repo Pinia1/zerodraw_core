@@ -23,6 +23,7 @@ export type GraphConfigTypes = Pick<Line, 'strokeWidth' | 'opacity' | 'fill'> & 
 
 export type LassoConfigTypes = {
   type: LassoMode;
+  shape: 'default' | 'rect' | 'ellipse';
 };
 
 export interface Point2D {

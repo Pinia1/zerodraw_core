@@ -138,6 +138,7 @@ const DrawLayer: React.FC = () => {
       clipHeight={layerConfig.height}
       isDrawing
       id={drawingLayer?.id}
+      visible={drawingLayer?.visible}
     >
       <Group ref={groupRef} clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {drawingLayer?.diagrams.map((diagram) => {

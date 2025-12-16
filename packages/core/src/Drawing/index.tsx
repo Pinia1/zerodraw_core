@@ -94,15 +94,17 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } = useLayerStore(
-    useShallow((state) => ({
-      setDrawingLayer: state.setDrawingLayer,
-      layers: state.layers,
-      initHistory: state.initHistory,
-      pushHistory: state.pushHistory,
-      getDrawingLayer: state.getDrawingLayer,
-    }))
-  );
+  const { drawingVisible, setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } =
+    useLayerStore(
+      useShallow((state) => ({
+        setDrawingLayer: state.setDrawingLayer,
+        layers: state.layers,
+        initHistory: state.initHistory,
+        pushHistory: state.pushHistory,
+        getDrawingLayer: state.getDrawingLayer,
+        drawingVisible: state.drawingLayer?.visible,
+      }))
+    );
 
   const renderOrderLayers = useMemo(() => {
     const newLayers = [...layers];
@@ -245,6 +247,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const cursorStyle = useMemo(() => {
     if (stageDraggable) return 'grab';
+    if (!drawingVisible) return 'not-allowed';
     switch (activeKey) {
       case Actions.RECT:
       case Actions.LINE:
@@ -258,7 +261,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         break;
     }
     return 'default';
-  }, [stageDraggable, activeKey]);
+  }, [stageDraggable, activeKey, drawingVisible]);
 
   useMount(() => {
     init();
@@ -935,6 +938,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (!drawingVisible) return;
     const input = toInputEvent(e, 'down');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!input.isPrimaryButton || stageDraggable) return;
@@ -1026,16 +1030,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     switch (activeKey) {
       case Actions.PEN:
       case Actions.ERASER:
-        // 点太少直接丢弃，不入历史
-        if (discardLastStrokeIfTooShort()) return;
-        return pushDrawingHistory();
-      case Actions.RECT:
-      case Actions.ELLIPSE:
       case Actions.LASSO:
         if (discardLastStrokeIfTooShort()) return;
         return finishLasso();
+      case Actions.RECT:
+      case Actions.ELLIPSE:
       case Actions.LINE:
-        return;
+        return pushDrawingHistory();
       default:
         break;
     }

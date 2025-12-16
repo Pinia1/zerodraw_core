@@ -8,10 +8,13 @@ import { findMissingorder } from '../../../hooks/useCreateLayer';
 import useLayerToBitmap from '../../../hooks/useLayerToBitmap';
 import {
   IconClip,
+  IconElli,
+  IconLasso,
   IconLassoAdd,
   IconLassoCopy,
   IconLassoInvert,
   IconLassoRemove,
+  IconRect,
 } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../../../store/useLayer';
@@ -317,6 +320,36 @@ const LassoConf = () => {
   const menus = useMemo(() => {
     return [
       {
+        key: 'default',
+        icon: <Icon component={IconLasso} />,
+        onClick: () => setLassoConfig({ ...lassoConfig, shape: 'default' }),
+        get isActive(): boolean {
+          return lassoConfig.shape === 'default';
+        },
+        tip: 'Default selection',
+      },
+      {
+        key: 'rect',
+        icon: <Icon component={IconRect} />,
+        onClick: () => setLassoConfig({ ...lassoConfig, shape: 'rect' }),
+        get isActive(): boolean {
+          return lassoConfig.shape === 'rect';
+        },
+        tip: 'Rectangular selection',
+      },
+      {
+        key: 'ellipse',
+        icon: <Icon component={IconElli} />,
+        onClick: () => setLassoConfig({ ...lassoConfig, shape: 'ellipse' }),
+        get isActive(): boolean {
+          return lassoConfig.shape === 'ellipse';
+        },
+        tip: 'Elliptical selection',
+      },
+      {
+        key: 'Divider',
+      },
+      {
         key: LassoMode.ADD,
         icon: <Icon component={IconLassoAdd} />,
         onClick: () => handleSetLassoConfig('type', LassoMode.ADD),
@@ -377,13 +410,13 @@ const LassoConf = () => {
         tip: 'Clear selection area',
       },
     ];
-  }, [lassoConfig.type, drawingLayer?.lassos?.length]);
+  }, [lassoConfig, drawingLayer?.lassos?.length]);
 
   return (
     <Container style={ContainerStyle}>
-      {menus.map((item) => {
+      {menus.map((item, index) => {
         if (item.key === 'Divider') {
-          return <Divider style={{ fontSize: 18 }} type="vertical" />;
+          return <Divider key={item.key + index} style={{ fontSize: 18 }} type="vertical" />;
         }
         return (
           <Tooltip key={item.key} title={item.tip}>
