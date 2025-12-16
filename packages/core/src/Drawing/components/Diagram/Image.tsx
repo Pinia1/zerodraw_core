@@ -27,6 +27,17 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
       setImageBitmap(bitmap);
     });
 
+    const handleDragStart = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+      // iPad/触屏：双指期间不要进入 shape drag
+      const touches = (e as any)?.evt?.touches as TouchList | undefined;
+      if (touches && touches.length >= 2) {
+        e.cancelBubble = true;
+        (e as any)?.target?.stopDrag?.();
+        return;
+      }
+      onDragStart?.(e as any);
+    });
+
     const handleDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
       e.cancelBubble = true;
       e.target.preventDefault();
@@ -54,7 +65,7 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         image={image}
         draggable={draggable}
         listening={true}
-        onDragStart={onDragStart}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
       />

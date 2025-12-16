@@ -442,6 +442,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       e.evt.preventDefault();
       isMultiTouchRef.current = true;
 
+      // 关键：如果某个 shape 已经进入 Konva 的 drag（例如一指拖图时第二指按下），这里必须强制停止拖拽状态
+      // 否则 Konva 仍会继续按“拖拽”处理，而不是进入双指缩放/平移逻辑
+      stage.stopDrag();
+
       // 如果正在绘制：直接“取消当前未完成图形”，不入历史、不留点，避免误触产生脏数据
       if (isDrawing.current) {
         const drawingLayer = getDrawingLayer();

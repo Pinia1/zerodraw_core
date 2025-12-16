@@ -120,7 +120,15 @@ const Layer: React.FC<Layers> = (props) => {
     trRef.current?.getLayer()?.batchDraw();
   });
 
-  const handleDragStart = useMemoizedFn(() => {
+  const handleDragStart = useMemoizedFn((e?: Konva.KonvaEventObject<unknown>) => {
+    // iPad/触屏：双指期间不要触发 shape drag（否则会与缩放/平移手势冲突）
+    const touches = (e as any)?.evt?.touches as TouchList | undefined;
+    if (touches && touches.length >= 2) {
+      if (e) e.cancelBubble = true;
+      (e as any)?.target?.stopDrag?.();
+      return;
+    }
+
     const container = document.getElementById(CANVAS_CONTAINER_ID);
     container!.style.cursor = 'move';
     setGuideLines({ v: [], h: [], points: [] });
@@ -128,6 +136,14 @@ const Layer: React.FC<Layers> = (props) => {
   });
 
   const handleDragMove = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+    // iPad/触屏：双指期间不要继续拖拽
+    const touches = (e as any)?.evt?.touches as TouchList | undefined;
+    if (touches && touches.length >= 2) {
+      e.cancelBubble = true;
+      (e as any)?.target?.stopDrag?.();
+      return;
+    }
+
     const node = e.target;
     if (!node) return;
 
