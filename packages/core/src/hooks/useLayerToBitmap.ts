@@ -1,4 +1,4 @@
-import { cropTransparentBorder, generateUUID, useLockFn } from '@monorepo/common';
+import { cropTransparentBorder, generateUUID, useLockFn } from '@zeroDraw/common';
 import Konva from 'konva';
 import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';

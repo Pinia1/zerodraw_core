@@ -1,4 +1,4 @@
-import { useMediaQuery } from '@monorepo/common';
+import { useMediaQuery } from '@zeroDraw/common';
 import { theme } from 'antd';
 import React from 'react';
 

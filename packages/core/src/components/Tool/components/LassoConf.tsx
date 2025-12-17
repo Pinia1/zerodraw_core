@@ -1,5 +1,5 @@
 import Icon, { ClearOutlined } from '@ant-design/icons';
-import { cropTransparentBorder, useMemoizedFn } from '@monorepo/common';
+import { cropTransparentBorder, useMemoizedFn } from '@zeroDraw/common';
 import { Divider, message, Tooltip } from 'antd';
 import Konva from 'konva';
 import React, { useMemo } from 'react';

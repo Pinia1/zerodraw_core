@@ -1,4 +1,4 @@
-import { IndexDBManager } from '@monorepo/common';
+import { IndexDBManager } from '@zeroDraw/common';
 
 const manager = new IndexDBManager();
 

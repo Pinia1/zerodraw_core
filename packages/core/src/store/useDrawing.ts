@@ -1,4 +1,4 @@
-import { WebWorker } from '@monorepo/common';
+import { WebWorker } from '@zeroDraw/common';
 import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -65,7 +65,7 @@ interface DrawingState {
 
 export const useDrawingStore = create<DrawingState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       stageRef: null,
       bindRef: (ref: DrawingState['stageRef']) => set({ stageRef: ref }),
 

@@ -1,6 +1,6 @@
 import { Button } from 'antd';
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useUserStore } from '../../store/useUserStore';
 
@@ -11,10 +11,9 @@ const Container = styled.div`
   height: 100vh;
 `;
 
-export default () => {
+const Login = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useUserStore();
-  const navigate = useNavigate();
   const handleGithubLogin = () => {
     const client_id = 'Ov23lim2JDpZfclnzJ0w';
     const redirect_uri = 'http://localhost:3000/auth';
@@ -34,3 +33,4 @@ export default () => {
     </Container>
   );
 };
+export default Login;

@@ -7,15 +7,23 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@zeroDraw/core': path.resolve(__dirname, '../core/src/index.ts'),
+      '@zeroDraw/common': path.resolve(__dirname, '../common/src/index.ts'),
     },
   },
   server: {
     port: 3000,
     open: true,
     host: true,
+    fs: {
+      allow: [path.resolve(__dirname, '..')],
+    },
+  },
+  optimizeDeps: {
+    exclude: ['@zeroDraw/core', '@zeroDraw/common'],
   },
   build: {
     outDir: 'dist',
-    sourcemap: true,
+    sourcemap: false,
   },
 });

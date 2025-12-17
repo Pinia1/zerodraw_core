@@ -1,4 +1,4 @@
-import { useMediaQuery, useRequest } from '@monorepo/common';
+import { useMediaQuery, useRequest } from '@zeroDraw/common';
 import { ConfigProvider, Skeleton, theme } from 'antd';
 import { useMemo } from 'react';
 import { Outlet } from 'react-router-dom';

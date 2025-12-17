@@ -1,4 +1,4 @@
-import { useMediaQuery } from '@monorepo/common';
+import { useMediaQuery } from '@zeroDraw/common';
 import React from 'react';
 import { Layer, Rect } from 'react-konva';
 import useImage from 'use-image';

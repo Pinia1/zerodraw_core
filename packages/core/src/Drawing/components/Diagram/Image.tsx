@@ -1,4 +1,4 @@
-import { isEmptyObj, useMemoizedFn } from '@monorepo/common';
+import { isEmptyObj, useMemoizedFn } from '@zeroDraw/common';
 import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';

@@ -1,5 +1,5 @@
-import { useSize } from '@monorepo/common';
-import { Drawing, Tools } from '@monorepo/core';
+import { useSize } from '@zeroDraw/common';
+import { Drawing, Tools } from '@zeroDraw/core';
 import { useRef } from 'react';
 
 import styled from 'styled-components';
@@ -10,7 +10,7 @@ const Container = styled.div`
   overflow: hidden;
 `;
 
-export default () => {
+const DrawingPage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const size = useSize(containerRef);
 
@@ -20,3 +20,5 @@ export default () => {
     </Container>
   );
 };
+
+export default DrawingPage;

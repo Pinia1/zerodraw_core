@@ -8,8 +8,8 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "files.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
+    // "**/node_modules": true,
+    // "**/dist": true,
     "**/.pnpm-store": true
   },
   "search.exclude": {
@@ -20,4 +20,3 @@
     "**/pnpm-lock.yaml": true
   }
 }
-

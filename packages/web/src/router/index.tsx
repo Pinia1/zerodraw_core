@@ -1,36 +1,33 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
-import Layout from '../layouts/Layout';
-import Drawing from '../pages/Drawing';
-import Login from '../pages/Login';
-import AuthCallback from '../pages/Login/AuchCallback';
-import NotFound from '../pages/NotFound';
+import { lazy, Suspense } from 'react';
+import { createBrowserRouter } from 'react-router-dom';
+
+const DrawingPage = lazy(() => import('../pages/Drawing'));
+const LoginPage = lazy(() => import('../pages/Login'));
+const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: <Navigate to="/drawing" replace />,
-      },
-      {
-        path: 'drawing',
-        element: <Drawing />,
-      },
-
-      {
-        path: '*',
-        element: <NotFound />,
-      },
-    ],
+    element: (
+      <Suspense fallback={null}>
+        <DrawingPage />
+      </Suspense>
+    ),
   },
   {
-    path: 'login',
-    element: <Login />,
+    path: '/login',
+    element: (
+      <Suspense fallback={null}>
+        <LoginPage />
+      </Suspense>
+    ),
   },
   {
-    path: '/auth',
-    element: <AuthCallback />,
+    path: '*',
+    element: (
+      <Suspense fallback={null}>
+        <NotFoundPage />
+      </Suspense>
+    ),
   },
 ]);

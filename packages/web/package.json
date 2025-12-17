@@ -1,5 +1,5 @@
 {
-  "name": "@monorepo/web",
+  "name": "@zeroDraw/web",
   "version": "1.0.0",
   "private": true,
   "description": "Web 应用",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
-    "@monorepo/common": "workspace:*",
-    "@monorepo/core": "workspace:*",
+    "@zeroDraw/common": "workspace:*",
+    "@zeroDraw/core": "workspace:*",
     "antd": "^5.27.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,4 +1,4 @@
-import { useDebounceEffect } from '@monorepo/common';
+import { useDebounceEffect } from '@zeroDraw/common';
 import { Popover } from 'antd';
 import Konva from 'konva';
 import React, { useEffect, useRef, useState } from 'react';

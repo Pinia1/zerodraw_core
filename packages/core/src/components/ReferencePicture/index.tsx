@@ -1,5 +1,5 @@
 import { CloseOutlined } from '@ant-design/icons';
-import { useMemoizedFn, useMount } from '@monorepo/common';
+import { useMemoizedFn, useMount } from '@zeroDraw/common';
 import React, { useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';

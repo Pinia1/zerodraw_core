@@ -1,4 +1,4 @@
-import { useAsyncEffect } from '@monorepo/common';
+import { useAsyncEffect } from '@zeroDraw/common';
 import React, { useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
 import { Fill as FillType } from '../../../types/Layers';

@@ -1,4 +1,4 @@
-import { useMemoizedFn } from '@monorepo/common';
+import { useMemoizedFn } from '@zeroDraw/common';
 import { useShallow } from 'zustand/react/shallow';
 import useLayerStore from '../store/useLayer';
 

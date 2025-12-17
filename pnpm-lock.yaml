@@ -60,7 +60,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@monorepo/common':
+      '@zeroDraw/common':
         specifier: workspace:*
         version: link:../common
       react-konva:
@@ -127,7 +127,7 @@ importers:
 
   packages/server:
     dependencies:
-      '@monorepo/common':
+      '@zeroDraw/common':
         specifier: workspace:*
         version: link:../common
       axios:
@@ -182,10 +182,10 @@ importers:
       '@ant-design/icons':
         specifier: ^6.1.0
         version: 6.1.0(react-dom@18.3.1)(react@18.3.1)
-      '@monorepo/common':
+      '@zeroDraw/common':
         specifier: workspace:*
         version: link:../common
-      '@monorepo/core':
+      '@zeroDraw/core':
         specifier: workspace:*
         version: link:../core
       antd:

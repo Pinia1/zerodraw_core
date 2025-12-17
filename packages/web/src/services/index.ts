@@ -1,4 +1,4 @@
-import { axios, AxiosError, InternalAxiosRequestConfig } from '@monorepo/common';
+import { axios, AxiosError, InternalAxiosRequestConfig } from '@zeroDraw/common';
 import { message } from 'antd';
 import { useUserStore } from '../store/useUserStore';
 
@@ -35,7 +35,7 @@ request.interceptors.response.use(
   },
   (error: AxiosError) => {
     if (error.response) {
-      const { status, data } = error.response;
+      const { status } = error.response;
       switch (status) {
         case 401:
           message.error('登录失败');

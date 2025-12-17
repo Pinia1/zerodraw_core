@@ -1,11 +1,10 @@
 {
-  "name": "@monorepo/core",
-  "version": "1.0.0",
+  "name": "@zeroDraw/core",
   "private": true,
-  "description": "React 组件库",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -38,7 +37,7 @@
     "@dnd-kit/utilities": "^3.2.2"
   },
   "dependencies": {
-    "@monorepo/common": "workspace:*"
+    "@zeroDraw/common": "workspace:*"
   },
   "devDependencies": {
     "@ant-design/icons": "^6.1.0",

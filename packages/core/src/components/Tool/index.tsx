@@ -1,5 +1,5 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
-import { useLockFn } from '@monorepo/common';
+import { useLockFn } from '@zeroDraw/common';
 import { Divider, Popover } from 'antd';
 import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';

@@ -1,4 +1,4 @@
-import { WebWorker } from '@monorepo/common';
+import { WebWorker } from '@zeroDraw/common';
 
 export function createFillWorker(errorHandler?: (error: Error) => void): WebWorker {
   const script = `

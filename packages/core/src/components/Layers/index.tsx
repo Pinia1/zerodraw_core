@@ -1,5 +1,5 @@
 import Icon from '@ant-design/icons';
-import { useMount } from '@monorepo/common';
+import { useMount } from '@zeroDraw/common';
 import { Button, Dropdown, Flex, Tabs, TabsProps } from 'antd';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';

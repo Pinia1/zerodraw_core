@@ -1,5 +1,5 @@
 import Icon from '@ant-design/icons';
-import { useMemoizedFn, useThrottleFn } from '@monorepo/common';
+import { useMemoizedFn, useThrottleFn } from '@zeroDraw/common';
 import { Flex, Input, Popover, Select, Slider } from 'antd';
 import Konva from 'konva';
 import React, { isValidElement, useMemo, useRef, useState } from 'react';

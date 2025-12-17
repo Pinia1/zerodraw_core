@@ -1,4 +1,4 @@
-import { useMount } from '@monorepo/common';
+import { useMount } from '@zeroDraw/common';
 import Konva from 'konva';
 import { useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';

@@ -1,5 +1,5 @@
 import Icon from '@ant-design/icons';
-import { useThrottleFn } from '@monorepo/common';
+import { useThrottleFn } from '@zeroDraw/common';
 import { Flex } from 'antd';
 import React from 'react';
 import styled from 'styled-components';

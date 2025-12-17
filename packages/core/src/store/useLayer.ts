@@ -1,4 +1,4 @@
-import { HistoryManager } from '@monorepo/common';
+import { HistoryManager } from '@zeroDraw/common';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { DrawLayer, Layers } from '../types/Layers';

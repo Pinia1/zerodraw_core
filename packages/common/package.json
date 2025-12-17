@@ -1,11 +1,10 @@
 {
-  "name": "@monorepo/common",
-  "version": "1.0.0",
+  "name": "@zeroDraw/common",
   "private": true,
-  "description": "共享工具库和类型定义",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

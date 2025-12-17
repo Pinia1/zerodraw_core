@@ -1,4 +1,4 @@
-import { useMemoizedFn } from '@monorepo/common';
+import { useMemoizedFn } from '@zeroDraw/common';
 import Konva from 'konva';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {

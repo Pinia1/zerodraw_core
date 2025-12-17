@@ -1,4 +1,4 @@
-import { useMount } from '@monorepo/common';
+import { useMount } from '@zeroDraw/common';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { githubLogin } from '../../services/login';
@@ -11,7 +11,7 @@ const Container = styled.div`
   height: 100vh;
 `;
 
-export default () => {
+const AuthCallback = () => {
   const navigate = useNavigate();
   const { setUser } = useUserStore();
   useMount(() => {
@@ -31,3 +31,4 @@ export default () => {
   });
   return <Container>loading...</Container>;
 };
+export default AuthCallback;
