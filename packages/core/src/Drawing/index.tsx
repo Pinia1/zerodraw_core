@@ -13,6 +13,7 @@ import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import useDrawingKeyboard from '../hooks/useKeyboard';
+import { useWheelLayerCache } from '../hooks/useWheelLayerCache';
 import {
   isPointInCanvasBounds,
   normalizeKonvaPointerEvent,
@@ -368,14 +369,22 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return { dx, dy };
   });
 
-  /**
-   * 统一 wheel 行为：
-   * - 触控板：默认平移（dx/dy），pinch 通常会带 ctrlKey -> 触发缩放
-   * - 鼠标滚轮：默认缩放（更符合绘图软件习惯）
-   */
+  const {
+    tick: handleWheelCacheTick,
+    start: startInteractionCache,
+    end: endInteractionCache,
+    cancel: cancelInteractionCacheEnd,
+  } = useWheelLayerCache(stageRef, {
+    endWait: 220,
+    excludeTopLayers: 1,
+    topLayerId: topLayer?.id,
+  });
+
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
-    // 某些浏览器/系统下即使 preventDefault，也可能继续冒泡导致页面滚动；这里额外 stopPropagation
+
+    handleWheelCacheTick();
+
     e.evt.stopPropagation();
     const stage = e.target.getStage();
     if (!stage) return;
@@ -439,6 +448,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (touches.length >= 2) {
       e.evt.preventDefault();
       isMultiTouchRef.current = true;
+
+      // iPad 双指手势（平移/缩放）期间开启 cache，加速大图层的重绘
+      cancelInteractionCacheEnd();
+      startInteractionCache();
 
       // 关键：如果某个 shape 已经进入 Konva 的 drag（例如一指拖图时第二指按下），这里必须强制停止拖拽状态
       // 否则 Konva 仍会继续按“拖拽”处理，而不是进入双指缩放/平移逻辑
@@ -525,7 +538,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (touches.length < 2) {
       lastTwoFinger.current = null;
       isMultiTouchRef.current = false;
+
+      // iPad 手势结束：立即清理 cache，释放内存/显存
+      endInteractionCache();
     }
+  });
+
+  const onDragStart = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
+    const stage = e.target.getStage();
+    if (!stage || e.target !== stage) return;
+    if (!stageDraggable) return;
+
+    cancelInteractionCacheEnd();
+    startInteractionCache();
   });
 
   const onDragEnd = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {
@@ -533,6 +558,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     if (!stage || e.target !== stage) return;
     if (!stageDraggable) return;
+
+    // 拖拽结束立即清理 cache（释放内存/显存）
+    endInteractionCache();
+
     setStageConfig({
       ...stageConfig,
       x: e.target.x(),
@@ -1142,6 +1171,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         draggable={stageDraggable}
         onContextMenu={handleContextMenu}
         onWheel={onStageWheel}
+        onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onTouchStart={onStageTouchStart}
         onTouchMove={onStageTouchMove}

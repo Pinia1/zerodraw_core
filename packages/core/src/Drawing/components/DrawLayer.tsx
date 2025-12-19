@@ -45,6 +45,7 @@ const DrawLayer: React.FC = () => {
       drawingId: state.drawingId,
     }))
   );
+
   const { drawingLayer } = useLayerStore(
     useShallow((state) => ({
       drawingLayer: state.drawingLayer,

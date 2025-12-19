@@ -61,6 +61,8 @@ interface DrawingState {
   bindWorkerRef: (ref: WebWorker | null) => void;
   shrinkTools: boolean;
   setShrinkTools: (shrinkTools: boolean) => void;
+  bitmapWorkerRef: WebWorker | null;
+  bindBitmapWorkerRef: (ref: WebWorker | null) => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -79,6 +81,8 @@ export const useDrawingStore = create<DrawingState>()(
       //worker ref
       workerRef: null,
       bindWorkerRef: (ref: WebWorker | null) => set({ workerRef: ref }),
+      bitmapWorkerRef: null,
+      bindBitmapWorkerRef: (ref: WebWorker | null) => set({ bitmapWorkerRef: ref }),
 
       //line config
       lineConfig: {

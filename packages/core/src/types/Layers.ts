@@ -37,6 +37,7 @@ export interface Layers {
   lassos: Lasso[];
   eraseLassos: Lasso[];
   image: Fill | null;
+  thumbnail: Fill | null;
   imageFull?: boolean;
   blendMode: BlendMode;
   filter?: LayerFilter;

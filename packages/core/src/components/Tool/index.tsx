@@ -76,7 +76,6 @@ const Tool: React.FC = () => {
       if (!layerConfig.width || !layerConfig.height) return;
       createLayerRun(id, url);
     },
-    onComplete: (result) => {},
     onError: (error) => {
       console.log(error, 'error');
     },

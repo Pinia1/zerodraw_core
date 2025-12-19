@@ -42,6 +42,7 @@ export const initialDrawingLayer: () => Layers = () => ({
   lassos: [],
   eraseLassos: [],
   image: null,
+  thumbnail: null,
   name: 'layer 1',
   order: 0,
   blendMode: 'normal',
