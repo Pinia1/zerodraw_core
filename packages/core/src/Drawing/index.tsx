@@ -50,6 +50,7 @@ import { isMac, isMobile, isWindows } from '../utils/platform';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
+import Thumbnail from './components/Thumbnail';
 
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL } = props;
@@ -248,7 +249,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       isDrawing.current = false;
       setDrawingId(null);
       const lines = drawingLayer?.lines || [];
-      let line = lines[lines.length - 1];
+      const line = lines[lines.length - 1];
       line.points = line.points.slice(0, -2);
       lines.splice(lines.length - 1, 1, line);
       setDrawingLayer({ ...drawingLayer!, lines: lines });
@@ -376,7 +377,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     cancel: cancelInteractionCacheEnd,
   } = useWheelLayerCache(stageRef, {
     endWait: 220,
-    excludeTopLayers: 1,
     topLayerId: topLayer?.id,
   });
 
@@ -563,7 +563,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     endInteractionCache();
 
     setStageConfig({
-      ...stageConfig,
+      scale: stageConfig.scale,
       x: e.target.x(),
       y: e.target.y(),
     });
@@ -1183,6 +1183,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onPointerLeave={handleMouseLeave}
       >
         <Mosic />
+        <Thumbnail />
 
         {renderOrderLayers.map((layer) => {
           const isDrawingLayer = topLayer?.id === layer.id;
