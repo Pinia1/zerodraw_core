@@ -79,6 +79,10 @@ const Layers: React.FC = () => {
         cursor: 'default',
         transformOrigin: 'left top',
         transform: isMobile ? 'scale(0.7)' : 'scale(1)',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       <Flex style={{ position: 'relative', height: '100%' }}>
@@ -98,7 +102,7 @@ const Layers: React.FC = () => {
             style={{
               position: 'absolute',
               right: 0,
-              transform: 'translateY(calc(17px - 50%))',
+              transform: 'translateY(calc(23px - 50%))',
               fontSize: 14,
             }}
           >

@@ -3,6 +3,8 @@ import { getStroke } from 'perfect-freehand';
 import type { Line } from '../types/Layers';
 import { isMobile } from './platform';
 
+/**最少点 */
+export const MIN_POINT = isMobile ? 4 : 6;
 /**图层控制宽度 */
 export const PROMPT_WIDTH = isMobile ? 175 : 250;
 /**右侧aside宽度 */

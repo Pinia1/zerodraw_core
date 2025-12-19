@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import useToolsStore from '../../../store/useTools';
 import { Actions } from '../../../types/Drawing';
 import type { Line } from '../../../types/Layers';
-import { pint2DToPath } from '../../../utils/drawing';
+import { MIN_POINT, pint2DToPath } from '../../../utils/drawing';
 
 const Paths: React.FC<Line> = (props) => {
   const { points, opacity } = props;
@@ -69,7 +69,7 @@ const Paths: React.FC<Line> = (props) => {
     ctx.restore();
   }, []);
 
-  if (points.length < 4) return null;
+  if (points.length < MIN_POINT) return null;
 
   return (
     <>

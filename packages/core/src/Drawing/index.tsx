@@ -1,7 +1,7 @@
 import { hexToRgba, useMemoizedFn, useMount } from '@zeroDraw/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -31,6 +31,7 @@ import {
   generateUUID,
   getTouchCenterAndDistance,
   MAX_SCALE,
+  MIN_POINT,
   MIN_SCALE,
   PROMPT_WIDTH,
   RATIO,
@@ -419,25 +420,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: stageConfig.y - dy,
     });
   });
-
-  // 确保 wheel 在画布上不会滚动页面：绑定一个 passive:false 的原生监听器
-  useEffect(() => {
-    const stage = stageRef?.current;
-    if (!stage) return;
-
-    const container = stage.container();
-    if (!container) return;
-
-    const handler = (evt: WheelEvent) => {
-      // 只在指针在 container 上时阻止页面滚动（事件目标就是 container 内部）
-      evt.preventDefault();
-    };
-
-    container.addEventListener('wheel', handler, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handler as any);
-    };
-  }, [stageRef]);
 
   const onStageTouchStart = useMemoizedFn((e: Konva.KonvaEventObject<TouchEvent>) => {
     const stage = e.target.getStage();
@@ -989,7 +971,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   /**
    * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
-   * 后续可以把所有“设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
+   * “设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
    */
   const toInputEvent = useMemoizedFn(
     (e: Konva.KonvaEventObject<MouseEvent>, phase: NormalizedPointerEvent['phase']) => {
@@ -1100,7 +1082,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     }
 
     // 少于 6 个点：丢弃本次 stroke（不入历史、不留点）
-    if (pointCount < 6) {
+    if (pointCount < MIN_POINT) {
       const newArr = arr.slice(0, -1);
       const newDiagrams = [...drawingLayer.diagrams];
       const lastDiagram = newDiagrams[newDiagrams.length - 1];
@@ -1160,6 +1142,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           isolation: 'isolate',
           // 允许我们在 iPad 上接管双指手势（否则 Safari 会缩放页面）
           touchAction: 'none',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
         }}
         id={CANVAS_CONTAINER_ID}
         width={size.width}
