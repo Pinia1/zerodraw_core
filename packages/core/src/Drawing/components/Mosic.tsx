@@ -6,6 +6,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import { msk, mskWhite } from '../../utils/base64img';
 
+export const MOSIC_LAYER_ID = '__interaction_mosic_layer__';
+
 const Mosic: React.FC = () => {
   const [windowTheme] = useMediaQuery();
   const { layerConfig, stageConfig } = useDrawingStore(
@@ -23,6 +25,7 @@ const Mosic: React.FC = () => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       listening={false}
+      id={MOSIC_LAYER_ID}
     >
       <Rect
         x={0}

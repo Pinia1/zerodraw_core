@@ -21,6 +21,7 @@ const Thumbnail: React.FC = () => {
       clipWidth={layerConfig.width}
       clipHeight={layerConfig.height}
       listening={false}
+      visible={false}
     >
       {thumbnail && (
         <Image
