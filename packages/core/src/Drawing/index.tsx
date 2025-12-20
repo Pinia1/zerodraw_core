@@ -636,13 +636,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       strokeWidth: config.strokeWidth,
       stroke: fillColor,
       opacity: config.opacity,
-      stabilizer: isEraser ? 0 : lineConfig.stabilizer || 0,
-      hardness: isEraser ? 1 : lineConfig.hardness || 1,
+      stabilizer: isEraser ? 0 : (lineConfig.stabilizer ?? 0),
+      hardness: isEraser ? 1 : (lineConfig.hardness ?? 1),
       tension: Math.max(!isEraser && lineConfig.stabilizer ? lineConfig.stabilizer / 4 : 0, 0.7),
       eraser: isEraser,
       id,
       pressure: [input.pressure || 0],
-      suppress: false,
+      suppress: lineConfig.suppress, //是否开启压感
       scale: stageConfig.scale,
       fill: !isEraser ? !!lineConfig.fill : false,
     };
@@ -824,7 +824,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       eraser: false,
       id,
       pressure: [input.pressure || 0],
-      suppress: false,
+      suppress: false, //是否开启压感
       scale: stageConfig.scale,
       fill: false,
     };
@@ -1037,9 +1037,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
-    e.evt.preventDefault();
     if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
+    if (!isDrawing.current) return;
     const input = toInputEvent(e, 'move');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;

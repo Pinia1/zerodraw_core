@@ -51,7 +51,7 @@ const BrushConf = () => {
               <Slider
                 style={{ width: '100%', margin: 0 }}
                 min={1}
-                max={250}
+                max={100}
                 onChange={(value) => {
                   handleSetConfig('strokeWidth', value);
                 }}

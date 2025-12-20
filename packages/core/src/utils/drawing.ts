@@ -24,6 +24,8 @@ export const REDUCE_SCALE = 0.18;
 /**增加缩放比例 */
 export const INCREASE_SCALE = 0.02;
 
+export const MAX_TAPER = 500;
+
 export const CANVAS_CONTAINER_ID = 'canvas_container';
 
 export const generateUUID = () => {
@@ -66,28 +68,32 @@ export function getSvgPathFromStroke(points: number[][]): string {
 
 export const pint2DToPath = (points: number[], line: Partial<Line>) => {
   const pathPoint = [];
+  const { suppress = false } = line;
 
-  // 调整这个值：1=不抽稀，2=50%，3=33%
-  //TODO 可以调整两端尖锐度
   const step = 1;
+  let pressureIndex = 0;
   for (let i = 0; i < points.length; i += 2 * step) {
-    pathPoint.push([points[i], points[i + 1]]);
+    pathPoint.push([
+      points[i],
+      points[i + 1],
+      suppress ? (line.pressure?.[pressureIndex] ?? 0.5) : 0.5,
+    ]);
+    pressureIndex++;
   }
 
-  const hardness = Math.max(0.1, line.hardness ?? 0);
+  const taper = (line.hardness || 0) * MAX_TAPER;
 
-  const taper = 1 - hardness < 0.1 ? false : 1 - hardness;
   const path = getSvgPathFromStroke(
     getStroke(pathPoint as number[][], {
-      simulatePressure: true,
+      simulatePressure: suppress, //速度模拟压感
       size: line.strokeWidth ? line.strokeWidth / 2 : 2,
-      thinning: line.suppress ? 0.6 : 0,
+      thinning: line.suppress ? 0.8 : 0,
       smoothing: line.stabilizer || 0.2,
       streamline: 0.5,
       easing: (t: number) => Math.sin((t * Math.PI) / 2),
       start: { taper },
       end: { taper },
-      last: false,
+      last: true,
     })
   );
   return path;

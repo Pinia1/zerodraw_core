@@ -18,6 +18,7 @@ function getPressure(evt: any): number {
   if (typeof evt?.pressure === 'number') return clamp01(evt.pressure);
   // iOS Touch force: 0~1
   const force = evt?.touches?.[0]?.force ?? evt?.changedTouches?.[0]?.force;
+
   if (typeof force === 'number') return clamp01(force);
   return 0;
 }
@@ -51,6 +52,7 @@ export function normalizeKonvaPointerEvent(
   const evtAny: any = e?.evt;
   const pointerType = getPointerType(evtAny);
   const pressure = getPressure(evtAny);
+
   const { button, buttons, isPrimaryButton } = getButtons(evtAny);
   const pointerId = typeof evtAny?.pointerId === 'number' ? evtAny.pointerId : undefined;
   const timeStamp = typeof evtAny?.timeStamp === 'number' ? evtAny.timeStamp : undefined;

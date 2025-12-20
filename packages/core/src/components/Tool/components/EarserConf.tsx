@@ -46,7 +46,7 @@ const EarserConf = () => {
         <Slider
           tooltip={{ open: false }}
           min={1}
-          max={250}
+          max={100}
           onChange={(value) => handleSetLineConfig('strokeWidth', value)}
           defaultValue={eraserConfig.strokeWidth}
         />
@@ -54,7 +54,7 @@ const EarserConf = () => {
           style={{ width: 55, height: 24 }}
           onChange={(e) => handleSetLineConfig('strokeWidth', Number(e.target.value))}
           value={eraserConfig.strokeWidth}
-          max={250}
+          max={100}
           min={1}
           suffix="px"
         />

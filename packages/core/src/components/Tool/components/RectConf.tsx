@@ -78,7 +78,7 @@ const RectConf = () => {
         <Slider
           tooltip={{ open: false }}
           min={1}
-          max={250}
+          max={100}
           onChange={(value) => handleSetGraphConfig('strokeWidth', value)}
           defaultValue={graphConfig.strokeWidth}
         />
@@ -86,7 +86,7 @@ const RectConf = () => {
           style={{ width: 55, height: 24 }}
           onChange={(e) => handleSetGraphConfig('strokeWidth', Number(e.target.value))}
           value={graphConfig.strokeWidth}
-          max={250}
+          max={100}
           min={1}
           suffix="px"
         />
