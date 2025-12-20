@@ -2,6 +2,7 @@ import { useDebounceEffect, useDebounceFn, useMemoizedFn } from '@zeroDraw/commo
 import Konva from 'konva';
 import { useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { MOSIC_LAYER_ID } from '../Drawing/components/Mosic';
 import { THUMBNAIL_LAYER_ID } from '../Drawing/components/Thumbnail';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
@@ -53,6 +54,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
     stage.getLayers().forEach((layer) => {
       if (!layer) return;
       if (layer.attrs?.id === THUMBNAIL_LAYER_ID) return;
+      if (layer.attrs?.id === MOSIC_LAYER_ID) return;
       records.push({ layer, visible: layer.visible() });
       layer.visible(false);
     });
@@ -109,32 +111,59 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   });
 
   const getBitmapSync = useMemoizedFn(() => {
-    requestAnimationFrame(async () => {
+    requestAnimationFrame(() => {
       const stage = stageRef?.current;
       if (!stage) return;
 
-      const x = layerConfig.x * stageConfig.scale + stageConfig.x;
-      const y = layerConfig.y * stageConfig.scale + stageConfig.y;
-      const width = layerConfig.width * stageConfig.scale;
-      const height = layerConfig.height * stageConfig.scale;
+      const mosicLayer = stage.findOne(`#${MOSIC_LAYER_ID}`) as any;
+      const thumbnailLayer = stage.findOne(`#${THUMBNAIL_LAYER_ID}`) as any;
 
-      const pixelRatio = (WIDTH / Math.max(1, width)) * (isMobile ? 0.2 : 0.4);
+      const prevMosicVisible = mosicLayer?.visible?.();
+      const prevThumbVisible = thumbnailLayer?.visible?.();
 
-      const blob = (await stage.toBlob({
-        x,
-        y,
-        width,
-        height,
-        pixelRatio,
-        mimeType: 'image/webp',
-      })) as Blob;
+      try {
+        thumbnailLayer?.visible?.(false);
 
-      const image = new window.Image();
-      image.src = URL.createObjectURL(blob);
-      image.onload = () => {
-        URL.revokeObjectURL(image.src);
-        setThumbnail(image);
-      };
+        if (!layerConfig.backgroundVisible) {
+          mosicLayer?.visible?.(false);
+        }
+
+        const x = layerConfig.x * stageConfig.scale + stageConfig.x;
+        const y = layerConfig.y * stageConfig.scale + stageConfig.y;
+        const width = layerConfig.width * stageConfig.scale;
+        const height = layerConfig.height * stageConfig.scale;
+
+        const pixelRatio = (WIDTH / Math.max(1, width)) * (isMobile ? 0.2 : 0.4);
+
+        const canvas = stage.toCanvas({
+          x,
+          y,
+          width,
+          height,
+          pixelRatio,
+        }) as HTMLCanvasElement;
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            setThumbnail(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        }, 'image/webp');
+      } finally {
+        if (thumbnailLayer && typeof prevThumbVisible === 'boolean') {
+          thumbnailLayer.visible(prevThumbVisible);
+        }
+        if (mosicLayer && typeof prevMosicVisible === 'boolean') {
+          mosicLayer.visible(prevMosicVisible);
+        }
+      }
     });
   });
 
