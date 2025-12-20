@@ -49,8 +49,8 @@ const Mosic: React.FC = () => {
           const shiftY = 0;
 
           const isDark = windowTheme === 'dark';
-          const c0 = isDark ? '#2B2B2D' : '#ffffff';
-          const c1 = isDark ? '#1F1F21' : '#dcdbdb';
+          const c0 = isDark ? '#2c313d' : '#ffffff';
+          const c1 = isDark ? '#20252e' : '#dcdbdb';
 
           ctx.save();
           ctx.imageSmoothingEnabled = false;
@@ -71,6 +71,9 @@ const Mosic: React.FC = () => {
             }
           }
           ctx.restore();
+          if (isDark) {
+            return;
+          }
           ctx.globalCompositeOperation = 'source-over';
           ctx.fillStyle = 'rgba(252, 252, 252, 0.22)';
           ctx.fillRect(0, 0, w + shiftX + tile, h + shiftY + tile);
