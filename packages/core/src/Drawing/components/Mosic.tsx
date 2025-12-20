@@ -1,4 +1,5 @@
 import { useMediaQuery } from '@zeroDraw/common';
+import type Konva from 'konva';
 import React from 'react';
 import { Layer, Shape } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
@@ -35,34 +36,24 @@ const Mosic: React.FC = () => {
             ctx.fillStyle = layerConfig.backgroundColor || '#ffffff';
             ctx.fillRect(0, 0, w, h);
             ctx.restore();
-            ctx.fillStrokeShape(shape as any);
+            ctx.fillStrokeShape(shape as Konva.Shape);
             return;
           }
           const scale = Math.max(0.001, stageConfig.scale || 1);
           const dpr = Math.max(1, window.devicePixelRatio || 1);
-          const tilePx = 14;
+          const tilePx = 10;
           const unitToPx = scale * dpr;
           const tile = tilePx / unitToPx;
 
-          // 计算 layer(0,0) 在屏幕上的物理像素位置：screen = stage.x + scale*layer.x
-          // 然后把绘制原点平移到 tilePx 的整数倍上，让格子边界落在整数物理像素边界。
-          const originPxX = (stageConfig.x + scale * layerConfig.x) * dpr;
-          const originPxY = (stageConfig.y + scale * layerConfig.y) * dpr;
-          const mod = (n: number, m: number) => ((n % m) + m) % m;
-          const shiftPxX = mod(originPxX, tilePx);
-          const shiftPxY = mod(originPxY, tilePx);
-          const shiftX = shiftPxX / unitToPx;
-          const shiftY = shiftPxY / unitToPx;
+          const shiftX = 0;
+          const shiftY = 0;
 
           const isDark = windowTheme === 'dark';
           const c0 = isDark ? '#2B2B2D' : '#ffffff';
-          const c1 = isDark ? '#1F1F21' : '#e5e5e5';
+          const c1 = isDark ? '#1F1F21' : '#dcdbdb';
 
           ctx.save();
           ctx.imageSmoothingEnabled = false;
-
-          // 平移到对齐后的坐标系
-          ctx.translate(-shiftX, -shiftY);
 
           ctx.fillStyle = c0;
           ctx.fillRect(0, 0, w + shiftX + tile, h + shiftY + tile);
@@ -81,10 +72,9 @@ const Mosic: React.FC = () => {
           }
           ctx.restore();
           ctx.globalCompositeOperation = 'source-over';
-          ctx.fillStyle = 'rgba(255,255,255,0.18)';
+          ctx.fillStyle = 'rgba(252, 252, 252, 0.22)';
           ctx.fillRect(0, 0, w + shiftX + tile, h + shiftY + tile);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ctx.fillStrokeShape(shape as any);
+          ctx.fillStrokeShape(shape as Konva.Shape);
         }}
       />
     </Layer>
