@@ -8,52 +8,56 @@ interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
-const Container: React.FC<ContainerProps> = ({ children, style, ...rest }) => {
-  const { token } = useToken();
-  const {
-    colorPrimaryBg,
-    colorBgContainer,
-    colorText,
-    colorInfoActive,
-    colorPrimaryActive,
-    colorFillTertiary,
-  } = token;
+const Container = React.memo(
+  React.forwardRef<HTMLDivElement, ContainerProps>(({ children, style, ...rest }, ref) => {
+    const { token } = useToken();
+    const {
+      colorPrimaryBg,
+      colorBgContainer,
+      colorText,
+      colorInfoActive,
+      colorPrimaryActive,
+      colorFillTertiary,
+    } = token;
 
-  const [windowTheme] = useMediaQuery();
+    const [windowTheme] = useMediaQuery();
 
-  const cssVariables = {
-    '--container-bg': colorBgContainer,
-    '--container-color': colorText,
-    '--container-active': colorInfoActive,
-    //custom,
-    '--container-hover-bg':
-      windowTheme === 'dark' ? 'rgba(60, 60, 62, 1)' : 'rgba(240, 240, 240, 1)',
-    '--container-box-shadow':
-      windowTheme === 'dark'
-        ? `
+    const cssVariables = {
+      '--container-bg': colorBgContainer,
+      '--container-color': colorText,
+      '--container-active': colorInfoActive,
+      //custom,
+      '--container-hover-bg':
+        windowTheme === 'dark' ? 'rgba(60, 60, 62, 1)' : 'rgba(240, 240, 240, 1)',
+      '--container-box-shadow':
+        windowTheme === 'dark'
+          ? `
           rgba(0, 0, 0, 0.25) 0px 2px 4px 0px, rgba(180, 180, 180, 0.25) 0px 0.5px 1px 0px inset
         `
-        : `
+          : `
        rgba(0, 0, 0, 0.25) 0px 2px 4px 0px, rgba(180, 180, 180, 0.25) 0px 0.5px 1px 0px inset
     `,
-    '--container-border-color':
-      windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
-    '--border-color': windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
-    '--color-primary-active': colorPrimaryActive,
-    '--color-fill-tertiary': colorFillTertiary,
-    '--color-primary-bg': colorPrimaryBg,
+      '--container-border-color':
+        windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
+      '--border-color': windowTheme === 'dark' ? 'rgb(36, 36, 37)' : 'rgba(240, 240, 240, 1)',
+      '--color-primary-active': colorPrimaryActive,
+      '--color-fill-tertiary': colorFillTertiary,
+      '--color-primary-bg': colorPrimaryBg,
 
-    //
-    backgroundColor: 'var(--container-bg)',
-    color: 'var(--container-color)',
-    boxShadow: 'var(--container-box-shadow)',
-  } as React.CSSProperties;
+      //
+      backgroundColor: 'var(--container-bg)',
+      color: 'var(--container-color)',
+      boxShadow: 'var(--container-box-shadow)',
+    } as React.CSSProperties;
 
-  return (
-    <div style={{ ...cssVariables, ...style }} {...rest}>
-      {children}
-    </div>
-  );
-};
+    return (
+      <div ref={ref} style={{ ...cssVariables, ...style }} {...rest}>
+        {children}
+      </div>
+    );
+  })
+);
 
-export default React.memo(Container);
+Container.displayName = 'Container';
+
+export default Container;

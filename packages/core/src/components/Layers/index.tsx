@@ -1,7 +1,7 @@
 import Icon from '@ant-design/icons';
 import { useMount } from '@zeroDraw/common';
 import { Button, Dropdown, Flex, Tabs, TabsProps } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
@@ -23,8 +23,40 @@ const StyledTabs = styled(Tabs)`
   }
 `;
 
+function readScaleFromTransform(transform: string): number {
+  if (!transform || transform === 'none') return 1;
+  // matrix(a, b, c, d, tx, ty)
+  if (transform.startsWith('matrix(')) {
+    const parts = transform
+      .slice('matrix('.length, -1)
+      .split(',')
+      .map((s) => Number.parseFloat(s.trim()));
+    const [a, b] = parts;
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return 1;
+    const scaleX = Math.hypot(a, b);
+    return Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
+  }
+  // matrix3d(...) scaleX=m11, scaleY=m22
+  if (transform.startsWith('matrix3d(')) {
+    const parts = transform
+      .slice('matrix3d('.length, -1)
+      .split(',')
+      .map((s) => Number.parseFloat(s.trim()));
+    const m11 = parts[0];
+    const m22 = parts[5];
+    const scaleX = Number.isFinite(m11) ? Math.abs(m11) : 1;
+    const scaleY = Number.isFinite(m22) ? Math.abs(m22) : 1;
+    // 取一个更稳的值（通常两者相等）
+    const s = (scaleX + scaleY) / 2;
+    return Number.isFinite(s) && s > 0 ? s : 1;
+  }
+  return 1;
+}
+
 const Layers: React.FC = () => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [panelScale, setPanelScale] = useState(1);
   const { shrinkTools } = useDrawingStore(
     useShallow((state) => ({
       shrinkTools: state.shrinkTools,
@@ -53,10 +85,21 @@ const Layers: React.FC = () => {
     setContainer(el);
   });
 
-  const items: TabsProps['items'] = [
-    { key: '1', label: 'Layers', children: <DragList /> },
-    { key: '2', label: 'Assets', children: 'Content of Tab Pane 2' },
-  ];
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+
+    const t = window.getComputedStyle(el).transform;
+    const s = readScaleFromTransform(t);
+    setPanelScale(s);
+  }, [container, shrinkTools]);
+
+  const tabsItems: TabsProps['items'] = useMemo(() => {
+    return [
+      { key: '1', label: 'Layers', children: <DragList panelScale={panelScale} /> },
+      { key: '2', label: 'Assets', children: 'Content of Tab Pane 2' },
+    ];
+  }, [panelScale]);
 
   const handleCreateLayer = () => {
     createLayerRun(generateUUID());
@@ -66,6 +109,7 @@ const Layers: React.FC = () => {
 
   return ReactDOM.createPortal(
     <Container
+      ref={panelRef}
       style={{
         position: 'absolute',
         left: 12,
@@ -79,14 +123,14 @@ const Layers: React.FC = () => {
         cursor: 'default',
         transformOrigin: 'left top',
         transform: isMobile ? 'scale(0.7)' : 'scale(1)',
-        userSelect: 'none',
+        // userSelect: 'none',
         WebkitUserSelect: 'none',
         WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent',
       }}
     >
       <Flex style={{ position: 'relative', height: '100%' }}>
-        <StyledTabs style={{ height: '100%' }} defaultActiveKey="1" items={items} />
+        <StyledTabs style={{ height: '100%' }} defaultActiveKey="1" items={tabsItems} />
         <Dropdown
           trigger={['click']}
           menu={{

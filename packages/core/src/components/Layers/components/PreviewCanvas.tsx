@@ -1,7 +1,6 @@
 import { useDebounceEffect } from '@zeroDraw/common';
-import { Popover } from 'antd';
 import Konva from 'konva';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../../store/useDrawing';
 import { Layers } from '../../../types/Layers';
@@ -9,49 +8,16 @@ import { layerFilterToCssFilter } from '../../../utils/BlendMode';
 
 const PREVIEW_WIDTH = 62;
 const PREVIEW_HEIGHT = 35;
-const LARGE_PREVIEW_WIDTH = 160;
-const LARGE_PREVIEW_HEIGHT = 90;
 
 const PreviewCanvas: React.FC<Layers> = (props) => {
   const smallCanvasRef = useRef<HTMLCanvasElement>(null);
-  const largeCanvasRef = useRef<HTMLCanvasElement>(null);
   const layerCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [open, setOpen] = useState(false);
 
   const { stageRef } = useDrawingStore(
     useShallow((state) => ({
       stageRef: state.stageRef,
     }))
   );
-
-  const renderLargePreview = () => {
-    if (!open) return;
-    const largeCanvas = largeCanvasRef.current;
-    const layerCanvas = layerCanvasRef.current;
-    if (!largeCanvas || !layerCanvas) return;
-
-    const srcW = layerCanvas.width;
-    const srcH = layerCanvas.height;
-    if (!srcW || !srcH) return;
-
-    const ctx = largeCanvas.getContext('2d');
-    if (!ctx) return;
-
-    largeCanvas.width = LARGE_PREVIEW_WIDTH;
-    largeCanvas.height = LARGE_PREVIEW_HEIGHT;
-    ctx.clearRect(0, 0, LARGE_PREVIEW_WIDTH, LARGE_PREVIEW_HEIGHT);
-
-    const scale = Math.min(LARGE_PREVIEW_WIDTH / srcW, LARGE_PREVIEW_HEIGHT / srcH);
-    const drawW = srcW * scale;
-    const drawH = srcH * scale;
-    const offsetX = (LARGE_PREVIEW_WIDTH - drawW) / 2;
-    const offsetY = (LARGE_PREVIEW_HEIGHT - drawH) / 2;
-
-    ctx.save();
-    ctx.filter = layerFilterToCssFilter(props.filter);
-    ctx.drawImage(layerCanvas, 0, 0, srcW, srcH, offsetX, offsetY, drawW, drawH);
-    ctx.restore();
-  };
 
   useDebounceEffect(
     () => {
@@ -127,47 +93,21 @@ const PreviewCanvas: React.FC<Layers> = (props) => {
         layerCanvasRef.current = layerCanvas;
 
         offscreenStage.destroy();
-
-        if (open) {
-          renderLargePreview();
-        }
       });
     },
-    [props, open],
+    [props],
     {
       wait: 200,
     }
   );
 
-  useEffect(() => {
-    if (!open) return;
-    renderLargePreview();
-  }, [open]);
-
   return (
-    <Popover
-      placement="right"
-      styles={{
-        body: {
-          padding: 0,
-        },
-      }}
-      open={open}
-      onOpenChange={setOpen}
-      content={
-        <canvas
-          ref={largeCanvasRef}
-          style={{ width: LARGE_PREVIEW_WIDTH, height: LARGE_PREVIEW_HEIGHT, display: 'block' }}
-        />
-      }
-    >
-      <canvas
-        ref={smallCanvasRef}
-        width={PREVIEW_WIDTH}
-        height={PREVIEW_HEIGHT}
-        style={{ display: 'block' }}
-      />
-    </Popover>
+    <canvas
+      ref={smallCanvasRef}
+      width={PREVIEW_WIDTH}
+      height={PREVIEW_HEIGHT}
+      style={{ display: 'block' }}
+    />
   );
 };
 
