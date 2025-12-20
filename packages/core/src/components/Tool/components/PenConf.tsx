@@ -127,6 +127,7 @@ const PenConf = () => {
         style={ToolItemStyle}
         $active={brushDetailConfPosition.visible}
         onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
           const rect = (e.target as HTMLElement).getBoundingClientRect();
           setBrushDetailConfPosition({
             visible: !brushDetailConfPosition.visible,

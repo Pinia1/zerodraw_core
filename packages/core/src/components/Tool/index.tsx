@@ -305,9 +305,9 @@ const Tool: React.FC = () => {
         })}
         <Portal
           visible={brushDetailConfPosition.visible}
-          setVisible={() =>
-            setBrushDetailConfPosition({ visible: false, position: { x: 0, y: 0 } })
-          }
+          setVisible={() => {
+            setBrushDetailConfPosition({ visible: false, position: { x: 0, y: 0 } });
+          }}
           position={brushDetailConfPosition.position}
           content={<BrushDetail />}
           popoverStyles={{

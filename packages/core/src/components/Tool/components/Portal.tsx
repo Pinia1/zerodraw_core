@@ -1,5 +1,6 @@
+import { useClickAway } from '@zeroDraw/common';
 import { Popover } from 'antd';
-import React from 'react';
+import React, { useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { Point2D } from '../../../types/Drawing';
 
@@ -18,6 +19,11 @@ const Portal: React.FC<PortalConfProps> = ({
   content,
   popoverStyles,
 }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useClickAway(() => {
+    setVisible(false);
+  }, ref);
+
   const style: React.CSSProperties = {
     position: 'fixed',
     display: visible ? 'block' : 'none',
@@ -28,18 +34,13 @@ const Portal: React.FC<PortalConfProps> = ({
   };
 
   return ReactDOM.createPortal(
-    <div style={style} onClick={(e) => e.stopPropagation()}>
+    <div ref={ref} style={style} onClick={(e) => e.stopPropagation()}>
       <Popover
         arrow={false}
         content={content}
         trigger="click"
-        open={true}
+        open={visible}
         zIndex={1031}
-        onOpenChange={(open) => {
-          if (!open) {
-            setVisible(false);
-          }
-        }}
         styles={{
           body: {
             ...popoverStyles,
