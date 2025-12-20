@@ -1,8 +1,6 @@
 import Konva from 'konva';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Rect, Shape } from 'react-konva';
-import { useShallow } from 'zustand/react/shallow';
-import useToolsStore from '../../../store/useTools';
 import type { Lasso } from '../../../types/Layers';
 
 type Bounds = { x: number; y: number; width: number; height: number };
@@ -67,12 +65,6 @@ function calcBounds(points: number[]): Bounds {
 const LassoView: React.FC<Lasso> = (props) => {
   const layerRef = useRef<Konva.Layer | null>(null);
   const dashOffsetRef = useRef(0);
-
-  const { activeKey } = useToolsStore(
-    useShallow((state) => ({
-      activeKey: state.activeKey,
-    }))
-  );
 
   const points = props.points ?? [];
   const bounds = useMemo(() => calcBounds(points), [points]);

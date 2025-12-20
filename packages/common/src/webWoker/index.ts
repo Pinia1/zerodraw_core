@@ -3,18 +3,35 @@ import { generateUUID } from '../utils';
 type Message = {
   id: string;
   type: string;
-  data: any;
+  data: unknown;
 };
+
+type Rgba = [number, number, number, number];
+type FillStop = { offset: number; color: string | Rgba } | { offset: number; rgba: string | Rgba };
 
 interface PostMessageData {
   imageData: ImageData;
   posX: number;
   posY: number;
   tolerance: number;
-  fillColor: Array<[number, number, number, number]>;
-  canvasConfig: any;
-  groupPos: any;
-  direction: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+  /**
+   * 旧协议（兼容保留）：8 方向 + 均匀 stops
+   */
+  fillColor?: Array<Rgba>;
+  direction?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
+  /**
+   * 新协议：任意角度 + 带 offset 的 stops
+   * - angleDeg: 0°=→，90°=↓（屏幕坐标系）
+   */
+  angleDeg?: number;
+  stops?: Array<FillStop>;
+  gradient?: { angle: number; stops: Array<FillStop> };
+
+  // 其余上下文（现状仍由业务侧自由传递）
+  canvasConfig: Record<string, unknown>;
+  groupPos: Record<string, unknown>;
 }
 
 enum Status {

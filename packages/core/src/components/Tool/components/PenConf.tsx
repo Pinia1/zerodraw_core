@@ -7,7 +7,7 @@ import { IconConf, IconFill, IconPen } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
-import { createFillWorker } from '../../../utils/worker';
+import { createFillWorker } from '../../../utils/fillWorker';
 import Container from '../../Container';
 import { ToolItem } from '../../index';
 

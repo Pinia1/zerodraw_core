@@ -20,6 +20,7 @@ import {
 } from '../input/normalizeKonvaPointerEvent';
 import type { NormalizedPointerEvent } from '../input/types';
 import { useDrawingStore } from '../store/useDrawing';
+import { useFillStore } from '../store/useFill';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
@@ -52,6 +53,18 @@ import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Thumbnail from './components/Thumbnail';
+
+type GroupPos = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  relativePos: { x: number; y: number };
+  pixelRatio: number;
+  imageData: ImageData;
+};
+
+type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
 
 const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL } = props;
@@ -98,6 +111,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lassoConfig: state.lassoConfig,
       setDrawingId: state.setDrawingId,
       workerRef: state.workerRef,
+    }))
+  );
+
+  const { fillGradient } = useFillStore(
+    useShallow((state) => ({
+      fillGradient: state.gradient,
     }))
   );
 
@@ -286,8 +305,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     finishLine,
   });
 
-  const getGroupPos = (stage: Konva.Stage) => {
-    let pos: any = null;
+  const getGroupPos = (stage: Konva.Stage): GroupPos | null => {
+    let pos: GroupPos | null = null;
     const layersDom = stage.children;
 
     const lastLayer = layersDom.find((i: Konva.Node) => i.attrs.isDrawing);
@@ -307,7 +326,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         //画布保持1920，保持group.width占用的画布比例
         const pixelRatio = WIDTH / layerConfig.width / stageConfig.scale;
 
-        pos = {
+        const base: Omit<GroupPos, 'imageData'> = {
           x: group.x - layerRect.x,
           y: group.y - layerRect.y,
           width: group.width,
@@ -316,11 +335,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           pixelRatio,
         };
         const absPos = lastLayer.getAbsolutePosition();
-        if (pos.y <= 0) {
-          pos.y = group.y - absPos.y;
+        if (base.y <= 0) {
+          base.y = group.y - absPos.y;
         }
-        if (pos.x <= 0) {
-          pos.x = group.x - absPos.x;
+        if (base.x <= 0) {
+          base.x = group.x - absPos.x;
         }
         const canvas = lastLayer.toCanvas({
           pixelRatio: pixelRatio,
@@ -332,7 +351,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
         const ctx = canvas.getContext('2d')!;
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        pos.imageData = imageData;
+        pos = { ...base, imageData };
       }
     });
 
@@ -398,7 +417,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       e.evt.deltaMode !== 0 ||
       (isWindows && Math.abs(dy) >= 30 && Math.abs(dx) < 1) ||
       // 兜底：wheelDeltaY 在 mac 触控板上也经常存在，不能作为通用判据；仅在 Windows 上作为辅助
-      (isWindows && typeof (e.evt as any).wheelDeltaY === 'number');
+      (isWindows && typeof (e.evt as WheelEventWithWheelDeltaY).wheelDeltaY === 'number');
     const isPinchZoomGesture = !!(e.evt.ctrlKey || e.evt.metaKey);
 
     // 缩放优先级：pinch(通常 ctrlKey) > mouse wheel
@@ -445,7 +464,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         if (drawingLayer) {
           const { type, diagrams } = getDrawingTypes();
           // 按当前工具类型移除最后一个临时图元，并同步移除 diagrams 的最后一项（如果匹配）
-          const arr = [...(drawingLayer[type] as any[])];
+          const arr = [...(drawingLayer[type] as unknown as Array<{ id?: string }>)];
           const removed = arr.pop();
           const newDiagrams = [...drawingLayer.diagrams];
           const lastDiagram = newDiagrams[newDiagrams.length - 1];
@@ -457,7 +476,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           ) {
             newDiagrams.pop();
           }
-          setDrawingLayer({ ...drawingLayer, [type]: arr, diagrams: newDiagrams } as any);
+          setDrawingLayer({
+            ...drawingLayer,
+            [type]: arr,
+            diagrams: newDiagrams,
+          } as unknown as Layers);
         }
         isDrawing.current = false;
         setDrawingId(null);
@@ -839,6 +862,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     try {
       const stage = e.target.getStage()!;
       const groupPos = getGroupPos(stage);
+      if (!groupPos) return;
+
       const {
         imageData,
         relativePos: { x: posX, y: posY },
@@ -848,13 +873,18 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       const magnificationPosY = Math.round(posY * pixelRatio);
       const tolerance = 10;
 
+      const fillStops = fillGradient.stops.map((s) => ({
+        offset: s.offset,
+        color: hexToRgba(s.color, lineConfig.opacity),
+      }));
+
       const { buffer, id } = (await workerRef?.postMessage({
         imageData,
         posX: magnificationPosX,
         posY: magnificationPosY,
         tolerance,
-        fillColor: [hexToRgba(fillColor, lineConfig.opacity)],
-        direction: 1,
+        angleDeg: fillGradient.angle,
+        stops: fillStops,
         canvasConfig: {
           layerBackground: '#ffffff',
         },
@@ -1035,7 +1065,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (!drawingLayer) return false;
 
     const { type, diagrams } = getDrawingTypes();
-    const arr = drawingLayer[type] as any[];
+    const arr = drawingLayer[type] as unknown as Array<{ id?: string; points?: number[] }>;
 
     if (!arr?.length) return true;
 
@@ -1073,7 +1103,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         ) {
           newDiagrams.pop();
         }
-        setDrawingLayer({ ...(drawingLayer as any), [type]: newArr, diagrams: newDiagrams });
+        setDrawingLayer({
+          ...drawingLayer,
+          [type]: newArr,
+          diagrams: newDiagrams,
+        } as unknown as Layers);
         isDrawing.current = false;
         setDrawingId(null);
         return true;
@@ -1089,7 +1123,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       if (lastDiagram && last?.id && lastDiagram.id === last.id && lastDiagram.type === diagrams) {
         newDiagrams.pop();
       }
-      setDrawingLayer({ ...(drawingLayer as any), [type]: newArr, diagrams: newDiagrams });
+      setDrawingLayer({
+        ...drawingLayer,
+        [type]: newArr,
+        diagrams: newDiagrams,
+      } as unknown as Layers);
       isDrawing.current = false;
       setDrawingId(null);
       return true;
