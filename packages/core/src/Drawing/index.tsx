@@ -125,17 +125,25 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       activeKey: state.activeKey,
     }))
   );
-  const { drawingVisible, setDrawingLayer, layers, initHistory, pushHistory, getDrawingLayer } =
-    useLayerStore(
-      useShallow((state) => ({
-        setDrawingLayer: state.setDrawingLayer,
-        layers: state.layers,
-        initHistory: state.initHistory,
-        pushHistory: state.pushHistory,
-        getDrawingLayer: state.getDrawingLayer,
-        drawingVisible: state.drawingLayer?.visible,
-      }))
-    );
+  const {
+    drawingVisible,
+    setDrawingLayer,
+    layers,
+    initHistory,
+    pushHistory,
+    getDrawingLayer,
+    drawingLayerId,
+  } = useLayerStore(
+    useShallow((state) => ({
+      setDrawingLayer: state.setDrawingLayer,
+      layers: state.layers,
+      initHistory: state.initHistory,
+      pushHistory: state.pushHistory,
+      getDrawingLayer: state.getDrawingLayer,
+      drawingLayerId: state.drawingLayer?.id,
+      drawingVisible: state.drawingLayer?.visible,
+    }))
+  );
 
   const renderOrderLayers = useMemo(() => {
     const newLayers = [...layers];
@@ -771,12 +779,43 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const { diagrams } = getDrawingTypes();
     const lastLine = activeDiagramRef.current?.activeDiagram?.props as unknown as Line;
+    if (!lastLine) return;
 
     const updatedLine: Line = {
       ...lastLine,
       points: [...lastLine.points, input.canvasPoint.x, input.canvasPoint.y],
       pressure: [...lastLine.pressure, input.pressure || 0],
     };
+
+    if (activeKey === Actions.ERASER) {
+      const drawingLayer = getDrawingLayer();
+      if (!drawingLayer) return;
+
+      const eraserLines = drawingLayer.eraserLines ?? [];
+      const idx = eraserLines.findIndex((l) => l.id === updatedLine.id);
+
+      const nextEraserLines =
+        idx >= 0
+          ? eraserLines.map((l) => (l.id === updatedLine.id ? updatedLine : l))
+          : [...eraserLines, updatedLine];
+
+      const nextDiagrams = drawingLayer.diagrams.some((d) => d.id === updatedLine.id)
+        ? drawingLayer.diagrams
+        : [...drawingLayer.diagrams, { id: updatedLine.id, type: 'eraserLine' }];
+
+      setDrawingLayer({
+        ...drawingLayer,
+        eraserLines: nextEraserLines,
+        diagrams: nextDiagrams as Diagram[],
+      });
+
+      activeDiagramRef.current?.setActiveDiagram({
+        type: diagrams,
+        props: updatedLine,
+      });
+
+      return;
+    }
 
     activeDiagramRef.current?.setActiveDiagram({
       type: diagrams,
@@ -1247,7 +1286,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           cursor: cursorStyle,
           position: 'relative',
           isolation: 'isolate',
-          // 允许我们在 iPad 上接管双指手势（否则 Safari 会缩放页面）
           touchAction: 'none',
           userSelect: 'none',
           WebkitUserSelect: 'none',
@@ -1279,7 +1317,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         <Thumbnail />
 
         {renderOrderLayers.map((layer) => {
-          const isDrawingLayer = topLayer?.id === layer.id;
+          const isDrawingLayer = drawingLayerId === layer.id;
           if (isDrawingLayer) {
             return (
               <React.Fragment key={`drawing-${layer.id}`}>
