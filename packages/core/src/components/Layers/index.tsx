@@ -146,7 +146,7 @@ const Layers: React.FC = () => {
             style={{
               position: 'absolute',
               right: 0,
-              transform: 'translateY(calc(23px - 50%))',
+              transform: 'translateY(calc(17px - 50%))',
               fontSize: 14,
             }}
           >

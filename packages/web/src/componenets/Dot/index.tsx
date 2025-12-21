@@ -5,7 +5,7 @@ import { useUserStore } from '../../store/useUserStore';
 
 const DotContainer = styled(Flex)`
   position: fixed;
-  bottom: 48px;
+  bottom: 2rem;
   left: 48px;
   gap: 8px;
   font-size: 12px;

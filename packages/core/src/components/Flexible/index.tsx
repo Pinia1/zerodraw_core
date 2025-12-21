@@ -120,7 +120,7 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
       style={{
         position: 'absolute',
         right: 12,
-        bottom: '1rem',
+        bottom: '2rem',
         height: 48,
         width: shrinkTools ? 48 : 250,
         transition: 'width 0.2s ease-in-out',
@@ -144,7 +144,7 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         );
       })}
     </Container>,
-    container
+    document.body
   );
 };
 
