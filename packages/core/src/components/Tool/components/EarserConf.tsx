@@ -1,8 +1,8 @@
 import Icon from '@ant-design/icons';
-import { Divider, Input, Slider } from 'antd';
+import { Divider, Input, Slider, Tooltip } from 'antd';
 import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { IconConf, IconEraser } from '../../../icons';
+import { IconConf, IconEraser, IconRemove } from '../../../icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
@@ -38,7 +38,18 @@ const EarserConf = () => {
         style={ToolItemStyle}
         $active={activeKey === Actions.ERASER}
       >
-        <Icon component={IconEraser} />
+        <Tooltip title="Pixel erasure">
+          <Icon component={IconEraser} />
+        </Tooltip>
+      </ToolItem>
+      <ToolItem
+        onClick={() => setActiveKey(Actions.REMOVE)}
+        style={ToolItemStyle}
+        $active={activeKey === Actions.REMOVE}
+      >
+        <Tooltip title="Object erasure">
+          <Icon component={IconRemove} />
+        </Tooltip>
       </ToolItem>
       <Divider style={{ fontSize: 18 }} type="vertical" />
       <ActionFlex>

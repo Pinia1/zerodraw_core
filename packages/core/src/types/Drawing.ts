@@ -63,6 +63,7 @@ export enum Actions {
   PEN = 'pen',
   FILL = 'fill',
   ERASER = 'eraser',
+  REMOVE = 'remove',
   COLOR = 'color',
   LASSO = 'lasso',
   GRAPH = 'graph',

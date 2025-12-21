@@ -2,15 +2,30 @@ import { isEmptyObj, useMemoizedFn } from '@zeroDraw/common';
 import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
+import useHit from '../../../hooks/useHit';
 import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
 const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig>>(
   (
-    { x, y, width, height, id, img, onDragStart, onDragEnd, rotation, handleDragMove, draggable },
+    {
+      x,
+      y,
+      width,
+      height,
+      id,
+      img,
+      onDragStart,
+      onDragEnd,
+      rotation,
+      handleDragMove,
+      draggable,
+      opacity,
+    },
     ref
   ) => {
     const [imageBitmap, setImageBitmap] = useState<ImageBitmap | null>(null);
+    const { handleMouseEnter, shapeOpacity } = useHit({ opacity, id });
 
     useEffect(() => {
       if (isEmptyObj(img)) {
@@ -68,6 +83,8 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragMove={handleDragMove}
+        onPointerEnter={handleMouseEnter}
+        opacity={shapeOpacity}
       />
     );
   }

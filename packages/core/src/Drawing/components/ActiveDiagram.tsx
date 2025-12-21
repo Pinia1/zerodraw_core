@@ -64,8 +64,9 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) =
 
   const RenderDiagram = useMemo(() => {
     switch (activeDiagram?.type) {
+      case 'remove':
       case 'path': {
-        return <Paths {...(activeDiagram.props as LineType)} />;
+        return <Paths {...(activeDiagram.props as LineType)} removeTag={false} />;
       }
       case 'image': {
         return <Image {...(activeDiagram.props as FillType)} draggable={false} />;

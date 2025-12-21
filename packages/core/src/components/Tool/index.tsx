@@ -169,9 +169,9 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconEraser} />,
         type: ToolTypes.STATE,
         dropdown: <EarserConf />,
-        dropdownKeys: [Actions.ERASER],
+        dropdownKeys: [Actions.ERASER, Actions.REMOVE],
         get isActive() {
-          return activeKey === Actions.ERASER;
+          return [Actions.ERASER, Actions.REMOVE].includes(activeKey);
         },
       },
       {

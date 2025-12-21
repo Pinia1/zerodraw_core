@@ -21,6 +21,7 @@ import {
 import type { NormalizedPointerEvent } from '../input/types';
 import { useDrawingStore } from '../store/useDrawing';
 import { useFillStore } from '../store/useFill';
+import useHitStore from '../store/useHit';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
@@ -111,6 +112,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lassoConfig: state.lassoConfig,
       setDrawingId: state.setDrawingId,
       workerRef: state.workerRef,
+    }))
+  );
+
+  const { setIsHit, hitIds } = useHitStore(
+    useShallow((state) => ({
+      setIsHit: state.setIsHit,
+      hitIds: state.hitIds,
     }))
   );
 
@@ -403,6 +411,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.LINE:
       case Actions.PEN:
       case Actions.ELLIPSE:
+      case Actions.REMOVE:
         return 'crosshair';
       case Actions.FILL:
       case Actions.ERASER:
@@ -697,7 +706,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const getDrawingTypes = (): {
     diagrams: Diagram['type'];
-    type: keyof Pick<Layers, 'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths' | 'lassos'>;
+    type: keyof Pick<
+      Layers,
+      'lines' | 'eraserLines' | 'rects' | 'ellipses' | 'paths' | 'lassos' | 'remove'
+    >;
   } => {
     switch (activeKey) {
       case Actions.ERASER:
@@ -729,6 +741,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return {
           diagrams: 'lasso',
           type: 'lassos',
+        };
+
+      case Actions.REMOVE:
+        return {
+          diagrams: 'remove',
+          type: 'remove',
         };
       default:
         return {
@@ -1127,6 +1145,100 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
+  const onRemoveInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
+    if (!input.canvasPoint) return;
+
+    isDrawing.current = true;
+
+    const id = generateUUID();
+    setDrawingId(id);
+    setIsHit(true);
+
+    const line: Line = {
+      points: [input.canvasPoint.x, input.canvasPoint.y],
+      strokeWidth: eraserConfig.strokeWidth,
+      stroke: '#000000',
+      opacity: 0.8,
+      stabilizer: lineConfig.stabilizer ?? 0,
+      hardness: 0.9,
+      tension: lineConfig.stabilizer,
+      eraser: false,
+      id,
+      pressure: [input.pressure || 0],
+      suppress: false,
+      scale: stageConfig.scale,
+      fill: true,
+    };
+
+    const { diagrams } = getDrawingTypes();
+
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: line,
+    });
+  });
+
+  const onRemoveInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
+    if (!input.canvasPoint) return;
+
+    const { diagrams } = getDrawingTypes();
+    const lastLine = activeDiagramRef.current?.activeDiagram?.props as unknown as Line;
+    if (!lastLine) return;
+
+    const MAX_POINTS = 100;
+
+    const nextPoints = [...lastLine.points, input.canvasPoint.x, input.canvasPoint.y];
+    const limitedPoints =
+      nextPoints.length > MAX_POINTS
+        ? nextPoints.slice(nextPoints.length - MAX_POINTS)
+        : nextPoints;
+
+    const updatedLine: Line = {
+      ...lastLine,
+      points: limitedPoints,
+      pressure: [0],
+    };
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: updatedLine,
+    });
+  });
+  const onRemoveInputUp = useMemoizedFn((_input: NormalizedPointerEvent) => {
+    setIsHit(false);
+
+    const drawingLayer = getDrawingLayer();
+    if (!drawingLayer) return;
+
+    const ids = new Set(hitIds);
+    if (ids.size === 0) {
+      activeDiagramRef.current?.setActiveDiagram(null);
+      return;
+    }
+
+    const nextDrawingLayer = {
+      ...(drawingLayer as unknown as Layers),
+
+      lines: (drawingLayer.lines ?? []).filter((x) => !ids.has(x.id)),
+      paths: (drawingLayer.paths ?? []).filter((x) => !ids.has(x.id)),
+      rects: (drawingLayer.rects ?? []).filter((x) => !ids.has(x.id)),
+      ellipses: (drawingLayer.ellipses ?? []).filter((x) => !ids.has(x.id)),
+      eraserLines: (drawingLayer.eraserLines ?? []).filter((x) => !ids.has(x.id)),
+      fills: (drawingLayer.fills ?? []).filter((x) => !ids.has(x.id)),
+      lassos: (drawingLayer.lassos ?? []).filter((x) => !ids.has(x.id)),
+      eraseLassos: (drawingLayer.eraseLassos ?? []).filter((x) => !ids.has(x.id)),
+      diagrams: (drawingLayer.diagrams ?? []).filter((d) => !ids.has(d.id)),
+    } as unknown as Layers;
+
+    setDrawingLayer(nextDrawingLayer);
+    const newLayers = layers.map((layer) =>
+      layer.id !== (drawingLayer as any).id ? layer : (nextDrawingLayer as any)
+    );
+    pushHistory(newLayers);
+    useHitStore.getState().setHitIds([]);
+    activeDiagramRef.current?.setActiveDiagram(null);
+    setDrawingId(null);
+  });
+
   /**
    * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
    * “设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
@@ -1159,6 +1271,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onFillMouseDown(e);
       case Actions.LASSO:
         return onLassoInputDown(input);
+      case Actions.REMOVE:
+        return onRemoveInputDown(input);
       default:
         break;
     }
@@ -1184,6 +1298,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onLineInputMove(input);
       case Actions.LASSO:
         return onLassoInputMove(input);
+      case Actions.REMOVE:
+        return onRemoveInputMove(input);
       default:
         break;
     }
@@ -1257,6 +1373,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.ELLIPSE:
       case Actions.LINE:
         return pushDrawingHistory();
+      case Actions.REMOVE:
+        return onRemoveInputUp(input);
       default:
         break;
     }

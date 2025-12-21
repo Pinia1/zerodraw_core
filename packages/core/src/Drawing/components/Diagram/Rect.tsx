@@ -1,8 +1,11 @@
 import React from 'react';
 import { Rect as KonvaRect } from 'react-konva';
+import useHit from '../../../hooks/useHit';
 import type { Rect as RectType } from '../../../types/Layers';
 
 const Rect: React.FC<RectType> = (props) => {
+  const { handleMouseEnter, shapeOpacity } = useHit({ opacity: props.opacity, id: props.id });
+
   return (
     <KonvaRect
       x={props.x}
@@ -11,10 +14,11 @@ const Rect: React.FC<RectType> = (props) => {
       height={props.height}
       stroke={props.stroke}
       strokeWidth={props.strokeWidth / 2}
-      opacity={props.opacity}
       fill={props.fill}
       lineCap="round"
       lineJoin="round"
+      onPointerEnter={handleMouseEnter}
+      opacity={shapeOpacity}
     />
   );
 };

@@ -36,6 +36,7 @@ export interface Layers {
   fills: Fill[];
   lassos: Lasso[];
   eraseLassos: Lasso[];
+  remove: Line | null;
   image: Fill | null;
   thumbnail: Fill | null;
   imageFull?: boolean;
@@ -68,7 +69,8 @@ export interface Diagram {
     | 'fill'
     | 'image'
     | 'lasso'
-    | 'eraseLasso';
+    | 'eraseLasso'
+    | 'remove';
 }
 
 export interface Line {
@@ -129,6 +131,7 @@ export type DiagramPropsMap = {
   fill: Fill;
   lasso: Lasso;
   eraseLasso: Lasso;
+  remove: Line;
 };
 export interface Rect extends Point2D {
   width: number;
