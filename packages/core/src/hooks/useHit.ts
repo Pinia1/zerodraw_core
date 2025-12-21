@@ -1,4 +1,5 @@
 import { useMemoizedFn } from '@zeroDraw/common';
+import Konva from 'konva';
 import { useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useHitStore from '../store/useHit';
@@ -10,9 +11,10 @@ const useHit = ({ opacity, id }: { opacity: number; id: string }) => {
   const [shapeOpacity, setShapeOpacity] = useState(opacity || 1);
   const activeKey = useToolsStore(useShallow((s) => s.activeKey));
 
-  const handleMouseEnter = useMemoizedFn(() => {
+  const handleMouseEnter = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (removeTagRef.current) return;
     if (activeKey !== Actions.REMOVE) return;
+    if (!e.target.getLayer()?.attrs.isDrawing) return;
 
     const { isHit, hitIds } = useHitStore.getState();
     if (!isHit) return;
