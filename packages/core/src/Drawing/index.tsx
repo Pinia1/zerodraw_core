@@ -569,38 +569,40 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       e.evt.preventDefault();
       isMultiTouchRef.current = true;
 
-      // iPad 双指手势（平移/缩放）期间开启 cache，加速大图层的重绘
       cancelInteractionCacheEnd();
       startInteractionCache();
 
-      // 关键：如果某个 shape 已经进入 Konva 的 drag（例如一指拖图时第二指按下），这里必须强制停止拖拽状态
-      // 否则 Konva 仍会继续按“拖拽”处理，而不是进入双指缩放/平移逻辑
       stage.stopDrag();
 
-      // 如果正在绘制：直接“取消当前未完成图形”，不入历史、不留点，避免误触产生脏数据
       if (isDrawing.current) {
-        const drawingLayer = getDrawingLayer();
-        if (drawingLayer) {
-          const { type, diagrams } = getDrawingTypes();
-          // 按当前工具类型移除最后一个临时图元，并同步移除 diagrams 的最后一项（如果匹配）
-          const arr = [...(drawingLayer[type] as unknown as Array<{ id?: string }>)];
-          const removed = arr.pop();
-          const newDiagrams = [...drawingLayer.diagrams];
-          const lastDiagram = newDiagrams[newDiagrams.length - 1];
-          if (
-            lastDiagram &&
-            removed?.id &&
-            lastDiagram.id === removed.id &&
-            lastDiagram.type === diagrams
-          ) {
-            newDiagrams.pop();
+        const active = activeDiagramRef.current?.activeDiagram;
+        const activeId = (active?.props as { id?: string } | null)?.id;
+
+        // 1) overlay 直接清空（PEN/LINE/RECT/ELLIPSE/LASSO 现在都在 overlay）
+        activeDiagramRef.current?.setActiveDiagram(null);
+
+        // 2) 只有“实时写入 drawLayer”的工具（比如 ERASER）才需要从 drawLayer 精确移除当前这笔
+        if (activeKey === Actions.ERASER && activeId) {
+          const drawingLayer = getDrawingLayer();
+          if (drawingLayer) {
+            const { type } = getDrawingTypes(); // type 例如 'eraserLines'
+            const list = (drawingLayer[type] as unknown as Array<{ id?: string }>) ?? [];
+            const nextList = list.filter((it) => it?.id !== activeId);
+            const nextDiagrams = (drawingLayer.diagrams ?? []).filter((d) => d.id !== activeId);
+
+            if (
+              nextList.length !== list.length ||
+              nextDiagrams.length !== (drawingLayer.diagrams ?? []).length
+            ) {
+              setDrawingLayer({
+                ...drawingLayer,
+                [type]: nextList,
+                diagrams: nextDiagrams,
+              } as unknown as Layers);
+            }
           }
-          setDrawingLayer({
-            ...drawingLayer,
-            [type]: arr,
-            diagrams: newDiagrams,
-          } as unknown as Layers);
         }
+
         isDrawing.current = false;
         setDrawingId(null);
       }
@@ -1137,6 +1139,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
+    e.evt.preventDefault();
     if (!drawingVisible) return;
     const input = toInputEvent(e, 'down');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
@@ -1167,6 +1170,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     if (stageDraggable) return;
     if (!isDrawing.current && !isMobile) return;
     const input = toInputEvent(e, 'move');
+
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;
     switch (activeKey) {
@@ -1304,8 +1308,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         onTouchCancel={onStageTouchEnd}
         onPointerDown={handleMouseDown}
         onPointerMove={handleMouseMove}
-        onPointerUp={handleMouseUp}
         onPointerLeave={handleMouseLeave}
+        onPointerUp={handleMouseUp}
+        onPointerCancel={handleMouseUp}
       >
         <Mosic />
         <Thumbnail />
