@@ -24,8 +24,16 @@ import { useFillStore } from '../store/useFill';
 import useLayerStore from '../store/useLayer';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
-import { Actions, EraserConfigTypes, LassoMode, LineConfigTypes } from '../types/Drawing';
-import type { Diagram, Lasso, Layers, Line } from '../types/Layers';
+import { Actions, EraserConfigTypes, GroupPos, LassoMode, LineConfigTypes } from '../types/Drawing';
+import type {
+  Diagram,
+  Ellipse as EllipseType,
+  Fill as FillType,
+  Lasso,
+  Layers,
+  Line,
+  Rect as RectType,
+} from '../types/Layers';
 import {
   ASIDE_WIDTH,
   CANVAS_CONTAINER_ID,
@@ -48,21 +56,12 @@ import {
   lockSquareEndPoint,
   mergeLassos,
 } from '../utils/Lasso';
-import { isMac, isMobile, isWindows } from '../utils/platform';
+import { isMac, isWindows } from '../utils/platform';
+import ActiveDiagram, { ActiveDiagramRef } from './components/ActiveDiagram';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Thumbnail from './components/Thumbnail';
-
-type GroupPos = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  relativePos: { x: number; y: number };
-  pixelRatio: number;
-  imageData: ImageData;
-};
 
 type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
 
@@ -71,6 +70,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
   const lassoStartRef = useRef<Point2D | null>(null);
+  const activeDiagramRef = useRef<ActiveDiagramRef | null>(null);
 
   const [cursorVisible, setCursorVisible] = useState(true);
 
@@ -165,114 +165,226 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     });
   });
 
+  const commitActiveDiagramToLayer = useMemoizedFn((layer: Layers): Layers => {
+    const active = activeDiagramRef.current?.activeDiagram;
+    if (!active) return layer;
+
+    const type = active.type;
+    const id = (active.props as { id?: string } | null)?.id;
+
+    if (!id) return layer;
+
+    const exists = layer.diagrams?.some((d) => d.id === id);
+    if (exists) return layer;
+
+    switch (type) {
+      case 'path':
+        return {
+          ...layer,
+          paths: [...(layer.paths ?? []), active.props as unknown as Line],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'eraserLine':
+        return {
+          ...layer,
+          eraserLines: [...(layer.eraserLines ?? []), active.props as unknown as Line],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'line':
+        return {
+          ...layer,
+          lines: [...(layer.lines ?? []), active.props as unknown as Line],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'rect':
+        return {
+          ...layer,
+          rects: [...(layer.rects ?? []), active.props as unknown as RectType],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'ellipse':
+        return {
+          ...layer,
+          ellipses: [...(layer.ellipses ?? []), active.props as unknown as EllipseType],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'lasso':
+        return {
+          ...layer,
+          lassos: [...(layer.lassos ?? []), active.props as unknown as Lasso],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'eraseLasso':
+        return {
+          ...layer,
+          eraseLassos: [...(layer.eraseLassos ?? []), active.props as unknown as Lasso],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      case 'fill':
+        return {
+          ...layer,
+          fills: [...(layer.fills ?? []), active.props as unknown as FillType],
+          diagrams: [...(layer.diagrams ?? []), { id, type }],
+        };
+      default:
+        return layer;
+    }
+  });
+
   const pushDrawingHistory = () => {
+    isDrawing.current = false;
+
     const drawingLayer = getDrawingLayer();
-    const drawingIndex = layers.findIndex((layer) => layer.id === drawingLayer?.id);
-    if (drawingIndex === -1 || !drawingLayer) return;
+    if (!drawingLayer) return;
+
+    const nextDrawingLayer = commitActiveDiagramToLayer(drawingLayer as unknown as Layers);
+
+    activeDiagramRef.current?.setActiveDiagram(null);
+
+    const drawingIndex = layers.findIndex((l) => l.id === nextDrawingLayer.id);
+    if (drawingIndex === -1) return;
 
     const newLayers = [...layers];
-    newLayers[drawingIndex] = drawingLayer as Layers;
+    newLayers[drawingIndex] = nextDrawingLayer;
 
-    isDrawing.current = false;
+    setDrawingLayer(nextDrawingLayer);
     setDrawingId(null);
-
     pushHistory(newLayers);
   };
 
   const finishLasso = useMemoizedFn(() => {
     const drawingLayer = getDrawingLayer();
-    if (!drawingLayer || !isDrawing.current) {
-      pushDrawingHistory();
+    if (!drawingLayer) return;
+
+    const active = activeDiagramRef.current?.activeDiagram;
+    const newStroke = active?.type === 'lasso' ? (active.props as unknown as Lasso) : null;
+    if (!newStroke || !newStroke.points?.length) {
+      activeDiagramRef.current?.setActiveDiagram(null);
+      setDrawingId(null);
       return;
     }
 
     const lassos = drawingLayer.lassos ?? [];
-    if (lassos.length === 0) {
-      pushDrawingHistory();
-      return;
-    }
 
-    const newStroke = lassos[lassos.length - 1];
-
-    // 找到所有与新 stroke 有交集的 lassos（包括新 stroke 自己）
+    // 找到所有与新 stroke 有交集的 lassos（不包含新 stroke，因为它尚未写入 drawingLayer）
     const intersectingIndices: number[] = [];
     for (let i = 0; i < lassos.length; i++) {
-      if (i === lassos.length - 1) {
-        // 新 stroke 自己
-        intersectingIndices.push(i);
-      } else if (hasIntersection(lassos[i].points, newStroke.points)) {
+      if (hasIntersection(lassos[i].points, newStroke.points)) {
         intersectingIndices.push(i);
       }
     }
 
-    // 如果没有交集：REMOVE 不应产生新的选区（否则渲染端会把它当“新增”）
-    if (intersectingIndices.length === 1) {
+    // 没有交集：REMOVE 不产生新选区；ADD 直接追加
+    if (intersectingIndices.length === 0) {
       if ((newStroke.mode ?? LassoMode.ADD) === LassoMode.REMOVE) {
-        const removedId = newStroke.id;
-        setDrawingLayer({
-          ...drawingLayer,
-          lassos: lassos.slice(0, -1),
-          diagrams: drawingLayer.diagrams.filter((d) => d.id !== removedId),
-        });
+        activeDiagramRef.current?.setActiveDiagram(null);
+        setDrawingId(null);
+        return;
       }
-      isDrawing.current = false;
-      pushDrawingHistory();
+
+      const nextDrawingLayer: Layers = {
+        ...(drawingLayer as unknown as Layers),
+        lassos: [...lassos, newStroke],
+        diagrams: [...drawingLayer.diagrams, { id: newStroke.id, type: 'lasso' }],
+      };
+
+      setDrawingLayer(nextDrawingLayer);
+      activeDiagramRef.current?.setActiveDiagram(null);
+      setDrawingId(null);
+
+      const drawingIndex = layers.findIndex((l) => l.id === nextDrawingLayer.id);
+      if (drawingIndex === -1) return;
+      const newLayers = [...layers];
+      newLayers[drawingIndex] = nextDrawingLayer;
+      pushHistory(newLayers);
       return;
     }
 
-    // 有交集（除了自己之外），进行合并
-    if (intersectingIndices.length > 1) {
-      // 收集需要合并的 lassos（按绘制顺序）
-      const toMerge = intersectingIndices.map((idx) => ({
+    const toMerge = intersectingIndices
+      .map((idx) => ({
         points: lassos[idx].points,
         mode: lassos[idx].mode ?? LassoMode.ADD,
-      }));
+      }))
+      .concat([{ points: newStroke.points, mode: newStroke.mode ?? LassoMode.ADD }]);
 
-      // 合并算法
-      const mergedPoints = mergeLassos(toMerge);
+    const mergedPoints = mergeLassos(toMerge);
 
-      // 保留非交集的 lassos + 新的合并 lasso
-      const newLassos: Lasso[] = lassos
-        .filter((_, idx) => !intersectingIndices.includes(idx))
-        .concat(
-          mergedPoints.length >= 4
-            ? [
-                {
-                  id: generateUUID(),
-                  points: mergedPoints,
-                  stroke: fillColor,
-                  scale: stageConfig.scale,
-                  mode: LassoMode.ADD, // 合并后统一为 ADD（因为已经是最终轮廓）
-                },
-              ]
-            : []
-        );
+    // 移除被合并的 lassos
+    const removedIds = new Set(intersectingIndices.map((idx) => lassos[idx].id));
+    const keptLassos = lassos.filter((_, idx) => !intersectingIndices.includes(idx));
+    const keptDiagrams = drawingLayer.diagrams.filter((d) => !removedIds.has(d.id));
 
-      // 更新 diagrams：移除被合并的 lasso diagrams
-      const removedIds = new Set(intersectingIndices.map((idx) => lassos[idx].id));
-      const newDiagrams = drawingLayer.diagrams.filter((d) => !removedIds.has(d.id));
+    const nextLassos: Lasso[] = [...keptLassos];
+    const nextDiagrams = [...keptDiagrams];
 
-      setDrawingLayer({
-        ...drawingLayer,
-        lassos: newLassos,
-        diagrams: newDiagrams,
+    if (mergedPoints.length >= 4) {
+      const mergedId = generateUUID();
+      nextLassos.push({
+        id: mergedId,
+        points: mergedPoints,
+        stroke: fillColor,
+        scale: stageConfig.scale,
+        mode: LassoMode.ADD, // 合并后的结果统一为 ADD
       });
+      nextDiagrams.push({ id: mergedId, type: 'lasso' });
     }
 
-    isDrawing.current = false;
-    pushDrawingHistory();
+    const nextDrawingLayer: Layers = {
+      ...(drawingLayer as unknown as Layers),
+      lassos: nextLassos,
+      diagrams: nextDiagrams,
+    };
+
+    setDrawingLayer(nextDrawingLayer);
+    activeDiagramRef.current?.setActiveDiagram(null);
+    setDrawingId(null);
+
+    const drawingIndex = layers.findIndex((l) => l.id === nextDrawingLayer.id);
+    if (drawingIndex === -1) return;
+    const newLayers = [...layers];
+    newLayers[drawingIndex] = nextDrawingLayer;
+    pushHistory(newLayers);
   });
 
   const finishLine = useMemoizedFn(() => {
+    if (activeKey !== Actions.LINE) return;
+
     const drawingLayer = getDrawingLayer();
-    if (isDrawing.current && activeKey === Actions.LINE) {
+    if (!drawingLayer) return;
+
+    if (isDrawing.current) {
       isDrawing.current = false;
       setDrawingId(null);
-      const lines = drawingLayer?.lines || [];
-      const line = lines[lines.length - 1];
-      line.points = line.points.slice(0, -2);
-      lines.splice(lines.length - 1, 1, line);
-      setDrawingLayer({ ...drawingLayer!, lines: lines });
+    }
+
+    const active = activeDiagramRef.current?.activeDiagram;
+    if (active?.type === 'line') {
+      const props = active.props as Line;
+      const id = props.id;
+      const pts = props.points ?? [];
+
+      const nextPoints = pts.length >= 4 ? pts.slice(0, -2) : pts;
+
+      if (id) {
+        const exists = drawingLayer.diagrams?.some((d) => d.id === id);
+        const nextLayer: Layers = exists
+          ? {
+              ...drawingLayer,
+              lines: (drawingLayer.lines ?? []).map((l) =>
+                l.id === id ? { ...l, points: nextPoints } : l
+              ),
+            }
+          : {
+              ...drawingLayer,
+              lines: [...(drawingLayer.lines ?? []), { ...props, points: nextPoints }],
+              diagrams: [...(drawingLayer.diagrams ?? []), { id, type: 'line' }],
+            };
+
+        setDrawingLayer(nextLayer);
+      }
+
+      activeDiagramRef.current?.setActiveDiagram(null);
+      return;
     }
   });
 
@@ -618,8 +730,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   };
 
   const onPenInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer) return;
     if (!input.canvasPoint) return;
 
     isDrawing.current = true;
@@ -647,24 +757,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       fill: !isEraser ? !!lineConfig.fill : false,
     };
 
-    const { type, diagrams } = getDrawingTypes();
+    const { diagrams } = getDrawingTypes();
 
-    setDrawingLayer({
-      ...drawingLayer,
-      [type]: [...drawingLayer[type], line],
-      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: line,
     });
   });
 
   const onPenInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer || !isDrawing.current) return;
+    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
-    const { type } = getDrawingTypes();
-    const lines = drawingLayer[type] as Line[];
-    const lastLine = lines[lines.length - 1];
-    if (!lastLine) return;
+    const { diagrams } = getDrawingTypes();
+    const lastLine = activeDiagramRef.current?.activeDiagram?.props as unknown as Line;
 
     const updatedLine: Line = {
       ...lastLine,
@@ -672,20 +778,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       pressure: [...lastLine.pressure, input.pressure || 0],
     };
 
-    const newLines = [...lines.slice(0, -1), updatedLine];
-
-    if (isMobile) {
-      setDrawingLayer({ ...drawingLayer, [type]: newLines });
-    } else {
-      requestAnimationFrame(() => {
-        setDrawingLayer({ ...drawingLayer, [type]: newLines });
-      });
-    }
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: updatedLine,
+    });
   });
 
   const onRectInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer) return;
     if (!input.canvasPoint) return;
     isDrawing.current = true;
 
@@ -705,21 +804,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       id,
     };
 
-    const { type, diagrams } = getDrawingTypes();
-    setDrawingLayer({
-      ...drawingLayer,
-      [type]: [...drawingLayer[type], rect],
-      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    const { diagrams } = getDrawingTypes();
+
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: rect,
     });
   });
 
   const onRectInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!isDrawing.current || !drawingLayer) return;
+    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
-    const rects = drawingLayer.rects || [];
-    let rect = rects[rects.length - 1];
+    let rect = activeDiagramRef.current?.activeDiagram?.props as unknown as RectType;
     if (!rect) return;
 
     rect = {
@@ -727,15 +824,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       width: input.canvasPoint.x - (rect.x ?? 0),
       height: input.canvasPoint.y - (rect.y ?? 0),
     };
-    rects.splice(rects.length - 1, 1, rect);
-    requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer, rects });
+    const { diagrams } = getDrawingTypes();
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: rect,
     });
   });
 
   const onEllipseInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer) return;
     if (!input.canvasPoint) return;
     isDrawing.current = true;
 
@@ -757,21 +853,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       mouseY: input.canvasPoint.y,
     };
 
-    const { type, diagrams } = getDrawingTypes();
-    setDrawingLayer({
-      ...drawingLayer,
-      [type]: [...drawingLayer[type], ellipse],
-      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    const { diagrams } = getDrawingTypes();
+
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: ellipse,
     });
   });
 
   const onEllipseInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!isDrawing.current || !drawingLayer) return;
+    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
-    const ellipses = drawingLayer.ellipses || [];
-    let ellipse = ellipses[ellipses.length - 1];
+    let ellipse = activeDiagramRef.current?.activeDiagram?.props as unknown as EllipseType;
     if (!ellipse) return;
 
     const width = input.canvasPoint.x - (ellipse.mouseX ?? 0);
@@ -787,25 +881,27 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       y: newY,
     };
 
-    ellipses.splice(ellipses.length - 1, 1, ellipse);
-    requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer, ellipses });
+    const { diagrams } = getDrawingTypes();
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: ellipse,
     });
   });
 
   const onLineInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer) return;
     if (!input.canvasPoint) return;
 
     let startX = input.canvasPoint.x;
     let startY = input.canvasPoint.y;
-    if (isDrawing.current && activeKey === Actions.LINE) {
-      const lines = drawingLayer.lines || [];
-      const lastLine = lines[lines.length - 1];
-      if (lastLine && lastLine.points.length >= 4) {
-        startX = lastLine.points[2];
-        startY = lastLine.points[3];
+
+    // 优先从 ActiveDiagram 里取（如果上一条还在 overlay 里），否则从 drawingLayer.lines 里取
+    const prevActive = activeDiagramRef.current?.activeDiagram;
+    if (prevActive?.type === 'line') {
+      const prev = prevActive.props as { points?: number[] };
+      const pts = prev.points ?? [];
+      if (pts.length >= 4) {
+        startX = pts[2];
+        startY = pts[3];
       }
     }
 
@@ -824,35 +920,35 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       eraser: false,
       id,
       pressure: [input.pressure || 0],
-      suppress: false, //是否开启压感
+      suppress: false,
       scale: stageConfig.scale,
       fill: false,
     };
 
-    const { type, diagrams } = getDrawingTypes();
-    setDrawingLayer({
-      ...drawingLayer,
-      [type]: [...drawingLayer[type], line],
-      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    // 只更新 overlay
+    const { diagrams } = getDrawingTypes();
+    activeDiagramRef.current?.setActiveDiagram({
+      type: diagrams,
+      props: line,
     });
   });
 
   const onLineInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!isDrawing.current || !drawingLayer) return;
+    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
-    const lines = drawingLayer.lines || [];
-    let line = lines[lines.length - 1];
-    if (!line) return;
+    const active = activeDiagramRef.current?.activeDiagram;
+    if (!active || active.type !== 'line') return;
 
-    line = {
-      ...line,
-      points: [line.points[0], line.points[1], input.canvasPoint.x, input.canvasPoint.y],
+    const last = active.props as Line;
+    const next: Line = {
+      ...last,
+      points: [last.points[0], last.points[1], input.canvasPoint.x, input.canvasPoint.y],
     };
-    lines.splice(lines.length - 1, 1, line);
-    requestAnimationFrame(() => {
-      setDrawingLayer({ ...drawingLayer, lines });
+
+    activeDiagramRef.current?.setActiveDiagram({
+      type: 'line',
+      props: next,
     });
   });
 
@@ -953,23 +1049,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       mode: lassoConfig.type,
     };
 
-    const { type, diagrams } = getDrawingTypes();
-
-    setDrawingLayer({
-      ...drawingLayer,
-      [type]: [...drawingLayer[type], line],
-      diagrams: [...drawingLayer.diagrams, { id, type: diagrams }],
+    // 新方式：套索绘制期只写入 overlay（ActiveDiagram），mouseUp 再合并/提交到 drawLayer
+    activeDiagramRef.current?.setActiveDiagram({
+      type: 'lasso',
+      props: line,
     });
   });
 
   const onLassoInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer || !isDrawing.current) return;
+    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
-    const { type } = getDrawingTypes();
-    const lassos = drawingLayer[type] as Lasso[];
-    const lastLasso = lassos[lassos.length - 1];
+    const active = activeDiagramRef.current?.activeDiagram;
+    const lastLasso = active?.type === 'lasso' ? (active.props as unknown as Lasso) : null;
     if (!lastLasso) return;
 
     const start = lassoStartRef.current ?? input.canvasPoint;
@@ -994,9 +1086,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const updatedLine: Lasso = { ...lastLasso, points: nextPoints };
 
-    const newLines = [...lassos.slice(0, -1), updatedLine];
-
-    setDrawingLayer({ ...drawingLayer, [type]: newLines });
+    activeDiagramRef.current?.setActiveDiagram({
+      type: 'lasso',
+      props: updatedLine,
+    });
   });
 
   /**
@@ -1061,24 +1154,21 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const discardLastStrokeIfTooShort = useMemoizedFn(() => {
-    const drawingLayer = getDrawingLayer();
-    if (!drawingLayer) return false;
+    const current = activeDiagramRef.current?.activeDiagram;
+    const points = (current?.props as { points?: number[] } | null)?.points ?? [];
 
-    const { type, diagrams } = getDrawingTypes();
-    const arr = drawingLayer[type] as unknown as Array<{ id?: string; points?: number[] }>;
+    if (!points.length) {
+      activeDiagramRef.current?.setActiveDiagram(null);
+      setDrawingId(null);
+      return true;
+    }
 
-    if (!arr?.length) return true;
-
-    const last = arr[arr.length - 1] as { id?: string; points?: number[] } | undefined;
-    const points = last?.points ?? [];
-    const pointCount = getPointCount(points);
-
-    // LASSO 的 rect/ellipse：点数固定，不能用 pointCount 判短；改为用 bounds 尺寸兜底
     if (activeKey === Actions.LASSO && lassoConfig.shape !== 'default') {
       let minX = Infinity;
       let minY = Infinity;
       let maxX = -Infinity;
       let maxY = -Infinity;
+
       for (let i = 0; i < points.length; i += 2) {
         const x = points[i];
         const y = points[i + 1];
@@ -1088,66 +1178,45 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         if (x > maxX) maxX = x;
         if (y > maxY) maxY = y;
       }
+
       const w = Number.isFinite(minX) && Number.isFinite(maxX) ? maxX - minX : 0;
       const h = Number.isFinite(minY) && Number.isFinite(maxY) ? maxY - minY : 0;
-      const MIN_SIZE = 6; // px：太小的框选/椭圆直接丢弃
-      if (w < MIN_SIZE && h < MIN_SIZE) {
-        const newArr = arr.slice(0, -1);
-        const newDiagrams = [...drawingLayer.diagrams];
-        const lastDiagram = newDiagrams[newDiagrams.length - 1];
-        if (
-          lastDiagram &&
-          last?.id &&
-          lastDiagram.id === last.id &&
-          lastDiagram.type === diagrams
-        ) {
-          newDiagrams.pop();
-        }
-        setDrawingLayer({
-          ...drawingLayer,
-          [type]: newArr,
-          diagrams: newDiagrams,
-        } as unknown as Layers);
-        isDrawing.current = false;
+      const MIN_SIZE = 6;
+
+      const shouldDiscard = w < MIN_SIZE && h < MIN_SIZE;
+      if (shouldDiscard) {
+        activeDiagramRef.current?.setActiveDiagram(null);
         setDrawingId(null);
-        return true;
       }
-      return false;
+      return shouldDiscard;
     }
 
-    // 少于 6 个点：丢弃本次 stroke（不入历史、不留点）
-    if (pointCount < MIN_POINT) {
-      const newArr = arr.slice(0, -1);
-      const newDiagrams = [...drawingLayer.diagrams];
-      const lastDiagram = newDiagrams[newDiagrams.length - 1];
-      if (lastDiagram && last?.id && lastDiagram.id === last.id && lastDiagram.type === diagrams) {
-        newDiagrams.pop();
-      }
-      setDrawingLayer({
-        ...drawingLayer,
-        [type]: newArr,
-        diagrams: newDiagrams,
-      } as unknown as Layers);
-      isDrawing.current = false;
+    const pointCount = getPointCount(points);
+    const shouldDiscard = pointCount < MIN_POINT;
+
+    if (shouldDiscard) {
+      activeDiagramRef.current?.setActiveDiagram(null);
       setDrawingId(null);
-      return true;
     }
 
-    return false;
+    return shouldDiscard;
   });
 
   const handleMouseUp = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     e.evt.preventDefault();
+    isDrawing.current = false;
     const input = toInputEvent(e, 'up');
+
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
 
     switch (activeKey) {
-      case Actions.PEN:
-      case Actions.ERASER:
-      case Actions.LASSO:
+      case Actions.LASSO: {
         lassoStartRef.current = null;
         if (discardLastStrokeIfTooShort()) return;
         return finishLasso();
+      }
+      case Actions.PEN:
+      case Actions.ERASER:
       case Actions.RECT:
       case Actions.ELLIPSE:
       case Actions.LINE:
@@ -1221,6 +1290,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           }
           return !!layer && <Layer key={layer.id} {...layer} />;
         })}
+        <ActiveDiagram ref={activeDiagramRef} />
       </Stage>
       <Cursor visible={cursorVisible} />
       <ReferencePicture />

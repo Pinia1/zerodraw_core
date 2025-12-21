@@ -47,6 +47,16 @@ export enum LassoMode {
   REMOVE = 'remove',
 }
 
+export type GroupPos = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  relativePos: { x: number; y: number };
+  pixelRatio: number;
+  imageData: ImageData;
+};
+
 export enum Actions {
   ADD = 'add',
   ROPE = 'rope',

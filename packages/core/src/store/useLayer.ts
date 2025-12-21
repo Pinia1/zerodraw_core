@@ -4,9 +4,10 @@ import { persist } from 'zustand/middleware';
 import type { DrawLayer, Layers } from '../types/Layers';
 import { generateUUID } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
+import lineJson from '../utils/line.json';
 
 const historyManager = new HistoryManager<Layers[]>({
-  maxLength: 50,
+  maxLength: 30,
   clone: (state) => state,
   cleanFutureCallback: (future) => {
     future.forEach((layers) => {
@@ -27,6 +28,12 @@ const historyManager = new HistoryManager<Layers[]>({
     });
   },
 });
+
+const lines = new Array(1000).fill(0).map(() => ({
+  ...lineJson,
+  points: lineJson.points.map((p) => Math.round(p)),
+  id: generateUUID(),
+}));
 
 export const initialDrawingLayer: () => Layers = () => ({
   id: generateUUID(),
@@ -69,6 +76,8 @@ export const emptyDrawingLayer: () => Partial<Layers> = () => ({
   image: null,
 });
 const init = initialDrawingLayer();
+// init.diagrams = lines.map((i) => ({ id: i.id, type: 'line' }));
+// init.lines = lines;
 
 interface LayerState {
   layers: Layers[];
