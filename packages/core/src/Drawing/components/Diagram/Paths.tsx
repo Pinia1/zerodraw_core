@@ -91,12 +91,6 @@ const Paths: React.FC<PathProps> = (props) => {
       <Shape
         listening={isRope}
         sceneFunc={(ctx: Konva.Context) => renderAllPaths(ctx, path2D, props)}
-        hitFunc={(ctx, shape) => {
-          ctx.beginPath();
-          ctx.rect(bounds.x, bounds.y, bounds.width, bounds.height);
-          ctx.closePath();
-          ctx.fillStrokeShape(shape);
-        }}
       />
 
       {isRemove && removeTag && (
