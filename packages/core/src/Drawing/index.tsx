@@ -1139,7 +1139,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   //drawing layer
   const handleMouseDown = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
-    e.evt.preventDefault();
     if (!drawingVisible) return;
     const input = toInputEvent(e, 'down');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
