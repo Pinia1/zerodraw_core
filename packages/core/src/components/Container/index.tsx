@@ -51,7 +51,18 @@ const Container = React.memo(
     } as React.CSSProperties;
 
     return (
-      <div ref={ref} style={{ ...cssVariables, ...style }} {...rest}>
+      <div
+        ref={ref}
+        style={{
+          ...cssVariables,
+          ...style,
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+        {...rest}
+      >
         {children}
       </div>
     );

@@ -285,10 +285,6 @@ const Tool: React.FC = () => {
           padding: '8px',
           overflow: 'hidden',
           borderRadius: '16px',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          WebkitTapHighlightColor: 'transparent',
         }}
       >
         {toolMenus.map((item, idx) => {

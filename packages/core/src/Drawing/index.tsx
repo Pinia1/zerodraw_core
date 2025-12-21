@@ -56,7 +56,7 @@ import {
   lockSquareEndPoint,
   mergeLassos,
 } from '../utils/Lasso';
-import { isMac, isWindows } from '../utils/platform';
+import { isMac, isMobile, isWindows } from '../utils/platform';
 import ActiveDiagram, { ActiveDiagramRef } from './components/ActiveDiagram';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
@@ -247,14 +247,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const nextDrawingLayer = commitActiveDiagramToLayer(drawingLayer as unknown as Layers);
 
-    activeDiagramRef.current?.setActiveDiagram(null);
-
     const drawingIndex = layers.findIndex((l) => l.id === nextDrawingLayer.id);
     if (drawingIndex === -1) return;
 
     const newLayers = [...layers];
     newLayers[drawingIndex] = nextDrawingLayer;
 
+    activeDiagramRef.current?.setActiveDiagram(null);
     setDrawingLayer(nextDrawingLayer);
     setDrawingId(null);
     pushHistory(newLayers);
@@ -774,7 +773,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onPenInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
     const { diagrams } = getDrawingTypes();
@@ -852,7 +850,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onRectInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
     let rect = activeDiagramRef.current?.activeDiagram?.props as unknown as RectType;
@@ -901,7 +898,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onEllipseInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
     let ellipse = activeDiagramRef.current?.activeDiagram?.props as unknown as EllipseType;
@@ -973,7 +969,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onLineInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
     const active = activeDiagramRef.current?.activeDiagram;
@@ -1096,7 +1091,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   });
 
   const onLassoInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
-    if (!isDrawing.current) return;
     if (!input.canvasPoint) return;
 
     const active = activeDiagramRef.current?.activeDiagram;
@@ -1171,7 +1165,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const handleMouseMove = useMemoizedFn((e: Konva.KonvaEventObject<MouseEvent>) => {
     if (!cursorVisible) setCursorVisible(true);
     if (stageDraggable) return;
-    if (!isDrawing.current) return;
+    if (!isDrawing.current && !isMobile) return;
     const input = toInputEvent(e, 'move');
     if (isMultiTouchRef.current && input.pointerType === 'touch') return;
     if (!isPointInCanvasBounds(input.stagePoint, layerConfig)) return;

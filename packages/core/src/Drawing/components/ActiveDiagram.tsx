@@ -1,8 +1,9 @@
 import Konva from 'konva';
 import React, { useImperativeHandle, useMemo, useState } from 'react';
-import { Group, Layer as KonvaLayer } from 'react-konva';
+import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
+import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions } from '../../types/Drawing';
 import {
@@ -47,6 +48,12 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) =
   const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
+    }))
+  );
+
+  const { opacity } = useLayerStore(
+    useShallow((state) => ({
+      opacity: state.drawingLayer?.opacity,
     }))
   );
 
@@ -102,6 +109,18 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) =
       {activeKey === Actions.LASSO && activeDiagram?.type === 'lasso' && (
         <Lasso {...(activeDiagram?.props as LassoType)} />
       )}
+
+      <KonvaRect
+        x={0}
+        y={0}
+        listening={false}
+        width={layerConfig.width}
+        height={layerConfig.height}
+        id="rect_for_placeholder"
+        fill={layerConfig.backgroundColor}
+        globalCompositeOperation={'destination-out'}
+        opacity={1 - (opacity ?? 100) / 100}
+      />
     </KonvaLayer>
   );
 });
