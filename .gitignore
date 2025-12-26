@@ -1,6 +1,7 @@
 # Dependencies
 node_modules
 .pnpm-store
+build.md
 
 # Build outputs
 dist
@@ -46,4 +47,3 @@ coverage
 .cache
 .temp
 .tmp
-
