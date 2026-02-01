@@ -1,6 +1,3 @@
-// 导出数据库实例和工具函数
-export { closeConnection, db, pool, testConnection } from './db';
-
 // 导出所有 schema
 export * from './schema';
 

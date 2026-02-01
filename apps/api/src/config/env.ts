@@ -20,8 +20,11 @@ const envSchema = z.object({
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),
 
-  JWT_SECRET: z.string().min(32),
+  JWT_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string().default('7d'),
+
+  GITHUB_CLIENT_ID: z.string(),
+  GITHUB_CLIENT_SECRET: z.string(),
 });
 
 function validateEnv() {

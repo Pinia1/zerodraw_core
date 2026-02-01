@@ -11,11 +11,11 @@ interface User {
 }
 
 export const getUserInfo = () => {
-  return request.get('/api/user/info');
+  return request.get('/api/auth/me');
 };
 
 export const githubLogin = (params: { code: string }): Promise<{ token: string; user: User }> => {
-  return request.get(`/github/login`, {
+  return request.get(`/api/auth/github/callback`, {
     params,
   });
 };

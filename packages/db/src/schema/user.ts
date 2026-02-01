@@ -1,10 +1,10 @@
 import { int, mysqlTable, text, timestamp, varchar } from 'drizzle-orm/mysql-core';
 
-export const users = mysqlTable('users', {
+export const user = mysqlTable('users', {
   id: int('id').primaryKey().autoincrement(),
-  githubId: int('github_id').notNull().unique(),
+  userId: int('user_id').unique().notNull(),
   viewNum: int('view_num').default(0),
-  githubAccessToken: varchar('github_access_token', { length: 255 }).notNull(),
+  platform: varchar('platform', { length: 255 }).notNull(),
   username: varchar('username', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }),
   avatar: varchar('avatar', { length: 500 }),
@@ -19,5 +19,5 @@ export const users = mysqlTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
+export type User = typeof user.$inferSelect;
+export type NewUser = typeof user.$inferInsert;

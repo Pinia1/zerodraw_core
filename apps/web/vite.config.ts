@@ -1,29 +1,42 @@
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@zeroDraw/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
-      '@zeroDraw/common': path.resolve(__dirname, '../../packages/common/src/index.ts'),
+export default defineConfig(({ mode }) => {
+  const envDir = path.resolve(__dirname, '../..'); // 回到根目录
+
+  // 加载所有环境变量（不限制前缀）
+  const env = loadEnv(mode, envDir, '');
+  const isDev = mode === 'development';
+
+  return {
+    envDir: envDir,
+    envPrefix: ['VITE_'],
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@zeroDraw/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
+        '@zeroDraw/common': path.resolve(__dirname, '../../packages/common/src/index.ts'),
+      },
     },
-  },
-  server: {
-    port: 3000,
-    open: true,
-    host: true,
-    fs: {
-      allow: [path.resolve(__dirname, '../..')],
+    server: {
+      port: 3000,
+      open: true,
+      host: true,
+      fs: {
+        allow: [path.resolve(__dirname, '../..')],
+      },
     },
-  },
-  optimizeDeps: {
-    exclude: ['@zeroDraw/core', '@zeroDraw/common'],
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: false,
-  },
+    optimizeDeps: {
+      exclude: ['@zeroDraw/core', '@zeroDraw/common'],
+    },
+    build: {
+      outDir: 'dist',
+      sourcemap: false,
+    },
+    define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(isDev ? `http://localhost:${env.PORT}` : ''),
+    },
+  };
 });
