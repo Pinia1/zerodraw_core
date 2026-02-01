@@ -1,20 +1,9 @@
 {
   "name": "zeroDraw",
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./packages/**\" dev",
+    "dev": "pnpm --parallel --filter \"./packages/**\" --filter \"./apps/**\" dev",
     "dev:web": "pnpm --filter @zeroDraw/web dev",
-    "dev:server": "pnpm --filter @zeroDraw/server dev",
-    "build": "pnpm --filter @zeroDraw/web build",
-    "build:server": "pnpm --filter @zeroDraw/server build",
-    "server:start": "pnpm --filter @zeroDraw/server pm2:start",
-    "server:stop": "pnpm --filter @zeroDraw/server pm2:stop",
-    "server:restart": "pnpm --filter @zeroDraw/server pm2:restart",
-    "server:logs": "pnpm --filter @zeroDraw/server pm2:logs",
-    "lint": "eslint \"packages/**/*.{ts,tsx,js,jsx}\" --max-warnings 0",
-    "lint:fix": "eslint \"packages/**/*.{ts,tsx,js,jsx}\" --fix",
-    "test": "pnpm --filter \"./packages/**\" test",
-    "clean": "pnpm --filter \"./packages/**\" clean && rm -rf node_modules",
-    "format": "prettier --write \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\""
+    "dev:api": "pnpm --filter @zeroDraw/api dev"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

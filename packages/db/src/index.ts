@@ -1,0 +1,9 @@
+// 导出数据库实例和工具函数
+export { closeConnection, db, pool, testConnection } from './db';
+
+// 导出所有 schema
+export * from './schema';
+
+// 导出 Drizzle ORM 常用方法（方便使用）
+export { and, asc, desc, eq, not, or, sql } from 'drizzle-orm';
+export type { InferInsertModel, InferSelectModel } from 'drizzle-orm';

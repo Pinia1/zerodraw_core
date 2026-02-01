@@ -7,8 +7,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@zeroDraw/core': path.resolve(__dirname, '../core/src/index.ts'),
-      '@zeroDraw/common': path.resolve(__dirname, '../common/src/index.ts'),
+      '@zeroDraw/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
+      '@zeroDraw/common': path.resolve(__dirname, '../../packages/common/src/index.ts'),
     },
   },
   server: {
@@ -16,7 +16,7 @@ export default defineConfig({
     open: true,
     host: true,
     fs: {
-      allow: [path.resolve(__dirname, '..')],
+      allow: [path.resolve(__dirname, '../..')],
     },
   },
   optimizeDeps: {
