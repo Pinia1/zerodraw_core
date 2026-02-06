@@ -3,6 +3,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 
 const DrawingPage = lazy(() => import('../pages/Drawing'));
+const FlowPage = lazy(() => import('../pages/Flow'));
 const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
@@ -10,6 +11,20 @@ const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={null}>
+            <FlowPage />
+          </Suspense>
+        ),
+      },
+    ],
+  },
+  {
+    path: '/drawing',
     element: <Layout />,
     children: [
       {

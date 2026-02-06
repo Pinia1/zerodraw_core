@@ -113,9 +113,7 @@ const Tool: React.FC = () => {
       setLayers(
         layers.map((layer) => (layer.id === drawingLayer?.id ? (newDrawingLayer as Layers) : layer))
       );
-    } catch (error) {
-      console.log(error, 'errorrrr');
-    }
+    } catch (error) {}
   });
 
   const toolMenus: {

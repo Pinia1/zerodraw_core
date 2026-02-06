@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@xyflow/react": "^12.10.0",
     "@zeroDraw/common": "workspace:*",
     "@zeroDraw/core": "workspace:*",
     "antd": "^5.27.6",
