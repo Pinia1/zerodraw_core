@@ -1,6 +1,7 @@
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
+import multipart from '@fastify/multipart';
 import fastify from 'fastify';
 import { errorHandler } from './plugins/errorHandler';
 import { registerRoutes } from './routes';
@@ -12,6 +13,12 @@ export async function createApp() {
   });
 
   await app.register(cors);
+
+  await app.register(multipart, {
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB
+    },
+  });
 
   await app.register(helmet, {
     contentSecurityPolicy: false,

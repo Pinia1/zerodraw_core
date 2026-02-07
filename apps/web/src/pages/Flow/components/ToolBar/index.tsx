@@ -3,6 +3,7 @@ import { useMemoizedFn } from '@zeroDraw/common';
 import { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload } from '@zeroDraw/core';
 import { Divider } from 'antd';
 import React, { useMemo, useState } from 'react';
+import { httpUpload } from '../../../../services/volc';
 import { Actions, ToolBarProps, ToolMenus } from './type';
 
 const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) => {
@@ -11,9 +12,18 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
   const { run: runUpload, loading } = useUpload({
     accept: 'image/*',
     multiple: false,
-    onSuccess: ({ id, url }) => {
+    onSuccess: async ({ id, url }) => {
       const image = new Image();
       image.src = url;
+
+      const blob = await fetch(url).then((res) => res.blob());
+      const file = new File([blob], id, { type: blob.type });
+      const formData = new FormData();
+      formData.append('file', file);
+      httpUpload(formData).then((r) => {
+        console.log(r, 'rrr');
+      });
+
       image.onload = () => {
         const MAX_SIZE = 120;
         const ratio = image.width / image.height;

@@ -14,6 +14,6 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
 
     request.user = foundUser;
   } catch (error) {
-    throw new UnauthorizedError('Invalid or expired token');
+    throw new UnauthorizedError('Unauthorized!');
   }
 }

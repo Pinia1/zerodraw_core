@@ -25,6 +25,9 @@ const envSchema = z.object({
 
   GITHUB_CLIENT_ID: z.string(),
   GITHUB_CLIENT_SECRET: z.string(),
+
+  TOS_ACCESS_KEY: z.string(),
+  TOS_SECRET_KEY: z.string(),
 });
 
 function validateEnv() {
