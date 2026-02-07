@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { generateRoutes } from '../modules/AIGenerate';
 import { authRoutes } from '../modules/Auth/auth.routes';
 import { fileRoutes } from '../modules/File';
 import { createSuccessResponse } from '../types/response';
@@ -17,5 +18,8 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   await app.register(fileRoutes, {
     prefix: '/api/file',
+  });
+  await app.register(generateRoutes, {
+    prefix: '/api/generate',
   });
 }

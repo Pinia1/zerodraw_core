@@ -28,6 +28,8 @@ const envSchema = z.object({
 
   TOS_ACCESS_KEY: z.string(),
   TOS_SECRET_KEY: z.string(),
+
+  SEEDREAM_API_KEY: z.string(),
 });
 
 function validateEnv() {
