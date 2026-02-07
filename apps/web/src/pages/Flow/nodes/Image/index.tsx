@@ -1,8 +1,16 @@
 import { PictureOutlined } from '@ant-design/icons';
-import { Handle, Position, useReactFlow, type NodeProps } from '@xyflow/react';
+import { Handle, Position, useReactFlow, useViewport, type NodeProps } from '@xyflow/react';
 import { useHover, useMemoizedFn } from '@zeroDraw/common';
-import { memo, useMemo, useRef } from 'react';
-import styled from 'styled-components';
+import React, { memo, useMemo, useRef } from 'react';
+import {
+  Corner,
+  ImageContainer,
+  Placeholder,
+  ResizeHandle,
+  ToolbarWrapper,
+  Wrapper,
+} from './components';
+import ImageTool from './components/Tool';
 
 interface ImageNodeData {
   label?: string;
@@ -13,91 +21,13 @@ interface ImageNodeData {
   [key: string]: unknown;
 }
 
-const Wrapper = styled.div<{ $selected: boolean }>`
-  position: relative;
-  border: ${({ $selected }) => ($selected ? '1px solid #1677ff' : '1px solid transparent')};
-  cursor: grab;
-  user-select: none;
-`;
-
-const ImageContainer = styled.div<{ $width: number; $height: number }>`
-  width: ${({ $width }) => $width}px;
-  height: ${({ $height }) => $height}px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fafafa;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-  }
-`;
-
-const Placeholder = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: #bbb;
-`;
-
-const Label = styled.span`
-  position: absolute;
-  top: 0;
-  transform: translateY(-120%);
-  color: #0958d9;
-  font-size: 12px;
-  white-space: nowrap;
-`;
-
-// 四个角的拖拽手柄
-type Corner = 'tl' | 'tr' | 'bl' | 'br';
-
-const cornerCursors: Record<Corner, string> = {
-  tl: 'nw-resize',
-  tr: 'ne-resize',
-  bl: 'sw-resize',
-  br: 'se-resize',
-};
-
-const cornerPositions: Record<
-  Corner,
-  { top?: number; bottom?: number; left?: number; right?: number }
-> = {
-  tl: { top: -3, left: -3 },
-  tr: { top: -3, right: -3 },
-  bl: { bottom: -3, left: -3 },
-  br: { bottom: -3, right: -3 },
-};
-
-const ResizeHandle = styled.div<{ $corner: Corner }>`
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #fff;
-  border: 1px solid #1677ff;
-  border-radius: 2px;
-  z-index: 10;
-  cursor: ${({ $corner }) => cornerCursors[$corner]};
-  ${({ $corner }) => {
-    const pos = cornerPositions[$corner];
-    return Object.entries(pos)
-      .map(([k, v]) => `${k}: ${v}px;`)
-      .join(' ');
-  }}
-`;
-
 const MIN_SIZE = 40;
 
-function ImageNode({ id, data, selected }: NodeProps) {
+const ImageNode: React.FC<NodeProps> = (props) => {
+  const { id, data, selected } = props;
   const { src = '/zero.png', width = 119, height = 117, name = '' } = data as ImageNodeData;
   const { getNode, setNodes, getZoom } = useReactFlow();
+  const { zoom } = useViewport();
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
 
@@ -241,8 +171,12 @@ function ImageNode({ id, data, selected }: NodeProps) {
   }, [selected]);
 
   return (
-    <Wrapper $selected={isHover || !!selected} ref={ref}>
-      {!!selected && <Label>{name || 'Image'}</Label>}
+    <Wrapper $selected={isHover || selected} ref={ref}>
+      {selected && (
+        <ToolbarWrapper $zoom={zoom}>
+          <ImageTool {...props} />
+        </ToolbarWrapper>
+      )}
 
       <ImageContainer $width={width} $height={height}>
         {src ? (
@@ -268,6 +202,6 @@ function ImageNode({ id, data, selected }: NodeProps) {
       )}
     </Wrapper>
   );
-}
+};
 
 export default memo(ImageNode);

@@ -12,11 +12,30 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
     accept: 'image/*',
     multiple: false,
     onSuccess: ({ id, url }) => {
-      console.log(id, url);
-      setNodes((nodes) => [
-        ...nodes,
-        { id: generateUUID(), type: 'img', position: { x: 0, y: 0 }, data: { src: url } },
-      ]);
+      const image = new Image();
+      image.src = url;
+      image.onload = () => {
+        const MAX_SIZE = 120;
+        const ratio = image.width / image.height;
+        let w, h;
+        if (image.width >= image.height) {
+          w = Math.min(image.width, MAX_SIZE);
+          h = Math.round(w / ratio);
+        } else {
+          h = Math.min(image.height, MAX_SIZE);
+          w = Math.round(h * ratio);
+        }
+        setNodes((nodes) => [
+          ...nodes,
+          {
+            id: generateUUID(),
+            type: 'img',
+            position: { x: 0, y: 0 },
+            data: { src: url, width: w, height: h },
+          },
+        ]);
+      };
+      image.remove();
     },
     onError: (error) => {
       console.log(error);

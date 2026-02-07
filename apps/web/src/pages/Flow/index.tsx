@@ -1,7 +1,6 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
@@ -11,27 +10,29 @@ import {
   useReactFlow,
   type Connection,
   type Edge,
-  type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useMemoizedFn } from '@zeroDraw/common';
+import { generateUUID } from '@zeroDraw/core';
 import styled from 'styled-components';
 import Toolbar from './components/ToolBar';
 import { nodeTypes } from './nodes';
 
 // 初始节点
-const initialNodes: Node[] = [
+const initialNodes: AppNode[] = [
   {
-    id: 'start-1',
+    id: generateUUID(),
     type: 'img',
-    position: { x: 100, y: 100 },
-    data: { label: '开始' },
+    position: { x: 0, y: 0 },
+    data: { src: '/zero.png' },
   },
   {
-    id: 'task-1',
+    id: generateUUID(),
     type: 'img',
     position: { x: 200, y: 120 },
-    data: { label: '数据采集', status: 'done', description: '从 API 获取用户数据' },
+    data: {
+      src: '/zero.png',
+    },
   },
 ];
 
@@ -75,7 +76,6 @@ function FlowEditor() {
         multiSelectionKeyCode="Shift"
         maxZoom={20}
       >
-        <Controls position="bottom-left" />
         <MiniMap
           position="bottom-right"
           nodeStrokeWidth={3}

@@ -1,8 +1,7 @@
-import { Node } from '@xyflow/react';
 import { ToolTypes } from '@zeroDraw/core';
 export interface ToolBarProps {
   onFitView: (type: string) => void;
-  setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
+  setNodes: React.Dispatch<React.SetStateAction<AppNode[]>>;
 }
 
 export enum Actions {
@@ -24,4 +23,5 @@ export interface ToolMenus {
   dropdown?: React.ReactNode;
   isActive?: boolean;
   disabled?: boolean;
+  tip?: string;
 }
