@@ -1,32 +1,86 @@
 import Icon, { LeftOutlined } from '@ant-design/icons';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
+import { Handle, Position, useNodes, useReactFlow } from '@xyflow/react';
+import { generateUUID, useMemoizedFn } from '@zeroDraw/common';
 import { Container, Icons, ToolItem } from '@zeroDraw/core';
 import { Input, Menu, Tooltip } from 'antd';
 import React, { memo, useMemo, useState } from 'react';
+import { httpSeedreamGenerate } from '../../../../services/generate';
 import { Header, InputRow, Title, TitleRow } from './components';
 import type { MentionItem } from './components/MentionList';
 import Prompt from './components/Prompt';
+
 const MENU_ITEMS = [
   { key: 'new_view', icon: <Icon component={Icons.IconViews} />, label: 'New view' },
   { key: 'expression', icon: <Icon component={Icons.IconFace} />, label: 'Change expression' },
 ];
 
-const MOCK_MENTION_ITEMS: MentionItem[] = [{ id: '1', label: 'Front view', image: '/zero.png' }];
+const NODE_WIDTH = 280;
+const GAP = 80;
 
-const CreateWithAI: React.FC<NodeProps> = ({ selected }) => {
+const CreateWithAI: React.FC<NodeProps> = ({ id, selected, height, data }) => {
+  const { imageId } = data;
   const [menuKey, setMenuKey] = useState<(typeof MENU_ITEMS)[number]['key'] | 'prompt' | null>(
     null
   );
 
-  const content = useMemo(() => {
-    if (menuKey === 'prompt') {
-      return <Prompt mentionItems={MOCK_MENTION_ITEMS} />;
+  const nodes = useNodes();
+  const { getNode, setNodes } = useReactFlow();
+  const handlerGenerate = useMemoizedFn(
+    async (values: {
+      prompt: { text: string; mentions: [] };
+      size: { width: number; height: number };
+    }) => {
+      const imageNode = getNode(imageId as string);
+
+      const { taskId } = await httpSeedreamGenerate({
+        action: 'SEEDDREAM_IMAGE',
+        s3Key: [imageNode?.data.s3Key as string],
+        args: {
+          prompt: values.prompt?.text || '',
+          size: values.size.width + 'x' + values.size.height,
+        },
+      });
+
+      const nextImageRatio = values.size.width / values.size.height;
+      //withai
+      const currentNode = getNode(id);
+      const currentX = currentNode?.position.x ?? 0;
+      const currentY = currentNode?.position.y ?? 0;
+      const currentH = height ?? 200;
+      const newNodeSize = 250;
+      setNodes((pre) => [
+        ...pre,
+        {
+          id: generateUUID(),
+          type: 'img',
+          position: {
+            x: currentX + NODE_WIDTH + GAP,
+            y: currentY + (currentH - newNodeSize) / 2,
+          },
+          data: {
+            taskId,
+            width: imageNode?.data.width,
+            height: nextImageRatio * (imageNode?.data.height as number),
+          },
+        },
+      ]);
     }
+  );
+
+  const content = useMemo(() => {
+    const imageNodes = nodes
+      .filter((node) => node.type === 'img')
+      .map((node, idx) => ({
+        id: node.id,
+        label: `image-${idx + 1}`,
+        url: node.data.src,
+        s3Key: node.data.s3Key,
+      })) as MentionItem[];
 
     switch (menuKey) {
       case 'prompt':
-        return <Prompt mentionItems={MOCK_MENTION_ITEMS} />;
-
+        return <Prompt onSubmit={handlerGenerate} mentionItems={imageNodes} />;
       default:
         return (
           <>
@@ -59,7 +113,7 @@ const CreateWithAI: React.FC<NodeProps> = ({ selected }) => {
           </>
         );
     }
-  }, [menuKey]);
+  }, [menuKey, nodes.length]);
 
   return (
     <Container

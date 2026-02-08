@@ -1,7 +1,16 @@
 import { PictureOutlined } from '@ant-design/icons';
-import { Handle, Position, useReactFlow, useViewport, type NodeProps } from '@xyflow/react';
-import { useHover, useMemoizedFn } from '@zeroDraw/common';
+import {
+  Handle,
+  Position,
+  useNodes,
+  useReactFlow,
+  useViewport,
+  type NodeProps,
+} from '@xyflow/react';
+import { useHover, useMemoizedFn, useRequest } from '@zeroDraw/common';
 import React, { memo, useMemo, useRef } from 'react';
+import { httpGetTask } from '../../../../services/generate';
+import { apiUrl, fileUrl } from '../../../../utils';
 import {
   Corner,
   ImageContainer,
@@ -25,11 +34,41 @@ const MIN_SIZE = 40;
 
 const ImageNode: React.FC<NodeProps> = (props) => {
   const { id, data, selected } = props;
+  const { taskId } = data;
   const { src = '/zero.png', width = 119, height = 117, name = '' } = data as ImageNodeData;
   const { getNode, setNodes, getZoom } = useReactFlow();
+  const nodes = useNodes();
   const { zoom } = useViewport();
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
+
+  const { cancel } = useRequest(() => httpGetTask(taskId as string), {
+    manual: !taskId,
+    onSuccess: (data) => {
+      if (['completed', 'failed'].includes(data.status)) {
+        cancel();
+      }
+      if (data.s3Key) {
+        setNodes((nds) =>
+          nds.map((n) => {
+            if (n.id !== id) return n;
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                src: `${apiUrl}${fileUrl}/${data.s3Key}`,
+                s3Key: data.s3Key,
+              },
+            };
+          })
+        );
+      }
+    },
+    onError() {
+      cancel();
+    },
+    pollingInterval: 2000,
+  });
 
   const dragRef = useRef<{
     startX: number;
@@ -160,6 +199,10 @@ const ImageNode: React.FC<NodeProps> = (props) => {
     document.addEventListener('pointerup', onPointerUp);
   });
 
+  const multSelected = useMemo(() => {
+    return nodes.filter((n) => n.selected).length > 1;
+  }, [nodes]);
+
   const handleStyle = useMemo(() => {
     return {
       width: 6,
@@ -172,7 +215,7 @@ const ImageNode: React.FC<NodeProps> = (props) => {
 
   return (
     <Wrapper $selected={isHover || selected} ref={ref}>
-      {selected && (
+      {selected && !multSelected && (
         <ToolbarWrapper $zoom={zoom}>
           <ImageTool {...props} />
         </ToolbarWrapper>

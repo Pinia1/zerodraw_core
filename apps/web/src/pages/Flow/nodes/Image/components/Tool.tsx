@@ -1,7 +1,7 @@
 import Icon from '@ant-design/icons';
-import { NodeProps } from '@xyflow/react';
+import { NodeProps, useReactFlow } from '@xyflow/react';
 import { useMemoizedFn } from '@zeroDraw/common';
-import { Container, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
+import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
 import { Divider, Tooltip } from 'antd';
 import { saveAs } from 'file-saver';
 import React, { useMemo } from 'react';
@@ -11,9 +11,41 @@ import { Actions, ToolMenus } from '../../../components/ToolBar/type';
 interface ImageToolProps extends NodeProps {}
 
 const ImageTool: React.FC<ImageToolProps> = (props) => {
-  const { id, data, selected } = props;
+  const { id, data } = props;
 
   const navigate = useNavigate();
+  const { getNode, setNodes, addEdges } = useReactFlow();
+
+  const handleCreateWithAI = useMemoizedFn(() => {
+    const currentNode = getNode(id);
+    if (!currentNode) return;
+
+    const nodeWidth = (data.width as number) || 250;
+    const gap = 80;
+
+    const newNodeId = generateUUID();
+    const newNode: CreateWithAINode = {
+      id: newNodeId,
+      type: 'createWithAI',
+      position: {
+        x: currentNode.position.x + nodeWidth + gap,
+        y: currentNode.position.y,
+      },
+      data: {
+        imageId: id,
+      },
+    };
+
+    const newEdge = {
+      id: `e-${id}-${newNodeId}`,
+      source: id,
+      target: newNodeId,
+      type: 'smoothstep',
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    addEdges([newEdge]);
+  });
 
   const toolMenus: ToolMenus[] = useMemo(() => {
     return [
@@ -36,8 +68,8 @@ const ImageTool: React.FC<ImageToolProps> = (props) => {
       {
         key: Actions.NOTE,
         icon: <Icon component={Icons.IconStar} />,
-        type: ToolTypes.STATE,
-        onClick: () => {},
+        type: ToolTypes.ACTION,
+        onClick: handleCreateWithAI,
         tip: 'Create with AI',
       },
       {

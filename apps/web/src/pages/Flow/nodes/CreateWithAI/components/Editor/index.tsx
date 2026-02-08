@@ -4,7 +4,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useMemoizedFn } from '@zeroDraw/common';
-import React, { useImperativeHandle, forwardRef, useMemo, useState } from 'react';
+import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { apiUrl, thumbnailUrl } from '../../../../../../utils';
 import {
   Badge,
   EditorArea,
@@ -59,9 +60,13 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       placeholder = 'Describe your changes...',
       autoFocus = true,
     },
-    ref,
+    ref
   ) => {
     const [mentionedList, setMentionedList] = useState<MentionItem[]>([]);
+
+    // 用 ref 持有最新的 mentionItems，避免 useEditor 闭包捕获旧值
+    const mentionItemsRef = useRef(mentionItems);
+    mentionItemsRef.current = mentionItems;
 
     const handleMentionSelect = useMemoizedFn((item: MentionItem) => {
       setMentionedList((prev) => {
@@ -70,9 +75,9 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       });
     });
 
-    const suggestion = useMemo(
-      () => createMentionSuggestion(() => mentionItems, handleMentionSelect),
-      [mentionItems],
+    // 只创建一次，内部通过 ref 读取最新数据
+    const [suggestion] = useState(() =>
+      createMentionSuggestion(() => mentionItemsRef.current, handleMentionSelect)
     );
 
     const editor = useEditor({
@@ -138,7 +143,6 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
 
     const handleSubmit = () => {
       const val = getValue();
-      if (!val.text) return;
       onSubmit?.(val);
     };
 
@@ -156,7 +160,11 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           <MentionedImages>
             {mentionedList.map((item, idx) => (
               <MentionedThumb key={item.id}>
-                <img src={item.image} alt={item.label} draggable={false} />
+                <img
+                  src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`}
+                  alt={item.label}
+                  draggable={false}
+                />
                 <Badge>{idx + 1}</Badge>
                 <RemoveButton onClick={() => removeMention(item.id)}>
                   <CloseOutlined style={{ fontSize: 8 }} />
@@ -184,7 +192,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         </Toolbar>
       </Wrapper>
     );
-  },
+  }
 );
 
 PromptEditor.displayName = 'PromptEditor';

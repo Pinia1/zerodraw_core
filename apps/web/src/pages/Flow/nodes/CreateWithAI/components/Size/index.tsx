@@ -18,7 +18,7 @@ const RESOLUTION_BASE: Record<Resolution, number> = {
 
 /** 比例预设：label + icon 文字 + 比例值(w/h) */
 const RATIOS = [
-  { key: 'auto', label: '智能', ratio: 0 },
+  { key: 'auto', label: 'auto', ratio: 0 },
   { key: '1:1', label: '1:1', ratio: 1, '2k': '2048x2048', '4k': '4096x4096' },
   { key: '3:4', label: '3:4', ratio: 3 / 4, '2k': '1728x2304', '4k': '3520x4704' },
   { key: '4:3', label: '4:3', ratio: 4 / 3, '2k': '2304x1728', '4k': '4704x3520' },
@@ -75,7 +75,10 @@ function clampSize(w: number, h: number): SizeValue {
 /* ==================== 组件 ==================== */
 
 /** 根据 w×h 反向匹配预设的 resolution + ratio */
-function matchPreset(w: number, h: number): { resolution: Resolution | null; ratioKey: string | null } {
+function matchPreset(
+  w: number,
+  h: number
+): { resolution: Resolution | null; ratioKey: string | null } {
   const sizeStr = `${w}x${h}`;
   for (const ratio of RATIOS) {
     const rec = ratio as unknown as Record<string, string>;

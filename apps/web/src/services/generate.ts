@@ -3,6 +3,7 @@ import request from '.';
 /** 提交 AI 生成任务 */
 export const httpSeedreamGenerate = (data: {
   action: string;
+  s3Key?: string[];
   args: Record<string, unknown>;
 }): Promise<{ taskId: string }> => {
   return request.post('/api/generate/seedream', data);
@@ -10,7 +11,7 @@ export const httpSeedreamGenerate = (data: {
 
 /** 轮询任务状态 */
 export const httpGetTask = (
-  taskId: string,
+  taskId: string
 ): Promise<{
   id: string;
   action: string;
@@ -18,6 +19,7 @@ export const httpGetTask = (
   s3Key: string | null;
   error: string | null;
   createdAt: string;
+  args: Record<string, unknown>;
 }> => {
   return request.get(`/api/generate/task/${taskId}`);
 };

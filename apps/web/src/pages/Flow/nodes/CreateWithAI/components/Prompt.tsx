@@ -1,6 +1,7 @@
+import { useMemoizedFn } from '@zeroDraw/common';
 import { Form, InputNumber } from 'antd';
 import React, { useRef } from 'react';
-import PromptEditor, { type EditorValue, type MentionItem, type PromptEditorRef } from './Editor';
+import PromptEditor, { type MentionItem, type PromptEditorRef } from './Editor';
 import { FormLabel } from './index';
 import Size from './Size';
 
@@ -8,27 +9,41 @@ interface PromptProps {
   /** 可 @ 引用的列表 */
   mentionItems?: MentionItem[];
   /** 提交回调 */
-  onSubmit?: (value: EditorValue) => void;
+  onSubmit?: (values: any) => void;
 }
 
 const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
   const editorRef = useRef<PromptEditorRef>(null);
+  const [form] = Form.useForm();
 
+  const handleSubmit = useMemoizedFn((values: any) => {
+    form.validateFields().then((values) => {
+      onSubmit?.(values);
+    });
+  });
   return (
     <div style={{ padding: 12 }}>
-      <Form layout="vertical">
-        <Form.Item name="prompt" style={{ marginBottom: 12 }}>
-          <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={onSubmit} />
+      <Form form={form} onFinish={onSubmit} layout="vertical">
+        <Form.Item
+          name="prompt"
+          style={{ marginBottom: 12 }}
+          rules={[{ required: true, message: 'Please enter a prompt' }]}
+        >
+          <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={handleSubmit} />
         </Form.Item>
-        <Form.Item name="size" style={{ marginBottom: 12 }}>
+        <Form.Item
+          name="size"
+          style={{ marginBottom: 12 }}
+          rules={[{ required: true, message: 'Please select a size' }]}
+        >
           <Size />
         </Form.Item>
         <Form.Item name="seed" label={<FormLabel>Seed</FormLabel>} style={{ marginBottom: 0 }}>
-          <InputNumber style={{ width: '100%' }} placeholder="随机 (-1)" />
+          <InputNumber style={{ width: '100%' }} placeholder="Random number seed" />
         </Form.Item>
       </Form>
     </div>
   );
 };
 
-export default Prompt;
+export default React.memo(Prompt);

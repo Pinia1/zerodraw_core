@@ -13,12 +13,16 @@ class GenerateService {
   async run(userId: number, params: SeedreamGenerateParams) {
     const taskId = randomUUID();
 
+    const insertArgs = {
+      ...params.args,
+      image: params.s3Key,
+    };
     await db.insert(aiTask).values({
       id: taskId,
       userId,
       action: params.action,
       status: 'pending',
-      args: params.args,
+      args: insertArgs,
     });
 
     await generateQueue.add(params.action, { taskId, params }, taskId);

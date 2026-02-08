@@ -26,7 +26,7 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
           id: generateUUID(),
           type: 'img',
           position: { x: 0, y: 0 },
-          data: { src: url, width: targetWidth, height: targetHeight },
+          data: { src: url, width: targetWidth, height: targetHeight, s3Key },
         },
       ]);
     },

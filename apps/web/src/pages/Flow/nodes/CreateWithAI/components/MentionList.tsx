@@ -1,10 +1,12 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import styled from 'styled-components';
+import { apiUrl, thumbnailUrl } from '../../../../../utils';
 
 export interface MentionItem {
   id: string;
   label: string;
-  image?: string;
+  url: string;
+  s3Key: string;
 }
 
 interface MentionListProps {
@@ -60,8 +62,8 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(({ items, comma
           onMouseEnter={() => setSelectedIndex(index)}
         >
           <Thumbnail>
-            {item.image ? (
-              <img src={item.image} alt={item.label} />
+            {item.s3Key ? (
+              <img src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`} alt={item.label} />
             ) : (
               <PlaceholderThumb>{item.label.charAt(0).toUpperCase()}</PlaceholderThumb>
             )}
@@ -97,7 +99,8 @@ const ListItem = styled.div<{ $active: boolean }>`
   padding: 6px 8px;
   border-radius: 8px;
   cursor: pointer;
-  background: ${({ $active }) => ($active ? 'var(--container-hover-bg, rgba(60, 60, 62, 1))' : 'transparent')};
+  background: ${({ $active }) =>
+    $active ? 'var(--container-hover-bg, rgba(60, 60, 62, 1))' : 'transparent'};
   transition: background 0.15s;
 
   &:hover {

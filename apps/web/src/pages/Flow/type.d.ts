@@ -6,6 +6,9 @@ declare global {
       src?: string;
       width?: number;
       height?: number;
+      args?: any;
+      s3Key?: string;
+      taskId?: string;
     },
     'img'
   >;
@@ -13,6 +16,7 @@ declare global {
   type CreateWithAINode = Node<
     {
       prompt?: string;
+      imageId?: string;
     },
     'createWithAI'
   >;
