@@ -25,6 +25,7 @@ export async function createApp() {
 
   await app.register(helmet, {
     contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
   });
 
   await app.register(jwt, {

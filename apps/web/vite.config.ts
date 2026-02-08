@@ -35,8 +35,5 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       sourcemap: false,
     },
-    define: {
-      'import.meta.env.VITE_API_URL': JSON.stringify(isDev ? `http://localhost:${env.PORT}` : ''),
-    },
   };
 });

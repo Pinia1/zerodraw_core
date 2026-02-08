@@ -31,7 +31,7 @@ class VolcService {
       key,
       expires,
       query: {
-        ...(process ? { 'x-tos-process': process } : {}),
+        ...(process ? { 'x-tos-process': process + '/format,webp' } : {}),
         'response-content-disposition': 'inline',
       },
     });

@@ -1,9 +1,10 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
 import { useMemoizedFn } from '@zeroDraw/common';
-import { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload } from '@zeroDraw/core';
+import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
 import { Divider } from 'antd';
 import React, { useMemo, useState } from 'react';
-import { httpUpload } from '../../../../services/volc';
+import { apiUrl, fileUrl } from '../../../../utils';
+import useUpload from '../../../hooks/useUpload';
 import { Actions, ToolBarProps, ToolMenus } from './type';
 
 const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) => {
@@ -12,43 +13,25 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
   const { run: runUpload, loading } = useUpload({
     accept: 'image/*',
     multiple: false,
-    onSuccess: async ({ id, url }) => {
+    onSuccess: async ({ s3Key, width, height }) => {
       const image = new Image();
+      const url = `${apiUrl}${fileUrl}/${s3Key}`;
       image.src = url;
-
-      const blob = await fetch(url).then((res) => res.blob());
-      const file = new File([blob], id, { type: blob.type });
-      const formData = new FormData();
-      formData.append('file', file);
-      httpUpload(formData).then((r) => {
-        console.log(r, 'rrr');
-      });
-
-      image.onload = () => {
-        const MAX_SIZE = 120;
-        const ratio = image.width / image.height;
-        let w, h;
-        if (image.width >= image.height) {
-          w = Math.min(image.width, MAX_SIZE);
-          h = Math.round(w / ratio);
-        } else {
-          h = Math.min(image.height, MAX_SIZE);
-          w = Math.round(h * ratio);
-        }
-        setNodes((nodes) => [
-          ...nodes,
-          {
-            id: generateUUID(),
-            type: 'img',
-            position: { x: 0, y: 0 },
-            data: { src: url, width: w, height: h },
-          },
-        ]);
-      };
-      image.remove();
+      const ratio = width / height;
+      const targetWidth = Math.min(width, 120);
+      const targetHeight = Math.round(targetWidth / ratio);
+      setNodes((nodes) => [
+        ...nodes,
+        {
+          id: generateUUID(),
+          type: 'img',
+          position: { x: 0, y: 0 },
+          data: { src: url, width: targetWidth, height: targetHeight },
+        },
+      ]);
     },
     onError: (error) => {
-      console.log(error);
+      console.log(error, 'error');
     },
   });
   const toolMenus: ToolMenus[] = useMemo(() => {

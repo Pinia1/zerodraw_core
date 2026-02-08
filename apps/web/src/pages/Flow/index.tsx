@@ -26,14 +26,6 @@ const initialNodes: AppNode[] = [
     position: { x: 0, y: 0 },
     data: { src: '/zero.png' },
   },
-  {
-    id: generateUUID(),
-    type: 'img',
-    position: { x: 200, y: 120 },
-    data: {
-      src: '/zero.png',
-    },
-  },
 ];
 
 // 初始连线
@@ -75,6 +67,7 @@ function FlowEditor() {
         deleteKeyCode={['Delete', 'Backspace']}
         multiSelectionKeyCode="Shift"
         maxZoom={20}
+        minZoom={0.1}
       >
         <MiniMap
           position="bottom-right"
