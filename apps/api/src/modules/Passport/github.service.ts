@@ -45,7 +45,7 @@ export class GithubService {
 
       if (!data.access_token) {
         logger.error('No access_token in response', null, { response: data });
-        throw new InternalServerError('github access token error');
+        throw new InternalServerError(`github access token error":${JSON.stringify(data)}`);
       }
 
       logger.info('GitHub access token obtained successfully');
@@ -55,7 +55,7 @@ export class GithubService {
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
       });
-      throw new InternalServerError('github access token error');
+      throw new InternalServerError(`github access token error:${JSON.stringify(error)}`);
     }
   }
 

@@ -19,7 +19,6 @@ class SeedreamService {
         ...params.args,
       }),
     });
-    console.log('response', response);
     if (!response.ok) {
       throw new InternalServerError('Failed to generate image');
     }

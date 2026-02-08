@@ -1,11 +1,14 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { closeDatabase } from './db';
+import { generateQueue } from './modules/AIGenerate/generate.queue';
+import { closeRedis } from './redis';
 import { logger } from './utils/logger';
 
 async function start() {
   try {
     const app = await createApp();
+
     await app.listen({ port: env.PORT, host: env.HOST });
 
     logger.info(`Server started successfully`, {
@@ -17,6 +20,8 @@ async function start() {
     const shutdown = async () => {
       try {
         await app.close();
+        await generateQueue.close();
+        await closeRedis();
         await closeDatabase();
         logger.info(`Server shutdown successfully`);
         process.exit(0);

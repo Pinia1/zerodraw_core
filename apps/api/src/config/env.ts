@@ -30,6 +30,11 @@ const envSchema = z.object({
   TOS_SECRET_KEY: z.string(),
 
   SEEDREAM_API_KEY: z.string(),
+
+  REDIS_HOST: z.string().default('127.0.0.1'),
+  REDIS_PORT: z.string().transform(Number).default('6379'),
+  REDIS_PASSWORD: z.string().default(''),
+  REDIS_DB: z.string().transform(Number).default('0'),
 });
 
 function validateEnv() {

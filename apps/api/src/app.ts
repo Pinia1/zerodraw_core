@@ -3,6 +3,7 @@ import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import fastify from 'fastify';
+import { generateQueue } from './modules/AIGenerate/generate.queue';
 import { errorHandler } from './plugins/errorHandler';
 import { registerRoutes } from './routes';
 
@@ -11,6 +12,8 @@ export async function createApp() {
     logger: false,
     trustProxy: true,
   });
+
+  generateQueue.start();
 
   await app.register(cors);
 
