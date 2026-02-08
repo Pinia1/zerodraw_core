@@ -47,9 +47,10 @@ class GenerateService {
       userId: task.userId,
       action: task.action,
       status: task.status,
-      output: task.output,
       error: task.error,
       createdAt: task.createdAt,
+      s3Key: task.s3Key,
+      args: task.args,
     };
 
     if (task.status === 'completed' || task.status === 'failed') {

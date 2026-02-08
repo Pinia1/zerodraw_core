@@ -16,6 +16,19 @@ export const seedreamGenerateSchema = z.object({
 });
 
 export type SeedreamGenerateParams = z.infer<typeof seedreamGenerateSchema>;
+export type SeedreamGenerateResponse = {
+  data: {
+    url: string;
+    size: string;
+  }[];
+  model: string;
+  usage: {
+    total_tokens: number;
+    output_tokens: number;
+    generated_images: number;
+  };
+  created: number;
+};
 
 export const seedreamGetTaskResponseSchema = z.object({
   id: z.string(),

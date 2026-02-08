@@ -12,6 +12,8 @@ export const aiTask = mysqlTable('ai_tasks', {
     .default('pending'),
   args: json('args'), // 请求参数
   output: json('output'), // 生成结果
+  s3Key: varchar('s3_key', { length: 50 }), // S3 文件 key
+  source: varchar('source', { length: 50 }), //原始url
   error: text('error'), // 错误信息
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),

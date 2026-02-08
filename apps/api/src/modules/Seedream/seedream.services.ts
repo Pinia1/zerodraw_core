@@ -1,4 +1,4 @@
-import { SeedreamGenerateParams } from '@zeroDraw/api-contract';
+import { SeedreamGenerateParams, SeedreamGenerateResponse } from '@zeroDraw/api-contract';
 import { env } from '../../config/env';
 import { InternalServerError } from '../../utils/errors';
 
@@ -22,7 +22,7 @@ class SeedreamService {
     if (!response.ok) {
       throw new InternalServerError('Failed to generate image');
     }
-    return response.json();
+    return response.json() as Promise<SeedreamGenerateResponse>;
   }
 }
 

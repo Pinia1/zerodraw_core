@@ -30,7 +30,10 @@ class VolcService {
       bucket: this.BUCKET_NAME,
       key,
       expires,
-      query: process ? { 'x-tos-process': process } : undefined,
+      query: {
+        ...(process ? { 'x-tos-process': process } : {}),
+        'response-content-disposition': 'inline',
+      },
     });
   }
 
@@ -57,9 +60,8 @@ class VolcService {
     }
   }
 
-  generateObjectKey(originalName: string) {
-    const ext = originalName.includes('.') ? originalName.slice(originalName.lastIndexOf('.')) : '';
-    return `${randomUUID()}${ext}`;
+  generateObjectKey() {
+    return randomUUID().replace(/-/g, '');
   }
 
   /**
@@ -70,7 +72,7 @@ class VolcService {
    * @returns 文件的对象 key
    */
   async uploadFile(buffer: Buffer, filename: string, mimetype?: string) {
-    const key = this.generateObjectKey(filename);
+    const key = this.generateObjectKey();
 
     try {
       await this.client.putObject({
@@ -78,6 +80,7 @@ class VolcService {
         key,
         body: buffer,
         contentType: mimetype,
+        contentDisposition: 'inline',
       });
 
       return key;
