@@ -13,6 +13,11 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@tiptap/extension-mention": "^3.19.0",
+    "@tiptap/extension-placeholder": "^3.19.0",
+    "@tiptap/react": "^3.19.0",
+    "@tiptap/starter-kit": "^3.19.0",
+    "@tiptap/suggestion": "^3.19.0",
     "@xyflow/react": "^12.10.0",
     "@zeroDraw/api-contract": "workspace:^",
     "@zeroDraw/common": "workspace:*",
@@ -25,6 +30,7 @@
     "react-konva-utils": "^1.0.6",
     "react-router-dom": "^7.9.5",
     "styled-components": "^6.1.19",
+    "tippy.js": "^6.3.7",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

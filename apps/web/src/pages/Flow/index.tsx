@@ -13,7 +13,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useMemoizedFn } from '@zeroDraw/common';
-import { generateUUID } from '@zeroDraw/core';
 import styled from 'styled-components';
 import Toolbar from './components/ToolBar';
 import { nodeTypes } from './nodes';
@@ -21,15 +20,29 @@ import { nodeTypes } from './nodes';
 // 初始节点
 const initialNodes: AppNode[] = [
   {
-    id: generateUUID(),
+    id: 'init-image-1',
     type: 'img',
     position: { x: 0, y: 0 },
-    data: { src: '/zero.png' },
+    data: { src: '/zero.png', width: 250, height: 250 },
+  },
+  {
+    id: 'init-create-with-ai-1',
+    type: 'createWithAI',
+    position: { x: 300, y: 0 },
+    data: {
+      prompt: 'A beautiful girl',
+    },
   },
 ];
 
 // 初始连线
-const initialEdges: Edge[] = [{ id: 'e-start-task1', source: 'start-1', target: 'task-1' }];
+const initialEdges: Edge[] = [
+  {
+    id: 'e-init-image-1-init-create-with-ai-1',
+    source: 'init-image-1',
+    target: 'init-create-with-ai-1',
+  },
+];
 
 const FlowContainer = styled.div`
   width: 100%;

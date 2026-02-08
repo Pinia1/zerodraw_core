@@ -4,6 +4,8 @@ declare global {
   type ImageNode = Node<
     {
       src?: string;
+      width?: number;
+      height?: number;
     },
     'img'
   >;
