@@ -13,6 +13,7 @@ export enum Actions {
   REDO = 'redo',
   NOTE = 'note',
   SECTION = 'section',
+  PREVIEW = 'preview',
 }
 
 export interface ToolMenus {

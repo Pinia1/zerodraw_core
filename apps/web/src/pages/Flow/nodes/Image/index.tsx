@@ -8,7 +8,8 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import { useHover, useMemoizedFn, useRequest } from '@zeroDraw/common';
-import React, { memo, useMemo, useRef } from 'react';
+import { Image } from 'antd';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import { httpGetTask } from '../../../../services/generate';
 import { apiUrl, fileUrl } from '../../../../utils';
 import {
@@ -41,6 +42,7 @@ const ImageNode: React.FC<NodeProps> = (props) => {
   const { zoom } = useViewport();
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
+  const [previewVisible, setPreviewVisible] = useState(false);
 
   const { cancel } = useRequest(() => httpGetTask(taskId as string), {
     manual: !taskId,
@@ -217,13 +219,27 @@ const ImageNode: React.FC<NodeProps> = (props) => {
     <Wrapper $selected={isHover || selected} ref={ref}>
       {selected && !multSelected && (
         <ToolbarWrapper $zoom={zoom}>
-          <ImageTool {...props} />
+          <ImageTool {...props} setPreviewVisible={setPreviewVisible} />
         </ToolbarWrapper>
       )}
 
       <ImageContainer $width={width} $height={height}>
         {src ? (
-          <img src={src} alt={name} draggable={false} />
+          <Image
+            preview={{
+              mask: false,
+              visible: previewVisible,
+              maskClosable: true,
+              onVisibleChange: (visible) => {
+                if (!visible) {
+                  setPreviewVisible(false);
+                }
+              },
+            }}
+            src={src}
+            alt={name}
+            draggable={false}
+          />
         ) : (
           <Placeholder>
             <PictureOutlined style={{ fontSize: 24 }} />

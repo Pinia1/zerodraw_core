@@ -23,7 +23,7 @@ const initialNodes: AppNode[] = [
     id: 'init-image-1',
     type: 'img',
     position: { x: 0, y: 0 },
-    data: { src: '/zero.png', width: 250, height: 250, s3Key: '4b06f6136e4642e69feed9fc376d508e' },
+    data: { src: '/zero.png', width: 250, height: 246, s3Key: '4b06f6136e4642e69feed9fc376d508e' },
   },
   {
     id: 'init-create-with-ai-1',

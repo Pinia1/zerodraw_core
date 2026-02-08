@@ -8,10 +8,12 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Actions, ToolMenus } from '../../../components/ToolBar/type';
 
-interface ImageToolProps extends NodeProps {}
+interface ImageToolProps extends NodeProps {
+  setPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 const ImageTool: React.FC<ImageToolProps> = (props) => {
-  const { id, data } = props;
+  const { id, data, setPreviewVisible } = props;
 
   const navigate = useNavigate();
   const { getNode, setNodes, addEdges } = useReactFlow();
@@ -64,6 +66,15 @@ const ImageTool: React.FC<ImageToolProps> = (props) => {
           saveAs(data.src as string, 'image.png');
         },
         tip: 'Download',
+      },
+      {
+        key: Actions.PREVIEW,
+        icon: <Icon component={Icons.IconPreview} />,
+        type: ToolTypes.ACTION,
+        onClick: () => {
+          setPreviewVisible(true);
+        },
+        tip: 'Preview',
       },
       {
         key: Actions.NOTE,
