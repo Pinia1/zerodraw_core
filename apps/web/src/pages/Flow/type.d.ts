@@ -21,5 +21,7 @@ declare global {
     'createWithAI'
   >;
 
-  type AppNode = ImageNode | CreateWithAINode;
+  type LibNode = Node<{}, 'lib'>;
+
+  type AppNode = ImageNode | CreateWithAINode | LibNode;
 }

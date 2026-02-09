@@ -5,6 +5,7 @@ import { Divider } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { apiUrl, fileUrl } from '../../../../utils';
 import useUpload from '../../../hooks/useUpload';
+import DropMenu from './components/Dropmenu';
 import { Actions, ToolBarProps, ToolMenus } from './type';
 
 const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) => {
@@ -38,9 +39,13 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
     return [
       {
         key: Actions.ADD,
-        icon: <Icon component={loading ? (LoadingOutlined as any) : Icons.IconAdd} />,
+        icon: (
+          <DropMenu>
+            <Icon component={loading ? (LoadingOutlined as any) : Icons.IconAdd} />
+          </DropMenu>
+        ),
         type: ToolTypes.ACTION,
-        onClick: runUpload,
+        onClick: () => {},
       },
       {
         key: Actions.DIVIDER,

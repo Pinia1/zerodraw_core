@@ -4,7 +4,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useMemoizedFn } from '@zeroDraw/common';
-import React, { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { apiUrl, thumbnailUrl } from '../../../../../../utils';
 import {
   Badge,
@@ -146,15 +146,8 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       onSubmit?.(val);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit();
-      }
-    };
-
     return (
-      <Wrapper onKeyDown={handleKeyDown} className="nodrag">
+      <Wrapper className="">
         {/* 被 @ 引用的图片预览 */}
         {mentionedList.length > 0 && (
           <MentionedImages>

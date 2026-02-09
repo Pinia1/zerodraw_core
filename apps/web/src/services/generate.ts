@@ -23,3 +23,22 @@ export const httpGetTask = (
 }> => {
   return request.get(`/api/generate/task/${taskId}`);
 };
+
+export const httpGetLibOutputs = (params?: {
+  page?: number;
+  pageSize?: number;
+}): Promise<{
+  list: {
+    id: string;
+    action: string;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    s3Key: string;
+    args: Record<string, unknown> | null;
+    createdAt: string;
+  }[];
+  total: number;
+  page: number;
+  pageSize: number;
+}> => {
+  return request.get('/api/lib/outputs', { params });
+};

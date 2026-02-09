@@ -26,29 +26,33 @@ const CreateWithAI: React.FC<NodeProps> = ({ id, selected, height, data }) => {
 
   const nodes = useNodes();
   const { getNode, setNodes } = useReactFlow();
+
   const handlerGenerate = useMemoizedFn(
     async (values: {
       prompt: { text: string; mentions: [] };
       size: { width: number; height: number };
     }) => {
       const imageNode = getNode(imageId as string);
+      const targetWidth = values.size.width as number;
+      const targetHeight = values.size.height as number;
 
       const { taskId } = await httpSeedreamGenerate({
         action: 'SEEDDREAM_IMAGE',
         s3Key: [imageNode?.data.s3Key as string],
         args: {
           prompt: values.prompt?.text || '',
-          size: values.size.width + 'x' + values.size.height,
+          size: targetWidth + 'x' + targetHeight,
         },
       });
 
-      const nextImageRatio = values.size.width / values.size.height;
+      const nextImageRatio = targetWidth / targetHeight;
       //withai
       const currentNode = getNode(id);
       const currentX = currentNode?.position.x ?? 0;
       const currentY = currentNode?.position.y ?? 0;
       const currentH = height ?? 200;
-      const newNodeSize = 250;
+      const newNodeWidth = 250;
+      const newNodeHeight = newNodeWidth / nextImageRatio;
       setNodes((pre) => [
         ...pre,
         {
@@ -56,12 +60,12 @@ const CreateWithAI: React.FC<NodeProps> = ({ id, selected, height, data }) => {
           type: 'img',
           position: {
             x: currentX + NODE_WIDTH + GAP,
-            y: currentY + (currentH - newNodeSize) / 2,
+            y: currentY + (currentH - newNodeHeight) / 2,
           },
           data: {
             taskId,
             width: imageNode?.data.width,
-            height: nextImageRatio * (imageNode?.data.height as number),
+            height: newNodeHeight,
           },
         },
       ]);

@@ -1,4 +1,3 @@
-import { PictureOutlined } from '@ant-design/icons';
 import {
   Handle,
   Position,
@@ -8,8 +7,8 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import { useHover, useMemoizedFn, useRequest } from '@zeroDraw/common';
-import { Image } from 'antd';
-import React, { memo, useMemo, useRef, useState } from 'react';
+import { Image, Spin } from 'antd';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { httpGetTask } from '../../../../services/generate';
 import { apiUrl, fileUrl } from '../../../../utils';
 import {
@@ -36,13 +35,21 @@ const MIN_SIZE = 40;
 const ImageNode: React.FC<NodeProps> = (props) => {
   const { id, data, selected } = props;
   const { taskId } = data;
-  const { src = '/zero.png', width = 119, height = 117, name = '' } = data as ImageNodeData;
+  const { src, width = 119, height = 117, name = '' } = data as ImageNodeData;
   const { getNode, setNodes, getZoom } = useReactFlow();
   const nodes = useNodes();
   const { zoom } = useViewport();
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // src 变化时重置 loading 状态
+  useEffect(() => {
+    if (src) {
+      setLoading(true);
+    }
+  }, [src]);
 
   const { cancel } = useRequest(() => httpGetTask(taskId as string), {
     manual: !taskId,
@@ -224,26 +231,27 @@ const ImageNode: React.FC<NodeProps> = (props) => {
       )}
 
       <ImageContainer $width={width} $height={height}>
-        {src ? (
+        {src && (
           <Image
             preview={{
               mask: false,
               visible: previewVisible,
-              maskClosable: true,
               onVisibleChange: (visible) => {
                 if (!visible) {
                   setPreviewVisible(false);
                 }
               },
+              getContainer: () => document.body,
             }}
             src={src}
-            alt={name}
-            draggable={false}
+            onLoad={() => setLoading(false)}
+            onError={() => setLoading(false)}
           />
-        ) : (
-          <Placeholder>
-            <PictureOutlined style={{ fontSize: 24 }} />
-            <span style={{ fontSize: 11 }}>暂无图片</span>
+        )}
+        {loading && (
+          <Placeholder style={{ position: 'absolute', inset: 0, background: '#fafafa' }}>
+            <Spin size="small" />
+            <span>loading</span>
           </Placeholder>
         )}
       </ImageContainer>

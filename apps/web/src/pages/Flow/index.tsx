@@ -34,6 +34,12 @@ const initialNodes: AppNode[] = [
       imageId: 'init-image-1',
     },
   },
+  {
+    id: 'init-lib',
+    type: 'lib',
+    position: { x: -1000, y: 0 },
+    data: {},
+  },
 ];
 
 // 初始连线

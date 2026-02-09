@@ -32,6 +32,8 @@ export const Placeholder = styled.div`
   justify-content: center;
   gap: 4px;
   color: #bbb;
+  position: relative;
+  font-size: 10px;
 `;
 
 export const ToolbarWrapper = styled.div<{ $zoom: number }>`
