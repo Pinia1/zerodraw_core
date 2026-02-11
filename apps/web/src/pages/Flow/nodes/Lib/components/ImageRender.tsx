@@ -1,9 +1,12 @@
 import { httpGetLibOutputs } from '@/services/generate';
 import { apiUrl, thumbnailUrl } from '@/utils';
-import { Spin } from 'antd';
-import { memo } from 'react';
+import Icon from '@ant-design/icons';
+import { useHover } from '@zeroDraw/common';
+import { Icons } from '@zeroDraw/core';
+import { Flex, Spin } from 'antd';
+import { memo, useRef } from 'react';
 import useImage from 'use-image';
-import { ImageCard } from '.';
+import { ActionButton, ImageCard, ImageCardMask } from '.';
 
 interface ImageRenderProps {
   data: Awaited<ReturnType<typeof httpGetLibOutputs>>['list'][number];
@@ -14,8 +17,11 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
   const [w, h] = sizeStr?.split('x').map(Number) ?? [];
   const [_, loading] = useImage(`${apiUrl}${thumbnailUrl}/${data.s3Key}`);
 
+  const ref = useRef<HTMLDivElement>(null);
+  const isHover = useHover(ref);
+
   return (
-    <ImageCard onClick={onClick}>
+    <ImageCard onClick={onClick} ref={ref}>
       <Spin spinning={loading === 'loading'}>
         <img
           src={`${apiUrl}${thumbnailUrl}/${data.s3Key}`}
@@ -27,6 +33,16 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
           }}
         />
       </Spin>
+      <ImageCardMask $isHover={isHover}>
+        <Flex gap={4}>
+          <ActionButton>
+            <Icon component={Icons.IconDownload} />
+          </ActionButton>
+          <ActionButton>
+            <Icon component={Icons.IconStar} />
+          </ActionButton>
+        </Flex>
+      </ImageCardMask>
     </ImageCard>
   );
 };

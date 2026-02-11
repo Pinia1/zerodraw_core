@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import styled, { createGlobalStyle } from 'styled-components';
 export const Wrapper = styled.div`
   width: 800px;
@@ -47,7 +48,6 @@ export const Content = styled.div`
   padding: 16px;
   cursor: default;
 
-  /* 美化滚动条 */
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -65,7 +65,6 @@ export const Content = styled.div`
     }
   }
 `;
-
 
 export const MasonryStyles = createGlobalStyle`
   .lib-masonry {
@@ -94,9 +93,65 @@ export const ImageCard = styled.div`
   overflow: hidden;
   background: #f5f5f5;
   cursor: pointer;
+  position: relative;
 
   img {
     display: block;
     width: 100%;
   }
 `;
+
+export const ImageCardMask = styled.div<{ $isHover: boolean }>`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 60%);
+  opacity: ${({ $isHover }) => ($isHover ? 1 : 0)};
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: ${({ $isHover }) => ($isHover ? 'auto' : 'none')};
+`;
+
+export const ActionButtonWrapper = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+`;
+
+export const ActionButton = ({
+  children,
+  onClick,
+  tooltip,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  tooltip?: string;
+}) => {
+  return (
+    <Tooltip title={tooltip}>
+      <ActionButtonWrapper
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick?.();
+        }}
+      >
+        {children}
+      </ActionButtonWrapper>
+    </Tooltip>
+  );
+};
