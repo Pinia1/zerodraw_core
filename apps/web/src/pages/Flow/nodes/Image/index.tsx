@@ -6,9 +6,9 @@ import {
   useViewport,
   type NodeProps,
 } from '@xyflow/react';
-import { useHover, useMemoizedFn, useRequest } from '@zeroDraw/common';
+import { useHover, useMemoizedFn, useRequest, useUpdateEffect } from '@zeroDraw/common';
 import { Image, Spin } from 'antd';
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useMemo, useRef, useState } from 'react';
 import { httpGetTask } from '../../../../services/generate';
 import { apiUrl, fileUrl } from '../../../../utils';
 import {
@@ -35,7 +35,7 @@ const MIN_SIZE = 40;
 const ImageNode: React.FC<NodeProps> = (props) => {
   const { id, data, selected } = props;
   const { taskId } = data;
-  const { src, width = 119, height = 117, name = '' } = data as ImageNodeData;
+  const { src, width = 119, height = 117 } = data as ImageNodeData;
   const { getNode, setNodes, getZoom } = useReactFlow();
   const nodes = useNodes();
   const { zoom } = useViewport();
@@ -44,8 +44,7 @@ const ImageNode: React.FC<NodeProps> = (props) => {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // src 变化时重置 loading 状态
-  useEffect(() => {
+  useUpdateEffect(() => {
     if (src) {
       setLoading(true);
     }
@@ -231,23 +230,21 @@ const ImageNode: React.FC<NodeProps> = (props) => {
       )}
 
       <ImageContainer $width={width} $height={height}>
-        {src && (
-          <Image
-            preview={{
-              mask: false,
-              visible: previewVisible,
-              onVisibleChange: (visible) => {
-                if (!visible) {
-                  setPreviewVisible(false);
-                }
-              },
-              getContainer: () => document.body,
-            }}
-            src={src}
-            onLoad={() => setLoading(false)}
-            onError={() => setLoading(false)}
-          />
-        )}
+        <Image
+          preview={{
+            mask: false,
+            visible: previewVisible,
+            onVisibleChange: (visible) => {
+              if (!visible) {
+                setPreviewVisible(false);
+              }
+            },
+            getContainer: () => document.body,
+          }}
+          src={src}
+          onLoad={() => setLoading(false)}
+          onError={() => setLoading(false)}
+        />
         {loading && (
           <Placeholder style={{ position: 'absolute', inset: 0, background: '#fafafa' }}>
             <Spin size="small" />

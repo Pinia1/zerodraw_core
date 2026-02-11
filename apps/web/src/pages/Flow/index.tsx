@@ -96,7 +96,7 @@ function FlowEditor() {
           pannable
           style={{ width: 160, height: 100 }}
         />
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#e8e8e8" />
+        <Background variant={BackgroundVariant.Dots} gap={100} size={2} color="#e8e8e8" />
       </ReactFlow>
     </FlowContainer>
   );

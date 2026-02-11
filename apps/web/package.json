@@ -28,6 +28,7 @@
     "react-dom": "^18.2.0",
     "react-konva": "^18.2.10",
     "react-konva-utils": "^1.0.6",
+    "react-masonry-css": "^1.0.16",
     "react-router-dom": "^7.9.5",
     "styled-components": "^6.1.19",
     "tippy.js": "^6.3.7",

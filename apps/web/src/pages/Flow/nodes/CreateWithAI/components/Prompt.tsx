@@ -16,7 +16,7 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
   const editorRef = useRef<PromptEditorRef>(null);
   const [form] = Form.useForm();
 
-  const handleSubmit = useMemoizedFn((values: any) => {
+  const handleSubmit = useMemoizedFn(() => {
     form.validateFields().then((values) => {
       onSubmit?.(values);
     });
