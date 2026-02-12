@@ -27,6 +27,7 @@ export const httpGetTask = (
 export const httpGetLibOutputs = (params?: {
   page?: number;
   pageSize?: number;
+  keyword?: string;
 }): Promise<{
   list: {
     id: string;

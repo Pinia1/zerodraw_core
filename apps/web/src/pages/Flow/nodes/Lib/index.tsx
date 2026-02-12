@@ -3,7 +3,7 @@ import { apiUrl, fileUrl } from '@/utils';
 import type { NodeProps } from '@xyflow/react';
 import { useInfiniteScroll, useMemoizedFn } from '@zeroDraw/common';
 import { Container } from '@zeroDraw/core';
-import { Divider, Image, Skeleton, Spin } from 'antd';
+import { Divider, Form, Image, Input, Skeleton, Spin } from 'antd';
 import React, { useMemo, useRef, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import {
@@ -18,19 +18,29 @@ import {
 } from './components';
 import ImageRender from './components/ImageRender';
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 5;
 
 type LibData = Awaited<ReturnType<typeof httpGetLibOutputs>>;
 
+interface QueryForm {
+  keyword?: string;
+}
+
+interface QueryParams extends QueryForm {
+  pageSize: number;
+}
+
 const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
   const [previewVisibleIndex, setPreviewVisibleIndex] = useState<number | null>(null);
+  const [form] = Form.useForm<QueryForm>();
   const contentRef = useRef<HTMLDivElement>(null);
+  const queryRef = useRef<QueryParams>({ pageSize: PAGE_SIZE });
 
-  const { data, loading, loadingMore, noMore, error } = useInfiniteScroll<LibData>(
+  const { data, loading, loadingMore, noMore, error, reload } = useInfiniteScroll<LibData>(
     (currentData) =>
       httpGetLibOutputs({
+        ...queryRef.current,
         page: currentData ? currentData.page + 1 : 1,
-        pageSize: PAGE_SIZE,
       }),
     {
       target: contentRef,
@@ -38,6 +48,11 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
       isNoMore: (data) => !!data && data.list.length >= data.total,
     }
   );
+
+  const handleSearch = useMemoizedFn((values: QueryForm) => {
+    queryRef.current = { pageSize: PAGE_SIZE, keyword: values.keyword || undefined };
+    reload();
+  });
 
   const handlePreview = useMemoizedFn((index: number) => {
     setPreviewVisibleIndex(index);
@@ -78,6 +93,22 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
       <Wrapper>
         <Header>
           <Title>outputs</Title>
+          <Form<QueryForm> form={form} layout="inline" size="small" autoComplete="off">
+            <Form.Item name="keyword" noStyle>
+              <Input.Search
+                placeholder="Search prompts..."
+                allowClear
+                onSearch={() => handleSearch(form.getFieldsValue())}
+                onChange={(e) => {
+                  if (!e.target.value) handleSearch({});
+                }}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                }}
+                style={{ width: 200 }}
+              />
+            </Form.Item>
+          </Form>
           <Count>{data?.total ?? 0} outputs</Count>
         </Header>
         <Content ref={contentRef} className="nowheel nodrag">

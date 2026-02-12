@@ -45,7 +45,7 @@ export const ToolbarWrapper = styled.div<{ $zoom: number }>`
   margin-bottom: ${({ $zoom }) => 20 / $zoom}px;
   z-index: 10;
   pointer-events: auto;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.5s ease-in-out;
 `;
 
 // 四个角的拖拽手柄
