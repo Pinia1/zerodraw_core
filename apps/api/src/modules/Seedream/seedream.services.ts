@@ -38,6 +38,7 @@ class SeedreamService {
         watermark,
       }),
     });
+
     if (!response.ok) {
       throw new InternalServerError('Failed to generate image');
     }

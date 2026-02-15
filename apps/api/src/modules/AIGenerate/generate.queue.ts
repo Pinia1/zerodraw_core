@@ -14,7 +14,7 @@ export interface GenerateJobData {
 
 class GenerateQueue {
   private readonly QUEUE_NAME = 'ai-generate';
-  private readonly CONCURRENCY = 3;
+  private readonly CONCURRENCY = 5;
 
   private queue: Queue<GenerateJobData>;
   private worker: Worker<GenerateJobData> | null = null;
