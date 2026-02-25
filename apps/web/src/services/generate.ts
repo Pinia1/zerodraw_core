@@ -29,14 +29,7 @@ export const httpGetLibOutputs = (params?: {
   pageSize?: number;
   keyword?: string;
 }): Promise<{
-  list: {
-    id: string;
-    action: string;
-    status: 'pending' | 'processing' | 'completed' | 'failed';
-    s3Key: string;
-    args: Record<string, unknown> | null;
-    createdAt: string;
-  }[];
+  list: LibOutput[];
   total: number;
   page: number;
   pageSize: number;

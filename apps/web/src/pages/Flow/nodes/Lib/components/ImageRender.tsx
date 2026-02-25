@@ -4,7 +4,7 @@ import Icon from '@ant-design/icons';
 import { useHover } from '@zeroDraw/common';
 import { Icons } from '@zeroDraw/core';
 import { Flex, Spin } from 'antd';
-import { memo, useRef } from 'react';
+import { useRef } from 'react';
 import useImage from 'use-image';
 import { ActionButton, ImageCard, ImageCardMask } from '.';
 
@@ -35,10 +35,13 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
       </Spin>
       <ImageCardMask $isHover={isHover}>
         <Flex gap={4}>
-          <ActionButton>
+          <ActionButton tooltip="Edit">
+            <Icon component={Icons.IconEdit} />
+          </ActionButton>
+          <ActionButton tooltip="Download">
             <Icon component={Icons.IconDownload} />
           </ActionButton>
-          <ActionButton>
+          <ActionButton tooltip="Favorite">
             <Icon component={Icons.IconStar} />
           </ActionButton>
         </Flex>
@@ -47,4 +50,4 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
   );
 };
 
-export default memo(ImageRender);
+export default ImageRender;

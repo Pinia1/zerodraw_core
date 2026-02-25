@@ -5,6 +5,7 @@ export * from './utils';
 
 export * from './Emitter';
 export * from './HistoryManager';
+export { default as useCopy } from './hooks/useCopy';
 export { default as useMediaQuery } from './hooks/useMediaQuery';
 export * from './IndexDBManager';
 export * from './listNode';

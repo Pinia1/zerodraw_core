@@ -3,7 +3,7 @@ import { apiUrl, fileUrl } from '@/utils';
 import type { NodeProps } from '@xyflow/react';
 import { useInfiniteScroll, useMemoizedFn } from '@zeroDraw/common';
 import { Container } from '@zeroDraw/core';
-import { Divider, Form, Image, Input, Skeleton, Spin } from 'antd';
+import { Divider, Form, Image, Input, Skeleton } from 'antd';
 import React, { useMemo, useRef, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import {
@@ -13,12 +13,12 @@ import {
   EmptyWrapper,
   Header,
   MasonryStyles,
-  Title,
   Wrapper,
 } from './components';
+import ImageArgs from './components/ImageArgs';
 import ImageRender from './components/ImageRender';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 25;
 
 type LibData = Awaited<ReturnType<typeof httpGetLibOutputs>>;
 
@@ -36,7 +36,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const queryRef = useRef<QueryParams>({ pageSize: PAGE_SIZE });
 
-  const { data, loading, loadingMore, noMore, error, reload } = useInfiniteScroll<LibData>(
+  const { data, loadingMore, noMore, error, reload } = useInfiniteScroll<LibData>(
     (currentData) =>
       httpGetLibOutputs({
         ...queryRef.current,
@@ -49,7 +49,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
     }
   );
 
-  const handleSearch = useMemoizedFn((values: QueryForm) => {
+  const handleSearch = useMemoizedFn((values: QueryForm = {}) => {
     queryRef.current = { pageSize: PAGE_SIZE, keyword: values.keyword || undefined };
     reload();
   });
@@ -63,25 +63,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
     [data?.list]
   );
 
-  if (loading) {
-    return (
-      <Wrapper>
-        <EmptyWrapper>
-          <Spin />
-        </EmptyWrapper>
-      </Wrapper>
-    );
-  }
-
-  if (error || items.length === 0) {
-    return (
-      <Wrapper>
-        <EmptyWrapper>
-          <EmptyText>Anyone here?</EmptyText>
-        </EmptyWrapper>
-      </Wrapper>
-    );
-  }
+  const empty = error || items.length === 0;
 
   return (
     <Container
@@ -92,7 +74,6 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
     >
       <Wrapper>
         <Header>
-          <Title>outputs</Title>
           <Form<QueryForm> form={form} layout="inline" size="small" autoComplete="off">
             <Form.Item name="keyword" noStyle>
               <Input.Search
@@ -113,11 +94,21 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
         </Header>
         <Content ref={contentRef} className="nowheel nodrag">
           <MasonryStyles />
-          <Masonry breakpointCols={4} className="lib-masonry" columnClassName="lib-masonry-column">
-            {items.map((item, index) => (
-              <ImageRender key={item.key} data={item.data} onClick={() => handlePreview(index)} />
-            ))}
-          </Masonry>
+          {empty ? (
+            <EmptyWrapper>
+              <EmptyText>Anyone here?</EmptyText>
+            </EmptyWrapper>
+          ) : (
+            <Masonry
+              breakpointCols={4}
+              className="lib-masonry"
+              columnClassName="lib-masonry-column"
+            >
+              {items.map((item, index) => (
+                <ImageRender key={item.key} data={item.data} onClick={() => handlePreview(index)} />
+              ))}
+            </Masonry>
+          )}
 
           {loadingMore && <Skeleton.Button style={{ marginTop: 20 }} block active />}
           {noMore && <Divider variant="dotted">That's all</Divider>}
@@ -132,6 +123,15 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
               if (!visible) setPreviewVisibleIndex(null);
             },
             onChange: (current) => setPreviewVisibleIndex(current),
+            imageRender: (originalNode) => {
+              const args = items[previewVisibleIndex as number]?.data.args as BaseArgsType | null;
+              return (
+                <>
+                  {originalNode}
+                  {args && <ImageArgs {...args} />}
+                </>
+              );
+            },
           }}
         />
       </Wrapper>
