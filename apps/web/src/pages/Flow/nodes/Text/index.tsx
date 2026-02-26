@@ -1,10 +1,10 @@
-import Compile from '@/componenets/Compile';
+import Compile, { PromptEditorRef } from '@/componenets/Compile';
 import { TEXT_CURSOR_URL } from '@/componenets/Icons/text';
 import { useFlowStore } from '@/store/useFlowStore';
 import type { NodeProps } from '@xyflow/react';
-import { useReactFlow, useViewport } from '@xyflow/react';
+import { useNodes, useReactFlow, useViewport } from '@xyflow/react';
 import { useHover, useMemoizedFn } from '@zeroDraw/common';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createGlobalStyle } from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import { Actions } from '../../components/ToolBar/type';
@@ -31,9 +31,12 @@ const TextNode: React.FC<NodeProps<TextNode>> = (props) => {
   const { setToolActive } = useFlowStore(
     useShallow((state) => ({ setToolActive: state.setToolActive }))
   );
+
+  const nodes = useNodes();
   const { zoom } = useViewport();
 
   const ref = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<PromptEditorRef>(null);
   const isHover = useHover(ref);
   const [focus, setFocus] = useState(false);
 
@@ -155,6 +158,10 @@ const TextNode: React.FC<NodeProps<TextNode>> = (props) => {
     };
   }, [status, id]);
 
+  const multSelected = useMemo(() => {
+    return nodes.filter((n) => n.selected).length > 1;
+  }, [nodes]);
+
   if (status === 'drag') {
     return <DragCursorStyle />;
   }
@@ -164,15 +171,14 @@ const TextNode: React.FC<NodeProps<TextNode>> = (props) => {
       $selected={selected || isHover || focus}
       ref={ref}
       style={{ width, minHeight: height }}
-      className="nodrag"
     >
-      {focus && (
+      {(focus || (selected && !multSelected)) && (
         <ToolbarWrapper $zoom={zoom}>
-          <TextTool {...props} />
+          <TextTool editor={editorRef.current?.editor ?? null} />
         </ToolbarWrapper>
       )}
 
-      <Compile setFocus={setFocus} style={{ width: '100%', height: '100%' }} />
+      <Compile ref={editorRef} setFocus={setFocus} style={{ width: '100%', height: '100%' }} />
 
       {selected && (
         <>

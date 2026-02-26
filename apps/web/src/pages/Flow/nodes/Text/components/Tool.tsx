@@ -1,162 +1,201 @@
-import Icon from '@ant-design/icons';
-import { NodeProps, useReactFlow } from '@xyflow/react';
-import { useMemoizedFn } from '@zeroDraw/common';
-import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
-import { Divider, Tooltip } from 'antd';
-import { saveAs } from 'file-saver';
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Actions, ToolMenus } from '../../../components/ToolBar/type';
+import {
+  BoldOutlined,
+  FontColorsOutlined,
+  FontSizeOutlined,
+  ItalicOutlined,
+  OrderedListOutlined,
+  StrikethroughOutlined,
+  UnderlineOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
+import type { Editor } from '@tiptap/react';
+import { Container, ToolItem } from '@zeroDraw/core';
+import type { MenuProps } from 'antd';
+import { ColorPicker, Divider, Dropdown } from 'antd';
+import React, { useCallback, useRef } from 'react';
+import styled from 'styled-components';
 
-interface ImageToolProps extends NodeProps {}
+interface TextToolProps {
+  editor: Editor | null;
+}
 
-const ImageTool: React.FC<ImageToolProps> = (props) => {
-  const { id, data } = props;
+const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 64];
 
-  const navigate = useNavigate();
-  const { getNode, setNodes, addEdges } = useReactFlow();
+const prevent = (e: React.MouseEvent) => e.preventDefault();
 
-  const handleCreateWithAI = useMemoizedFn(() => {
-    const currentNode = getNode(id);
-    if (!currentNode) return;
+const TextTool: React.FC<TextToolProps> = ({ editor }) => {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const getContainer = () => toolbarRef.current || document.body;
 
-    const nodeWidth = (data.width as number) || 250;
-    const gap = 80;
+  const refocusEditor = useCallback(() => {
+    requestAnimationFrame(() => editor?.commands.focus());
+  }, [editor]);
 
-    const newNodeId = generateUUID();
-    const newNode: CreateWithAINode = {
-      id: newNodeId,
-      type: 'createWithAI',
-      position: {
-        x: currentNode.position.x + nodeWidth + gap,
-        y: currentNode.position.y,
-      },
-      data: {
-        imageId: id,
-      },
-    };
+  if (!editor) return null;
 
-    const newEdge = {
-      id: `e-${id}-${newNodeId}`,
-      source: id,
-      target: newNodeId,
-      type: 'smoothstep',
-    };
+  const currentFontSize =
+    (editor.getAttributes('textStyle').fontSize as string)?.replace('px', '') || '14';
 
-    setNodes((nds) => [...nds, newNode]);
-    addEdges([newEdge]);
-  });
+  const currentColor = (editor.getAttributes('textStyle').color as string) || '#e0e0e0';
 
-  const toolMenus: ToolMenus[] = useMemo(() => {
-    return [
-      {
-        key: Actions.ROPE,
-        icon: <Icon component={Icons.IconEdit} />,
-        type: ToolTypes.ACTION,
-        onClick: () => navigate('/drawing'),
-        tip: 'Edit',
-      },
-      {
-        key: Actions.TEXT,
-        icon: <Icon component={Icons.IconDownload} />,
-        type: ToolTypes.ACTION,
-        onClick: () => {
-          saveAs(data.src as string, 'image.png');
-        },
-        tip: 'Download',
-      },
-      {
-        key: Actions.PREVIEW,
-        icon: <Icon component={Icons.IconPreview} />,
-        type: ToolTypes.ACTION,
-        onClick: () => {},
-        tip: 'Preview',
-      },
-      {
-        key: Actions.NOTE,
-        icon: <Icon component={Icons.IconStar} />,
-        type: ToolTypes.ACTION,
-        onClick: handleCreateWithAI,
-        tip: 'Create with AI',
-      },
-      {
-        key: Actions.SECTION,
-        icon: <Icon component={Icons.IconSection} />,
-        type: ToolTypes.STATE,
-        onClick: () => {},
-      },
+  const fontSizeItems: MenuProps['items'] = FONT_SIZES.map((s) => ({
+    key: String(s),
+    label: <span onMouseDown={prevent}>{s}px</span>,
+  }));
 
-      {
-        key: Actions.DIVIDER,
-        icon: <Icon component={Icons.IconAdd} />,
-        type: ToolTypes.DIVIDER,
-      },
-      {
-        key: Actions.UNDO,
-        icon: <Icon component={Icons.IconUndo} />,
-        type: ToolTypes.ACTION,
-        onClick: () => {},
-        disabled: false,
-      },
-      {
-        key: Actions.REDO,
-        icon: <Icon component={Icons.IconRedo} />,
-        type: ToolTypes.ACTION,
-        onClick: () => {},
-        disabled: false,
-      },
-    ];
-  }, []);
+  const handleFontSizeClick: MenuProps['onClick'] = ({ key }) => {
+    editor
+      .chain()
+      .focus()
+      .setMark('textStyle', { fontSize: `${key}px` })
+      .run();
+  };
 
-  const handleSetActiveKey = useMemoizedFn(async (item: ToolMenus) => {
-    if (item.disabled) return;
+  const handleColor = (color: string) => {
+    (editor.chain().focus() as any).setColor(color).run();
+  };
 
-    await item.onClick?.(item);
-    if (item.type !== ToolTypes.STATE) return;
-  });
+  const buttons = [
+    {
+      key: 'bold',
+      icon: <BoldOutlined />,
+      active: editor.isActive('bold'),
+      onClick: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      key: 'italic',
+      icon: <ItalicOutlined />,
+      active: editor.isActive('italic'),
+      onClick: () => editor.chain().focus().toggleItalic().run(),
+    },
+    {
+      key: 'underline',
+      icon: <UnderlineOutlined />,
+      active: editor.isActive('underline'),
+      onClick: () => editor.chain().focus().toggleUnderline().run(),
+    },
+    {
+      key: 'strike',
+      icon: <StrikethroughOutlined />,
+      active: editor.isActive('strike'),
+      onClick: () => editor.chain().focus().toggleStrike().run(),
+    },
+    { key: 'divider1' },
+    {
+      key: 'bulletList',
+      icon: <UnorderedListOutlined />,
+      active: editor.isActive('bulletList'),
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      key: 'orderedList',
+      icon: <OrderedListOutlined />,
+      active: editor.isActive('orderedList'),
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+    },
+  ];
 
   return (
-    <Container
-      style={{
-        width: 'fit-content',
-        top: '1rem',
-        left: '0px',
-        right: '0px',
-        margin: '0 auto',
-        zIndex: 10,
-        display: 'flex',
-        gap: '8px',
-        alignItems: 'center',
-        height: '42px',
-        padding: '6px',
-        overflow: 'hidden',
-        borderRadius: '16px',
-        fontSize: 14,
-      }}
-    >
-      {toolMenus.map((item, idx) => {
-        const key = `${item.key}+${idx}`;
-        if (item.type === ToolTypes.DIVIDER) {
-          return <Divider key={key} style={{ height: '60%' }} type="vertical" />;
-        }
-        return (
-          <Tooltip key={key} title={item.tip || ''}>
+    <Toolbar ref={toolbarRef} onMouseDown={prevent}>
+      <Container
+        style={{
+          width: 'fit-content',
+          zIndex: 10,
+          display: 'flex',
+          gap: '4px',
+          alignItems: 'center',
+          height: '38px',
+          padding: '4px 6px',
+          overflow: 'visible',
+          borderRadius: '12px',
+          fontSize: 14,
+        }}
+      >
+        <Dropdown
+          menu={{
+            items: fontSizeItems,
+            onClick: handleFontSizeClick,
+            selectedKeys: [currentFontSize],
+          }}
+          trigger={['click']}
+          getPopupContainer={getContainer}
+        >
+          <ToolItem
+            $active={false}
+            style={{ width: 'auto', minWidth: 38, gap: 2, padding: '0 4px' }}
+            onMouseDown={prevent}
+          >
+            <FontSizeOutlined />
+            <SizeLabel>{currentFontSize}</SizeLabel>
+          </ToolItem>
+        </Dropdown>
+
+        <ColorPicker
+          size="small"
+          value={currentColor}
+          onChange={(_, hex) => handleColor(hex)}
+          onOpenChange={(open) => {
+            if (!open) refocusEditor();
+          }}
+          getPopupContainer={getContainer}
+          presets={[
+            {
+              label: 'Presets',
+              colors: [
+                '#ffffff',
+                '#e0e0e0',
+                '#9e9e9e',
+                '#616161',
+                '#000000',
+                '#ef5350',
+                '#ff7043',
+                '#ffa726',
+                '#ffee58',
+                '#66bb6a',
+                '#42a5f5',
+                '#ab47bc',
+                '#ec407a',
+                '#26c6da',
+                '#8d6e63',
+              ],
+            },
+          ]}
+        >
+          <ToolItem $active={false} style={{ width: 32, minWidth: 32 }} onMouseDown={prevent}>
+            <FontColorsOutlined style={{ color: currentColor }} />
+          </ToolItem>
+        </ColorPicker>
+
+        <Divider style={{ height: '60%' }} type="vertical" />
+
+        {buttons.map((btn) =>
+          btn.key.startsWith('divider') ? (
+            <Divider key={btn.key} style={{ height: '60%' }} type="vertical" />
+          ) : (
             <ToolItem
-              $disabled={item.disabled}
-              onClick={() => handleSetActiveKey(item)}
-              $active={!!item.isActive}
-              style={{
-                width: 'fit-content',
-                minWidth: 38,
-              }}
+              key={btn.key}
+              $active={btn.active}
+              onMouseDown={prevent}
+              onClick={btn.onClick}
+              style={{ width: 32, minWidth: 32 }}
             >
-              {item.icon}
+              {btn.icon}
             </ToolItem>
-          </Tooltip>
-        );
-      })}
-    </Container>
+          )
+        )}
+      </Container>
+    </Toolbar>
   );
 };
 
-export default ImageTool;
+export default React.memo(TextTool);
+
+const Toolbar = styled.div`
+  position: relative;
+`;
+
+const SizeLabel = styled.span`
+  font-size: 12px;
+  min-width: 16px;
+  text-align: center;
+`;

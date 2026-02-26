@@ -1,6 +1,9 @@
 import { type MentionItem } from '@/pages/Flow/nodes/CreateWithAI/components/MentionList';
+import Color from '@tiptap/extension-color';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
+import { TextStyle } from '@tiptap/extension-text-style';
+import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Container } from '@zeroDraw/core';
@@ -40,6 +43,8 @@ export interface PromptEditorRef {
   focus: () => void;
   /** 获取当前值 */
   getValue: () => EditorValue;
+  /** tiptap editor 实例 */
+  editor: ReturnType<typeof useEditor>;
 }
 
 const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
@@ -49,12 +54,13 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       extensions: [
         StarterKit.configure({
           heading: false,
-          bulletList: false,
-          orderedList: false,
           blockquote: false,
           codeBlock: false,
           horizontalRule: false,
         }),
+        TextStyle as any,
+        Color as any,
+        Underline as any,
         Placeholder.configure({ placeholder }),
         Mention.configure({
           HTMLAttributes: { class: 'mention' },
@@ -86,7 +92,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       editor?.commands.focus('end');
     };
 
-    useImperativeHandle(ref, () => ({ clear, focus, getValue }));
+    useImperativeHandle(ref, () => ({ clear, focus, getValue, editor }));
 
     return (
       <Container style={{ background: 'transparent' }}>
