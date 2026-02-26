@@ -232,7 +232,7 @@ const ImageNode: React.FC<NodeProps> = (props) => {
       <ImageContainer $width={width} $height={height}>
         <Image
           preview={{
-            mask: false,
+            minScale: 0.5,
             visible: previewVisible,
             onVisibleChange: (visible) => {
               if (!visible) {

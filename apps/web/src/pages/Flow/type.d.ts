@@ -23,5 +23,12 @@ declare global {
 
   type LibNode = Node<{}, 'lib'>;
 
-  type AppNode = ImageNode | CreateWithAINode | LibNode;
+  type TextNode = Node<
+    {
+      status: 'complete' | 'drag' | 'empty';
+    },
+    'text'
+  >;
+
+  type AppNode = ImageNode | CreateWithAINode | LibNode | TextNode;
 }

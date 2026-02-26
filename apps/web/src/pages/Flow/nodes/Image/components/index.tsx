@@ -16,6 +16,10 @@ export const ImageContainer = styled.div<{ $width: number; $height: number }>`
   justify-content: center;
   background: #fafafa;
 
+  .ant-image-cover {
+    display: none;
+  }
+
   img {
     width: 100%;
     height: 100%;

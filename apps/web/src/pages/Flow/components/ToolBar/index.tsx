@@ -1,15 +1,22 @@
+import { useFlowStore } from '@/store/useFlowStore';
 import Icon, { LoadingOutlined } from '@ant-design/icons';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
 import { Divider } from 'antd';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { apiUrl, fileUrl } from '../../../../utils';
 import useUpload from '../../../hooks/useUpload';
 import DropMenu from './components/Dropmenu';
 import { Actions, ToolBarProps, ToolMenus } from './type';
 
 const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) => {
-  const [toolActive, setToolActive] = useState<Actions>(Actions.ROPE);
+  const { toolActive, setToolActive } = useFlowStore(
+    useShallow((state) => ({
+      toolActive: state.toolActive,
+      setToolActive: state.setToolActive,
+    }))
+  );
 
   const { run: runUpload, loading } = useUpload({
     accept: 'image/*',
@@ -67,7 +74,17 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
         get isActive() {
           return toolActive === Actions.TEXT;
         },
-        onClick: () => {},
+        onClick: () => {
+          setNodes((nodes) => [
+            ...nodes,
+            {
+              id: generateUUID(),
+              type: 'text',
+              position: { x: 0, y: 0 },
+              data: { status: 'drag' },
+            },
+          ]);
+        },
       },
       {
         key: Actions.NOTE,
