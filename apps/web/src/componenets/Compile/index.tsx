@@ -7,8 +7,9 @@ import Underline from '@tiptap/extension-underline';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Container } from '@zeroDraw/core';
-import { forwardRef, useImperativeHandle } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import styled from 'styled-components';
+import { FontSize } from './extensions/fontSize';
 
 export type { MentionItem };
 
@@ -49,6 +50,8 @@ export interface PromptEditorRef {
 
 const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
   ({ onChange, placeholder = 'Add Text', autoFocus = true, setFocus, style }, ref) => {
+    const [isFocused, setIsFocused] = useState(false);
+
     const editor = useEditor({
       autofocus: autoFocus ? 'end' : false,
       extensions: [
@@ -59,6 +62,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           horizontalRule: false,
         }),
         TextStyle as any,
+        FontSize,
         Color as any,
         Underline as any,
         Placeholder.configure({ placeholder }),
@@ -75,8 +79,14 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           mentions: [],
         });
       },
-      onFocus: () => setFocus(true),
-      onBlur: () => setFocus(false),
+      onFocus: () => {
+        setIsFocused(true);
+        setFocus(true);
+      },
+      onBlur: () => {
+        setIsFocused(false);
+        setFocus(false);
+      },
     });
 
     const getValue = (): EditorValue => ({
@@ -95,8 +105,11 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     useImperativeHandle(ref, () => ({ clear, focus, getValue, editor }));
 
     return (
-      <Container style={{ background: 'transparent' }}>
-        <EditorArea style={style}>
+      <Container style={{ background: 'transparent', boxShadow: 'none' }}>
+        <EditorArea
+          className={isFocused ? 'nodrag nowheel' : ''}
+          style={style}
+        >
           <EditorContent editor={editor} />
         </EditorArea>
       </Container>
@@ -111,6 +124,7 @@ export default PromptEditor;
 const EditorArea = styled.div`
   flex: 1;
   padding: 3px;
+  cursor: text;
 
   .tiptap {
     width: 100%;

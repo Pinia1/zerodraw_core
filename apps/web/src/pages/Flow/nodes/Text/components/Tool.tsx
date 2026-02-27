@@ -12,7 +12,7 @@ import type { Editor } from '@tiptap/react';
 import { Container, ToolItem } from '@zeroDraw/core';
 import type { MenuProps } from 'antd';
 import { ColorPicker, Divider, Dropdown } from 'antd';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 interface TextToolProps {
@@ -26,6 +26,18 @@ const prevent = (e: React.MouseEvent) => e.preventDefault();
 const TextTool: React.FC<TextToolProps> = ({ editor }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const getContainer = () => toolbarRef.current || document.body;
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    if (!editor) return;
+    const update = () => forceUpdate((n) => n + 1);
+    editor.on('selectionUpdate', update);
+    editor.on('transaction', update);
+    return () => {
+      editor.off('selectionUpdate', update);
+      editor.off('transaction', update);
+    };
+  }, [editor]);
 
   const refocusEditor = useCallback(() => {
     requestAnimationFrame(() => editor?.commands.focus());
@@ -44,11 +56,7 @@ const TextTool: React.FC<TextToolProps> = ({ editor }) => {
   }));
 
   const handleFontSizeClick: MenuProps['onClick'] = ({ key }) => {
-    editor
-      .chain()
-      .focus()
-      .setMark('textStyle', { fontSize: `${key}px` })
-      .run();
+    (editor.chain().focus() as any).setFontSize(`${key}px`).run();
   };
 
   const handleColor = (color: string) => {
