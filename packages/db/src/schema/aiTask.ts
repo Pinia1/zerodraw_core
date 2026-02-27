@@ -17,6 +17,7 @@ export const aiTask = mysqlTable('ai_tasks', {
   error: text('error'), // 错误信息
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  deletedAt: timestamp('deleted_at'), // 软删除时间
 });
 
 export type AiTask = typeof aiTask.$inferSelect;

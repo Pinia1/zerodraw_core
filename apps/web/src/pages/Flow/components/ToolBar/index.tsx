@@ -102,7 +102,17 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
         get isActive() {
           return toolActive === Actions.SECTION;
         },
-        onClick: () => {},
+        onClick: () => {
+          setNodes((nodes) => [
+            {
+              id: generateUUID(),
+              type: 'section',
+              position: { x: 0, y: 0 },
+              data: { status: 'drag' },
+            },
+            ...nodes,
+          ]);
+        },
       },
 
       {

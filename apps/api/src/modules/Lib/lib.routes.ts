@@ -1,4 +1,4 @@
-import { paginationQuerySchema } from '@zeroDraw/api-contract';
+import { deleteOutputResponseSchema, paginationQuerySchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { createSuccessResponse } from '../../types/response';
 import { authenticate } from '../Auth/auth.middleware';
@@ -19,5 +19,19 @@ export async function libRoutes(app: FastifyInstance) {
     const data = await libService.getOutputs({ userId, page, pageSize, keyword });
 
     return reply.send(createSuccessResponse(data));
+  });
+
+  app.delete('/outputs/:id', async (request, reply) => {
+    const paramsResult = deleteOutputResponseSchema.safeParse(request.params);
+    if (!paramsResult.success) {
+      return reply.code(400).send({ message: 'Invalid parameters' });
+    }
+
+    const { id } = paramsResult.data;
+    const userId = request.user.userId;
+
+    await libService.deleteOutput({ id, userId });
+
+    return reply.send(createSuccessResponse(id));
   });
 }

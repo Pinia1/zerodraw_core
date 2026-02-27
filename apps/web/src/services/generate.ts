@@ -36,3 +36,7 @@ export const httpGetLibOutputs = (params?: {
 }> => {
   return request.get('/api/lib/outputs', { params });
 };
+
+export const httpDeleteLibOutput = (id: string): Promise<string> => {
+  return request.delete(`/api/lib/outputs/${id}`);
+};

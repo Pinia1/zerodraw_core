@@ -97,7 +97,7 @@ const CreateWithAI: React.FC<NodeProps> = ({ id, selected, height, data }) => {
                     <Icon component={Icons.IconRightArrow} />
                   </ToolItem>
                 }
-                onClick={() => setMenuKey('prompt')}
+                onPointerDown={() => setMenuKey('prompt')}
               />
             </InputRow>
 

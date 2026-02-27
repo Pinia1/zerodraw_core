@@ -7,6 +7,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import { useHover, useMemoizedFn, useRequest, useUpdateEffect } from '@zeroDraw/common';
+import { Container } from '@zeroDraw/core';
 import { Image, Spin } from 'antd';
 import React, { memo, useMemo, useRef, useState } from 'react';
 import { httpGetTask } from '../../../../services/generate';
@@ -246,10 +247,14 @@ const ImageNode: React.FC<NodeProps> = (props) => {
           onError={() => setLoading(false)}
         />
         {loading && (
-          <Placeholder style={{ position: 'absolute', inset: 0, background: '#fafafa' }}>
-            <Spin size="small" />
-            <span>loading</span>
-          </Placeholder>
+          <Container>
+            <Placeholder
+              style={{ position: 'absolute', inset: 0, background: 'var(--container-bg)' }}
+            >
+              <Spin size="small" />
+              <span>generating...</span>
+            </Placeholder>
+          </Container>
         )}
       </ImageContainer>
 

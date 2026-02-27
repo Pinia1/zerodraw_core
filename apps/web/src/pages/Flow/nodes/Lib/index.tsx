@@ -1,7 +1,8 @@
-import { httpGetLibOutputs } from '@/services/generate';
+import useCtrlKeydown from '@/pages/hooks/useCtrlKeydown';
+import { httpDeleteLibOutput, httpGetLibOutputs } from '@/services/generate';
 import { apiUrl, fileUrl } from '@/utils';
 import type { NodeProps } from '@xyflow/react';
-import { useInfiniteScroll, useMemoizedFn } from '@zeroDraw/common';
+import { useInfiniteScroll, useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Container } from '@zeroDraw/core';
 import { Divider, Form, Image, Input, Skeleton } from 'antd';
 import React, { useMemo, useRef, useState } from 'react';
@@ -35,8 +36,9 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
   const [form] = Form.useForm<QueryForm>();
   const contentRef = useRef<HTMLDivElement>(null);
   const queryRef = useRef<QueryParams>({ pageSize: PAGE_SIZE });
+  const [ctrlDown] = useCtrlKeydown();
 
-  const { data, loadingMore, noMore, error, reload } = useInfiniteScroll<LibData>(
+  const { data, loadingMore, noMore, error, reload, mutate } = useInfiniteScroll<LibData>(
     (currentData) =>
       httpGetLibOutputs({
         ...queryRef.current,
@@ -48,6 +50,16 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
       isNoMore: (data) => !!data && data.list.length >= data.total,
     }
   );
+
+  const { run: deleteOutput } = useRequest(httpDeleteLibOutput, {
+    manual: true,
+    onSuccess: (id) => {
+      mutate((pre) => ({
+        ...pre!,
+        list: pre?.list?.filter((item) => item.id !== id) || [],
+      }));
+    },
+  });
 
   const handleSearch = useMemoizedFn((values: QueryForm = {}) => {
     queryRef.current = { pageSize: PAGE_SIZE, keyword: values.keyword || undefined };
@@ -92,7 +104,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
           </Form>
           <Count>{data?.total ?? 0} outputs</Count>
         </Header>
-        <Content ref={contentRef} className="nowheel nodrag">
+        <Content ref={contentRef} className={ctrlDown ? '' : 'nowheel nodrag'}>
           <MasonryStyles />
           {empty ? (
             <EmptyWrapper>
@@ -105,7 +117,12 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
               columnClassName="lib-masonry-column"
             >
               {items.map((item, index) => (
-                <ImageRender key={item.key} data={item.data} onClick={() => handlePreview(index)} />
+                <ImageRender
+                  key={item.key}
+                  data={item.data}
+                  onClick={() => handlePreview(index)}
+                  onDelete={() => deleteOutput(item.key)}
+                />
               ))}
             </Masonry>
           )}

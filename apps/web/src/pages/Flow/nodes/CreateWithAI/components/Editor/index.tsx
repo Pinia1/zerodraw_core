@@ -81,7 +81,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     );
 
     const editor = useEditor({
-      autofocus: autoFocus ? 'end' : false,
+      autofocus: autoFocus,
       extensions: [
         StarterKit.configure({
           heading: false,
@@ -119,7 +119,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     };
 
     const focus = () => {
-      editor?.commands.focus('end');
+      editor?.commands.focus();
     };
 
     useImperativeHandle(ref, () => ({ clear, focus, getValue }));
@@ -146,8 +146,20 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       onSubmit?.(val);
     };
 
+    const handleEditorClick = useMemoizedFn((e: React.MouseEvent) => {
+      if (!editor) return;
+      // 如果有选中的文本，不处理
+      const { from, to } = editor.state.selection;
+      if (from !== to) return;
+      
+      const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+      if (pos) {
+        editor.chain().focus().setTextSelection(pos.pos).run();
+      }
+    });
+
     return (
-      <Wrapper className="">
+      <Wrapper className="nodrag">
         {/* 被 @ 引用的图片预览 */}
         {mentionedList.length > 0 && (
           <MentionedImages>
@@ -168,7 +180,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         )}
 
         {/* 编辑区 */}
-        <EditorArea>
+        <EditorArea onClick={handleEditorClick}>
           <EditorContent editor={editor} />
         </EditorArea>
 

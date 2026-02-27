@@ -30,5 +30,7 @@ declare global {
     'text'
   >;
 
-  type AppNode = ImageNode | CreateWithAINode | LibNode | TextNode;
+  type SectionNode = Node<{ status: 'complete' | 'drag' | 'drawing' }, 'section'>;
+
+  type AppNode = ImageNode | CreateWithAINode | LibNode | TextNode | SectionNode;
 }

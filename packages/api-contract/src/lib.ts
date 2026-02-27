@@ -29,3 +29,7 @@ export const outputListResponseSchema = z.object({
 });
 
 export type OutputListResponse = z.infer<typeof outputListResponseSchema>;
+
+export const deleteOutputResponseSchema = z.object({
+  id: z.string(),
+});

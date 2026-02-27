@@ -1,14 +1,27 @@
-import { aiTask, desc, sql } from '@zeroDraw/db';
+import { aiTask, and, desc, eq, sql } from '@zeroDraw/db';
+import { isNull } from 'drizzle-orm';
 import { db } from '../../db';
-import { GetOutputsParams } from './lib.type';
+import { DeleteOutputParams, GetOutputsParams } from './lib.type';
 
 class LibService {
   async getOutputs({ userId, page, pageSize, keyword }: GetOutputsParams) {
     const offset = (page - 1) * pageSize;
 
-    const baseWhere = keyword
-      ? sql`${aiTask.userId} = ${userId} AND ${aiTask.s3Key} IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(${aiTask.args}, '$.prompt')) LIKE ${'%' + keyword + '%'}`
-      : sql`${aiTask.userId} = ${userId} AND ${aiTask.s3Key} IS NOT NULL`;
+    // 构建基础查询条件
+    const conditions = [
+      eq(aiTask.userId, userId),
+      sql`${aiTask.s3Key} IS NOT NULL`,
+      isNull(aiTask.deletedAt),
+    ];
+
+    // 如果有关键词，添加模糊搜索
+    if (keyword) {
+      conditions.push(
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${aiTask.args}, '$.prompt')) LIKE ${'%' + keyword + '%'}`
+      );
+    }
+
+    const baseWhere = and(...conditions);
 
     const [countResult] = await db
       .select({ count: sql<number>`count(*)` })
@@ -33,6 +46,14 @@ class LibService {
       .offset(offset);
 
     return { list, total, page, pageSize };
+  }
+
+  async deleteOutput({ id, userId }: DeleteOutputParams) {
+    const result = await db
+      .update(aiTask)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(aiTask.id, id), eq(aiTask.userId, userId), isNull(aiTask.deletedAt)));
+    return result;
   }
 }
 

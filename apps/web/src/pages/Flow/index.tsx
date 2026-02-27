@@ -55,6 +55,10 @@ const FlowContainer = styled.div`
   width: 100%;
   height: 100vh;
   position: relative;
+
+  .react-flow__pane {
+    cursor: default !important;
+  }
 `;
 
 function FlowEditor() {
@@ -78,6 +82,13 @@ function FlowEditor() {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        selectionOnDrag
+        panOnDrag={false}
+        panActivationKeyCode="Space"
+        zoomOnScroll
+        zoomActivationKeyCode={null}
+        selectionKeyCode={null}
+        multiSelectionKeyCode="Shift"
         fitView
         fitViewOptions={{ padding: 0.2 }}
         defaultEdgeOptions={{
@@ -85,7 +96,6 @@ function FlowEditor() {
           type: 'smoothstep',
         }}
         deleteKeyCode={['Delete', 'Backspace']}
-        multiSelectionKeyCode="Shift"
         maxZoom={20}
         minZoom={0.1}
       >

@@ -1,9 +1,9 @@
 import { httpGetLibOutputs } from '@/services/generate';
 import { apiUrl, thumbnailUrl } from '@/utils';
-import Icon from '@ant-design/icons';
+import Icon, { DeleteOutlined } from '@ant-design/icons';
 import { useHover } from '@zeroDraw/common';
 import { Icons } from '@zeroDraw/core';
-import { Flex, Spin } from 'antd';
+import { Flex, Popconfirm, Spin } from 'antd';
 import { useRef } from 'react';
 import useImage from 'use-image';
 import { ActionButton, ImageCard, ImageCardMask } from '.';
@@ -11,8 +11,9 @@ import { ActionButton, ImageCard, ImageCardMask } from '.';
 interface ImageRenderProps {
   data: Awaited<ReturnType<typeof httpGetLibOutputs>>['list'][number];
   onClick: () => void;
+  onDelete: () => void;
 }
-const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
+const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete }) => {
   const sizeStr = data.args?.size as string | undefined;
   const [w, h] = sizeStr?.split('x').map(Number) ?? [];
   const [_, loading] = useImage(`${apiUrl}${thumbnailUrl}/${data.s3Key}`);
@@ -43,6 +44,18 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick }) => {
           </ActionButton>
           <ActionButton tooltip="Favorite">
             <Icon component={Icons.IconStar} />
+          </ActionButton>
+
+          <ActionButton tooltip="Delete">
+            <Popconfirm
+              title="Delete the image"
+              description="Remove from the output"
+              onConfirm={onDelete}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Icon component={DeleteOutlined as any} />
+            </Popconfirm>
           </ActionButton>
         </Flex>
       </ImageCardMask>
