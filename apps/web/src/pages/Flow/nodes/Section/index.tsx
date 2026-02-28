@@ -10,7 +10,7 @@ import { Actions } from '../../components/ToolBar/type';
 import { Corner, ResizeHandle } from '../Image/components';
 
 const DragCursorStyle = createGlobalStyle`
-  .react-flow__pane {
+  .Flow-Container {
     cursor: ${SECTION_CURSOR_URL} !important;
   }
 `;

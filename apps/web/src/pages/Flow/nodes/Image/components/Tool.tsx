@@ -1,4 +1,4 @@
-import Icon from '@ant-design/icons';
+import Icon, { DeleteOutlined } from '@ant-design/icons';
 import { NodeProps, useReactFlow } from '@xyflow/react';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/core';
@@ -10,10 +10,12 @@ import { Actions, ToolMenus } from '../../../components/ToolBar/type';
 
 interface ImageToolProps extends NodeProps {
   setPreviewVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  error?: boolean;
+  handleDelete: () => void;
 }
 
 const ImageTool: React.FC<ImageToolProps> = (props) => {
-  const { id, data, setPreviewVisible } = props;
+  const { id, data, setPreviewVisible, error, handleDelete } = props;
 
   const navigate = useNavigate();
   const { getNode, setNodes, addEdges } = useReactFlow();
@@ -50,6 +52,17 @@ const ImageTool: React.FC<ImageToolProps> = (props) => {
   });
 
   const toolMenus: ToolMenus[] = useMemo(() => {
+    if (error) {
+      return [
+        {
+          key: Actions.DELETE,
+          icon: <DeleteOutlined />,
+          type: ToolTypes.ACTION,
+          onClick: handleDelete,
+          tip: 'Delete',
+        },
+      ];
+    }
     return [
       {
         key: Actions.ROPE,
@@ -89,7 +102,13 @@ const ImageTool: React.FC<ImageToolProps> = (props) => {
         type: ToolTypes.STATE,
         onClick: () => {},
       },
-
+      {
+        key: Actions.DELETE,
+        icon: <DeleteOutlined />,
+        type: ToolTypes.ACTION,
+        onClick: handleDelete,
+        tip: 'Delete',
+      },
       {
         key: Actions.DIVIDER,
         icon: <Icon component={Icons.IconAdd} />,
@@ -110,7 +129,7 @@ const ImageTool: React.FC<ImageToolProps> = (props) => {
         disabled: false,
       },
     ];
-  }, []);
+  }, [error]);
 
   const handleSetActiveKey = useMemoizedFn(async (item: ToolMenus) => {
     if (item.disabled) return;

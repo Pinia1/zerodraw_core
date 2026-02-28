@@ -136,6 +136,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
           preview={{
             visible: previewVisibleIndex !== null,
             current: previewVisibleIndex ?? 0,
+            minScale: 0.5,
             onVisibleChange: (visible) => {
               if (!visible) setPreviewVisibleIndex(null);
             },

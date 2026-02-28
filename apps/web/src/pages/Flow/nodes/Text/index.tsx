@@ -1,5 +1,5 @@
 import Compile, { PromptEditorRef } from '@/componenets/Compile';
-import { TEXT_CURSOR_URL } from '@/componenets/Icons/text';
+import { SECTION_CURSOR_URL } from '@/componenets/Icons/text';
 import { useFlowStore } from '@/store/useFlowStore';
 import type { NodeProps } from '@xyflow/react';
 import { useNodes, useReactFlow, useViewport } from '@xyflow/react';
@@ -12,8 +12,8 @@ import { Corner, ResizeHandle, ToolbarWrapper, Wrapper } from '../Image/componen
 import TextTool from './components/Tool';
 
 const DragCursorStyle = createGlobalStyle`
-  .react-flow__pane {
-    cursor: ${TEXT_CURSOR_URL} !important;
+ .Flow-Container {
+    cursor: ${SECTION_CURSOR_URL} !important;
   }
 `;
 

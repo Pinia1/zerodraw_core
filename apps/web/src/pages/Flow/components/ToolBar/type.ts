@@ -14,6 +14,7 @@ export enum Actions {
   NOTE = 'note',
   SECTION = 'section',
   PREVIEW = 'preview',
+  DELETE = 'delete',
 }
 
 export interface ToolMenus {

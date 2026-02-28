@@ -65,7 +65,13 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
         get isActive() {
           return toolActive === Actions.ROPE;
         },
-        onClick: () => {},
+        onClick: () => {
+          setNodes((pre) => {
+            return pre.filter((i) =>
+              i.type === 'text' ? (i.data as TextNode['data']).status !== 'drag' : true
+            );
+          });
+        },
       },
       {
         key: Actions.TEXT,

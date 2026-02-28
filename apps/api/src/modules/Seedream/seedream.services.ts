@@ -6,7 +6,8 @@ import { volcService } from '../Volc/volc.services';
 class SeedreamService {
   private readonly BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
   private readonly API_KEY = env.SEEDREAM_API_KEY;
-  private readonly MODEL_NAME = 'doubao-seedream-4-5-251128';
+  // private readonly MODEL_NAME = 'doubao-seedream-4-5-251128';
+  private readonly MODEL_NAME = 'doubao-seedream-5-0-260128';
 
   async generate(params: SeedreamGenerateParams) {
     const {
@@ -38,6 +39,8 @@ class SeedreamService {
         watermark,
       }),
     });
+
+    console.log(response, 'seedread response');
 
     if (!response.ok) {
       throw new InternalServerError('Failed to generate image');

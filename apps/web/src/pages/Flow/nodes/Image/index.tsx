@@ -51,10 +51,11 @@ const ImageNode: React.FC<NodeProps> = (props) => {
     }
   }, [src]);
 
-  const { cancel } = useRequest(() => httpGetTask(taskId as string), {
+  const { cancel, data: responseData } = useRequest(() => httpGetTask(taskId as string), {
     manual: !taskId,
     onSuccess: (data) => {
       if (['completed', 'failed'].includes(data.status)) {
+        setLoading(false);
         cancel();
       }
       if (data.s3Key) {
@@ -208,25 +209,34 @@ const ImageNode: React.FC<NodeProps> = (props) => {
     document.addEventListener('pointerup', onPointerUp);
   });
 
+  const handleDelete = useMemoizedFn(() => {
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+  });
+
   const multSelected = useMemo(() => {
     return nodes.filter((n) => n.selected).length > 1;
   }, [nodes]);
 
-  const handleStyle = useMemo(() => {
-    return {
-      width: 6,
-      height: 6,
-      background: '#fff',
-      border: '1px solid #722ed1',
-      opacity: selected ? 1 : 0,
-    };
-  }, [selected]);
+  const handleStyle = {
+    width: 6,
+    height: 6,
+    background: '#fff',
+    border: '1px solid #722ed1',
+    opacity: selected ? 1 : 0,
+  };
+
+  const error = responseData?.status === 'failed';
 
   return (
     <Wrapper $selected={isHover || selected} ref={ref}>
       {selected && !multSelected && (
         <ToolbarWrapper $zoom={zoom}>
-          <ImageTool {...props} setPreviewVisible={setPreviewVisible} />
+          <ImageTool
+            {...props}
+            setPreviewVisible={setPreviewVisible}
+            error={error}
+            handleDelete={handleDelete}
+          />
         </ToolbarWrapper>
       )}
 
@@ -246,6 +256,15 @@ const ImageNode: React.FC<NodeProps> = (props) => {
           onLoad={() => setLoading(false)}
           onError={() => setLoading(false)}
         />
+        {error && (
+          <Container>
+            <Placeholder
+              style={{ position: 'absolute', inset: 0, background: 'var(--container-bg)' }}
+            >
+              <span>{responseData?.error}</span>
+            </Placeholder>
+          </Container>
+        )}
         {loading && (
           <Container>
             <Placeholder

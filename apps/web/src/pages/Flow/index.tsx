@@ -55,9 +55,16 @@ const FlowContainer = styled.div`
   width: 100%;
   height: 100vh;
   position: relative;
+  cursor: default;
 
+  .react-flow {
+    cursor: inherit;
+  }
+  .react-flow__renderer {
+    cursor: inherit;
+  }
   .react-flow__pane {
-    cursor: default !important;
+    cursor: inherit !important;
   }
 `;
 
@@ -73,7 +80,7 @@ function FlowEditor() {
   });
 
   return (
-    <FlowContainer>
+    <FlowContainer className="Flow-Container">
       <Toolbar setNodes={setNodes} onFitView={() => fitView({ padding: 0.2 })} />
       <ReactFlow
         nodes={nodes}
