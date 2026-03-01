@@ -40,8 +40,6 @@ class SeedreamService {
       }),
     });
 
-    console.log(response, 'seedread response');
-
     if (!response.ok) {
       throw new InternalServerError('Failed to generate image');
     }

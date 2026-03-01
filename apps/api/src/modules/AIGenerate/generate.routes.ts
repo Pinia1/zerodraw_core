@@ -1,4 +1,8 @@
-import { seedreamGenerateSchema, seedreamGetTaskResponseSchema } from '@zeroDraw/api-contract';
+import {
+  nanobananaGenerateSchema,
+  seedreamGenerateSchema,
+  seedreamGetTaskResponseSchema,
+} from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { createSuccessResponse } from '../../types/response';
 import { BadRequestError } from '../../utils/errors';
@@ -27,5 +31,16 @@ export async function generateRoutes(app: FastifyInstance) {
     const { id } = queryResult.data;
     const result = await generateService.getTask(id, request.user.userId);
     return reply.send(createSuccessResponse(result));
+  });
+
+  app.post('/nano-banana', async (request, reply) => {
+    const queryResult = nanobananaGenerateSchema.safeParse(request.body);
+
+    if (!queryResult.success) {
+      throw new BadRequestError();
+    }
+
+    const response = await generateService.run(request.user.userId, queryResult.data);
+    return reply.send(createSuccessResponse(response));
   });
 }

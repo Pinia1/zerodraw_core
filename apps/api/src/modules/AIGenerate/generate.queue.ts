@@ -1,15 +1,15 @@
-import { SeedreamGenerateParams } from '@zeroDraw/api-contract';
 import { aiTask, eq } from '@zeroDraw/db';
 import { Job, Queue, Worker } from 'bullmq';
 import { db } from '../../db';
 import { bullRedisConnection } from '../../redis';
 import { logger } from '../../utils/logger';
-import { seedreamService } from '../Seedream/seedream.services';
 import { volcService } from '../Volc/volc.services';
+import { GenerateParams } from './generators/base.generator';
+import { generatorFactory } from './generators/factory';
 
 export interface GenerateJobData {
   taskId: string;
-  params: SeedreamGenerateParams;
+  params: GenerateParams;
 }
 
 class GenerateQueue {
@@ -70,17 +70,21 @@ class GenerateQueue {
     const { taskId, params } = job.data;
 
     logger.info(`[Worker] Processing task ${taskId}`, {
-      type: params.action,
+      action: params.action,
       attempt: job.attemptsMade + 1,
     });
 
     await db.update(aiTask).set({ status: 'processing' }).where(eq(aiTask.id, taskId));
 
-    const result = await seedreamService.generate(params);
+    // 使用工厂模式获取对应的生成器
+    const generator = generatorFactory.getGenerator(params.action);
+    
+    // 调用生成器生成图片
+    const generateResult = await generator.generate(params);
 
-    const imageUrl = result.data[0].url;
-    const imageRes = await fetch(imageUrl);
-    const contentType = imageRes.headers.get('content-type') || 'image/png';
+    // 下载图片并上传到 S3
+    const imageRes = await fetch(generateResult.imageUrl);
+    const contentType = imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const ext = contentType.includes('jpeg') ? '.jpg' : '.png';
     const imageBuffer = await imageRes.arrayBuffer();
     const s3Key = await volcService.uploadFile(
@@ -89,18 +93,19 @@ class GenerateQueue {
       contentType
     );
 
+    // 更新任务状态
     await db
       .update(aiTask)
       .set({
         status: 'completed',
-        output: result,
+        output: generateResult.rawResponse,
         s3Key,
       })
       .where(eq(aiTask.id, taskId));
 
-    logger.info(`[Worker] Task ${taskId} completed`);
+    logger.info(`[Worker] Task ${taskId} completed`, { action: params.action });
 
-    return result;
+    return generateResult.rawResponse;
   }
 
   /** 任务失败回调 */

@@ -35,6 +35,8 @@ const envSchema = z.object({
   REDIS_PORT: z.string().transform(Number).default('6379'),
   REDIS_PASSWORD: z.string().default(''),
   REDIS_DB: z.string().transform(Number).default('0'),
+
+  NANOBANANA_API_KEY: z.string(),
 });
 
 function validateEnv() {

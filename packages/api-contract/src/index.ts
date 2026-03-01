@@ -1,6 +1,7 @@
 export * from './generate';
 export * from './github';
 export * from './lib';
+export * from './nanobanana';
 export * from './seedream';
 
 export interface ApiResponse<T = unknown> {

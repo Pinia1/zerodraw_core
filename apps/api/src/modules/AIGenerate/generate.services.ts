@@ -1,16 +1,16 @@
-import { SeedreamGenerateParams } from '@zeroDraw/api-contract';
 import { aiTask, eq } from '@zeroDraw/db';
 import { randomUUID } from 'crypto';
 import { db } from '../../db';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
+import { GenerateParams } from './generators/base.generator';
 import { generateQueue } from './generate.queue';
 
 class GenerateService {
   private readonly TASK_CACHE_PREFIX = 'ai-task:';
   private readonly TASK_CACHE_TTL = 60 * 60; // 1 小时
 
-  async run(userId: number, params: SeedreamGenerateParams) {
+  async run(userId: number, params: GenerateParams) {
     const taskId = randomUUID();
 
     const insertArgs = {
