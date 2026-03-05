@@ -38,11 +38,9 @@ export class BananaGenerator extends AIGenerator {
   }
 
   /** 轮询获取生成结果 */
-  private async pollResult(taskId: string, maxAttempts = 120, interval = 2000): Promise<string> {
+  private async pollResult(taskId: string, maxAttempts = 120, interval = 5000): Promise<string> {
     for (let i = 0; i < maxAttempts; i++) {
       const result = await bananaService.getResult(taskId);
-
-      console.log(`Poll attempt ${i + 1}/${maxAttempts}:`, JSON.stringify(result, null, 2));
 
       if (result.code !== 0) {
         throw new Error(`Failed to get result (code: ${result.code}): ${result.msg}`);

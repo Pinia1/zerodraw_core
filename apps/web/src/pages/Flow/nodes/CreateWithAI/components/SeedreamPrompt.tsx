@@ -22,7 +22,7 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
     });
   });
   return (
-    <div style={{ padding: 12 }}>
+    <div className="nodrag" style={{ padding: 12 }}>
       <Form form={form} onFinish={onSubmit} layout="vertical">
         <Form.Item
           name="prompt"

@@ -30,7 +30,7 @@ class BananaService {
   private readonly BASE_URL = 'https://grsai.dakka.com.cn';
 
   async generate(params: NanobananaGenerateParams): Promise<BananaGenerateResponse> {
-    const { model, prompt, aspectRatio, imageSize, webHook, shutProgress } = params.args;
+    const { model, prompt, aspectRatio, imageSize } = params.args;
 
     const imageUrls = params.s3Key?.map((key) => volcService.getSignedUrl(key));
 
@@ -46,8 +46,8 @@ class BananaService {
         aspectRatio,
         imageSize,
         urls: imageUrls,
-        webHook,
-        shutProgress,
+        webHook: '-1',
+        shutProgress: false,
       }),
     });
     return response.json() as Promise<BananaGenerateResponse>;

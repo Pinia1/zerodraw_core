@@ -1,3 +1,4 @@
+import type { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import request from '.';
 
 /** 提交 AI 生成任务 */
@@ -7,6 +8,14 @@ export const httpSeedreamGenerate = (data: {
   args: Record<string, unknown>;
 }): Promise<{ taskId: string }> => {
   return request.post('/api/generate/seedream', data);
+};
+
+export const httpNanobananaGenerate = (data: {
+  action: string;
+  s3Key?: string[];
+  args: NanobananaGenerateParams['args'];
+}): Promise<{ taskId: string }> => {
+  return request.post('/api/generate/nano-banana', data);
 };
 
 /** 轮询任务状态 */

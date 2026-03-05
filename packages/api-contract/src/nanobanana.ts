@@ -20,9 +20,7 @@ export const nanobananaGenerateSchema = z.object({
         '4:5',
         '21:9',
       ]),
-      imageSize: z.enum(['1K', '2K', '4K']),
-      webHook: z.enum(['-1']),
-      shutProgress: z.boolean().optional(),
+      imageSize: z.enum(['512px', '1K', '2K', '4K']),
     })
     .passthrough(),
 });
