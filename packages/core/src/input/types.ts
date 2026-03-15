@@ -27,11 +27,11 @@ export interface NormalizedPointerEvent {
   /** 当前是否按下主按钮（mouse: 左键） */
   isPrimaryButton: boolean;
 
-  /** 原生事件按钮字段（可能无） */
+  /** 原生事件按钮字段 */
   button?: number;
   buttons?: number;
 
-  /** 时间戳（如有） */
+  /** 时间戳 */
   timeStamp?: number;
 
   /** 修饰键：便于工具逻辑（例如 Shift 锁比例） */

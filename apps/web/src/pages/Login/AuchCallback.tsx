@@ -18,17 +18,22 @@ const AuthCallback = () => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     if (code) {
-      githubLogin({ code }).then((data) => {
-        if (data) {
-          setUser(data.user);
-          localStorage.setItem('token', data.token);
-          navigate('/');
-        }
-      });
+      githubLogin({ code })
+        .then((data) => {
+          if (data) {
+            setUser(data.user);
+            localStorage.setItem('token', data.token);
+            navigate('/');
+          }
+        })
+        .catch(loginError);
     } else {
-      navigate('/login');
+      loginError();
     }
   });
+  const loginError = () => {
+    navigate('/login');
+  };
   return <Container>loading...</Container>;
 };
 export default AuthCallback;

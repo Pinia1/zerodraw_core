@@ -9,6 +9,7 @@ import { Tools } from '..';
 import Cursor from '../components/Cursor';
 import Flexible from '../components/Flexible';
 import LayersControl from '../components/Layers';
+import Prompt from '../components/Prompt';
 import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
@@ -1450,6 +1451,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       <ReferencePicture />
       {tools?.includes(Tools.TOOL) && <Tool />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
+      {tools?.includes(Tools.LAYERS_CONTROL) && <Prompt />}
       {tools?.includes(Tools.FLEXIBLE) && <Flexible init={init} />}
     </>
   );

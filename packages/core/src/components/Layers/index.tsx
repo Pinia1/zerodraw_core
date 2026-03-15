@@ -15,11 +15,15 @@ import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import DragList from './DragList';
 
-const StyledTabs = styled(Tabs)`
+export const StyledTabs = styled(Tabs)`
   .ant-tabs-content-holder {
     padding: 3px;
     overflow-y: auto;
     padding-bottom: 20px;
+  }
+
+  .ant-tabs-content {
+    height: 100%;
   }
 `;
 
@@ -123,7 +127,6 @@ const Layers: React.FC = () => {
         cursor: 'default',
         transformOrigin: 'left top',
         transform: isMobile ? 'scale(0.7)' : 'scale(1)',
-        // userSelect: 'none',
         WebkitUserSelect: 'none',
         WebkitTouchCallout: 'none',
         WebkitTapHighlightColor: 'transparent',

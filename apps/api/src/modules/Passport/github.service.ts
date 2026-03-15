@@ -7,6 +7,9 @@ export class GithubService {
   private readonly clientId: string = env.GITHUB_CLIENT_ID;
   private readonly clientSecret: string = env.GITHUB_CLIENT_SECRET;
 
+  private readonly githubAccessTokenUrl = 'https://github.com/login/oauth/access_token';
+  private readonly githubUserInfoUrl = 'https://api.github.com/user';
+
   async getAccessToken(code: string): Promise<GithubTokenResponse> {
     const params = new URLSearchParams({
       client_id: this.clientId,
@@ -15,7 +18,7 @@ export class GithubService {
     });
 
     try {
-      const response = await fetch('https://github.com/login/oauth/access_token', {
+      const response = await fetch(this.githubAccessTokenUrl, {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -60,16 +63,14 @@ export class GithubService {
   }
 
   async getUserInfo(accessToken: string): Promise<GithubUser> {
-    const url = 'https://api.github.com/user';
-
     logger.info('Requesting GitHub user info', {
-      url,
+      url: this.githubUserInfoUrl,
       hasToken: !!accessToken,
       tokenLength: accessToken.length,
     });
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(this.githubUserInfoUrl, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: 'application/json',
