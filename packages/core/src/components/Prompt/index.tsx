@@ -52,6 +52,7 @@ const Prompt: React.FC = () => {
         styles={{
           content: {
             height: '100%',
+            outline: 'none',
           },
         }}
         style={{ height: '100%' }}

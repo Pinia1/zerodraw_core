@@ -105,6 +105,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     const clear = () => {
       editor?.commands.clearContent();
       setMentionedList([]);
+      requestAnimationFrame(focus);
     };
 
     const focus = () => {

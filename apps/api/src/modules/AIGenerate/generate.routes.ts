@@ -12,7 +12,6 @@ import { generateService } from './generate.services';
 export async function generateRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
 
-  // 提交生成任务，立即返回 taskId
   app.post('/seedream', async (request, reply) => {
     const queryResult = seedreamGenerateSchema.safeParse(request.body);
     if (!queryResult.success) {

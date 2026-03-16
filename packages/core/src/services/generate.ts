@@ -37,6 +37,7 @@ export const httpGetLibOutputs = (params?: {
   page?: number;
   pageSize?: number;
   keyword?: string;
+  projectId?: string;
 }): Promise<{
   list: LibOutput[];
   total: number;

@@ -13,10 +13,10 @@ export async function libRoutes(app: FastifyInstance) {
       return reply.code(400).send({ message: 'Invalid query parameters' });
     }
 
-    const { page, pageSize, keyword } = queryResult.data;
+    const { page, pageSize, keyword, projectId } = queryResult.data;
     const userId = request.user.userId;
 
-    const data = await libService.getOutputs({ userId, page, pageSize, keyword });
+    const data = await libService.getOutputs({ userId, page, pageSize, keyword, projectId });
 
     return reply.send(createSuccessResponse(data));
   });

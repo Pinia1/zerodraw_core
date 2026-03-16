@@ -1,6 +1,6 @@
 import { useInfiniteScroll, useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Divider, Form, Image, Input, Skeleton } from 'antd';
-import React, { useMemo, useRef, useState } from 'react';
+import { forwardRef, memo, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import Masonry from 'react-masonry-css';
 import Fetch from '../../fetch';
 import Container from '../Container';
@@ -23,7 +23,16 @@ interface QueryParams extends QueryForm {
   pageSize: number;
 }
 
-const Lib: React.FC = () => {
+interface LibProps {
+  projectId?: string;
+}
+
+export interface LibRef {
+  addTask: (taskId: string) => void;
+}
+
+const Lib = forwardRef<any, LibProps>((props, ref) => {
+  const { projectId } = props;
   const [previewVisibleIndex, setPreviewVisibleIndex] = useState<number | null>(null);
   const [form] = Form.useForm<QueryForm>();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -34,6 +43,7 @@ const Lib: React.FC = () => {
       Fetch.getLibOutputs({
         ...queryRef.current,
         page: currentData ? currentData.page + 1 : 1,
+        projectId,
       }),
     {
       target: contentRef,
@@ -66,7 +76,13 @@ const Lib: React.FC = () => {
     [data?.list]
   );
 
+  const addTask = useMemoizedFn((taskId: string) => {});
+
   const empty = error || items.length === 0;
+
+  useImperativeHandle(ref, () => ({
+    addTask,
+  }));
 
   return (
     <Container
@@ -74,26 +90,32 @@ const Lib: React.FC = () => {
         borderRadius: 16,
         border: 'none',
         boxShadow: 'none',
-        height: '100%',
+        height: projectId ? '0px' : '100%',
+        flex: 1,
+        minHeight: 200,
       }}
     >
       <Wrapper>
         <Header>
-          <Form<QueryForm> form={form} layout="inline" size="small" autoComplete="off">
-            <Form.Item name="keyword" noStyle>
-              <Input.Search
-                placeholder="Search prompts..."
-                allowClear
-                onSearch={() => handleSearch(form.getFieldsValue())}
-                onChange={(e) => {
-                  if (!e.target.value) handleSearch({});
-                }}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                }}
-              />
-            </Form.Item>
-          </Form>
+          {projectId ? (
+            'Outputs'
+          ) : (
+            <Form<QueryForm> form={form} layout="inline" size="small" autoComplete="off">
+              <Form.Item name="keyword" noStyle>
+                <Input.Search
+                  placeholder="Search prompts..."
+                  allowClear
+                  onSearch={() => handleSearch(form.getFieldsValue())}
+                  onChange={(e) => {
+                    if (!e.target.value) handleSearch({});
+                  }}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                />
+              </Form.Item>
+            </Form>
+          )}
         </Header>
         <Content ref={contentRef}>
           <MasonryStyles />
@@ -146,6 +168,6 @@ const Lib: React.FC = () => {
       </Wrapper>
     </Container>
   );
-};
+});
 
-export default React.memo(Lib);
+export default memo(Lib);

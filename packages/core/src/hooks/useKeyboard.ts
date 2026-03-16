@@ -2,7 +2,6 @@ import { useKeyPress, useMemoizedFn } from '@zeroDraw/common';
 import { RefObject } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import useLayerStore from '../store/useLayer';
-import useCopyLayer from './useCopyLayer';
 
 interface UseDrawingKeyboardOptions {
   /** 是否正在绘制的 ref */
@@ -21,7 +20,7 @@ export const useDrawingKeyboard = ({
   setStageDraggable,
   finishLine,
 }: UseDrawingKeyboardOptions) => {
-  const { copy, paste } = useCopyLayer();
+  // const { copy, paste } = useCopyLayer();
   const { undoHistory, redoHistory } = useLayerStore(
     useShallow((state) => ({
       undoHistory: state.undoHistory,
@@ -84,9 +83,9 @@ export const useDrawingKeyboard = ({
   );
 
   //copy
-  useKeyPress('ctrl.c', copy);
+  // useKeyPress('ctrl.c', copy);
   //paste
-  useKeyPress('ctrl.v', paste);
+  // useKeyPress('ctrl.v', paste);
   //delete
 };
 

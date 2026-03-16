@@ -1,11 +1,17 @@
-import { useMemoizedFn } from '@zeroDraw/common';
+import { useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
 import { useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
+import Fetch from '../../../../fetch';
 import useLayerStore from '../../../../store/useLayer';
 import PromptEditor, { type PromptEditorRef } from '../../../Compile';
 import { MentionItem } from '../../../Compile/MentionList';
+import type { LibRef as LibRefType } from '../../../Lib';
+import History from '../../../Lib';
+
+const nanobananaGenerate = Fetch.nanobananaGenerate;
+const projectId = '1';
 
 const CreateWithAI = () => {
   const { layers } = useLayerStore(
@@ -14,10 +20,19 @@ const CreateWithAI = () => {
     }))
   );
 
+  const libRef = useRef<LibRefType>(null);
   const editorRef = useRef<PromptEditorRef>(null);
 
   const [form] = Form.useForm();
   const model = Form.useWatch('model', form);
+
+  const { run: generate } = useRequest(nanobananaGenerate, {
+    manual: true,
+    onSuccess: (data) => {
+      const { taskId } = data;
+      libRef.current?.addTask(taskId);
+    },
+  });
 
   const sizeOptions = useMemo(() => {
     const opt = [
@@ -46,7 +61,18 @@ const CreateWithAI = () => {
   }, [model]);
 
   const handleSubmit = useMemoizedFn(() => {
-    form.validateFields().then((values) => {});
+    form.validateFields().then((values) => {
+      generate({
+        action: 'GRAAI_NANO_BANANA',
+        args: {
+          model: values.model,
+          prompt: values.prompt.text,
+          aspectRatio: values.aspectRatio,
+          imageSize: values.imageSize,
+          projectId: projectId,
+        },
+      });
+    });
   });
 
   const layersItems = useMemo(() => {
@@ -57,7 +83,7 @@ const CreateWithAI = () => {
   }, [layers]);
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Form
         initialValues={{
           prompt: '',
@@ -79,6 +105,7 @@ const CreateWithAI = () => {
             placeholder="What are you creating?"
             autoFocus={false}
             mentionItems={layersItems}
+            onSubmit={handleSubmit}
           />
         </Form.Item>
         <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
@@ -161,7 +188,8 @@ const CreateWithAI = () => {
           <Select options={sizeOptions} />
         </Form.Item>
       </Form>
-    </>
+      <History ref={libRef} projectId={projectId} />
+    </div>
   );
 };
 

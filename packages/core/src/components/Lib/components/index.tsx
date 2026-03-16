@@ -45,7 +45,7 @@ export const Content = styled.div`
   overflow-y: auto;
   cursor: default;
   padding-right: 4px;
-  height: 100%;
+  height: auto;
 
   &::-webkit-scrollbar {
     width: 4px;

@@ -1,4 +1,8 @@
-import { httpDeleteLibOutput, httpGetLibOutputs } from '../services/generate';
+import {
+  httpDeleteLibOutput,
+  httpGetLibOutputs,
+  httpNanobananaGenerate,
+} from '../services/generate';
 
 const getEnv = (key: 'VITE_API_URL' | 'VITE_IMAGE_THUMBNAIL' | 'VITE_IMAGE_FILE') => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.[key]) {
@@ -17,6 +21,7 @@ class Fetch {
 
   static getLibOutputs = httpGetLibOutputs;
   static deleteLibOutput = httpDeleteLibOutput;
+  static nanobananaGenerate = httpNanobananaGenerate;
 }
 
 export default Fetch;

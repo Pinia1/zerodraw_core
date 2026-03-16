@@ -4,7 +4,7 @@ import { db } from '../../db';
 import { DeleteOutputParams, GetOutputsParams } from './lib.type';
 
 class LibService {
-  async getOutputs({ userId, page, pageSize, keyword }: GetOutputsParams) {
+  async getOutputs({ userId, page, pageSize, keyword, projectId }: GetOutputsParams) {
     const offset = (page - 1) * pageSize;
 
     // 构建基础查询条件
@@ -18,6 +18,12 @@ class LibService {
     if (keyword) {
       conditions.push(
         sql`JSON_UNQUOTE(JSON_EXTRACT(${aiTask.args}, '$.prompt')) LIKE ${'%' + keyword + '%'}`
+      );
+    }
+
+    if (projectId) {
+      conditions.push(
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${aiTask.args}, '$.projectId')) = ${projectId}`
       );
     }
 
