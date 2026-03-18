@@ -10,5 +10,13 @@ type LibOutput = {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   s3Key: string;
   args: BaseArgsType | null;
-  createdAt: string;
+  createdAt: number;
+};
+
+type RunningItem = {
+  id: string;
+  action: string;
+  status: 'pending' | 'processing';
+  args: BaseArgsType | null;
+  createdAt: number;
 };

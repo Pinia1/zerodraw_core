@@ -1,6 +1,8 @@
 import {
   httpDeleteLibOutput,
   httpGetLibOutputs,
+  httpGetLibRunning,
+  httpGetTask,
   httpNanobananaGenerate,
 } from '../services/generate';
 
@@ -22,6 +24,8 @@ class Fetch {
   static getLibOutputs = httpGetLibOutputs;
   static deleteLibOutput = httpDeleteLibOutput;
   static nanobananaGenerate = httpNanobananaGenerate;
+  static getLibRunning = httpGetLibRunning;
+  static httpGetTask = httpGetTask;
 }
 
 export default Fetch;

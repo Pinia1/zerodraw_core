@@ -6,6 +6,8 @@ export const paginationQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
   keyword: z.string().trim().optional(),
   projectId: z.string().trim().optional(),
+  startDate: z.string().trim().optional(),
+  endDate: z.string().trim().optional(),
 });
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
@@ -17,7 +19,7 @@ export const outputItemSchema = z.object({
   status: z.enum(['pending', 'processing', 'completed', 'failed']),
   s3Key: z.string(),
   args: z.record(z.unknown()).nullable(),
-  createdAt: z.string(),
+  createdAt: z.number(),
 });
 
 export type OutputItem = z.infer<typeof outputItemSchema>;
@@ -34,3 +36,13 @@ export type OutputListResponse = z.infer<typeof outputListResponseSchema>;
 export const deleteOutputResponseSchema = z.object({
   id: z.string(),
 });
+
+//running
+export const runningQuerySchema = z.object({
+  action: z.string().trim().optional(),
+  projectId: z.string().trim().optional(),
+  startDate: z.string().trim().optional(),
+  endDate: z.string().trim().optional(),
+});
+
+export type RunningQuery = z.infer<typeof runningQuerySchema>;

@@ -1,4 +1,4 @@
-import type { NanobananaGenerateParams } from '@zeroDraw/api-contract';
+import type { NanobananaGenerateParams, RunningQuery } from '@zeroDraw/api-contract';
 import request from '.';
 
 /** 提交 AI 生成任务 */
@@ -27,7 +27,7 @@ export const httpGetTask = (
   status: 'pending' | 'processing' | 'completed' | 'failed';
   s3Key: string | null;
   error: string | null;
-  createdAt: string;
+  createdAt: number;
   args: Record<string, unknown>;
 }> => {
   return request.get(`/api/generate/task/${taskId}`);
@@ -49,4 +49,8 @@ export const httpGetLibOutputs = (params?: {
 
 export const httpDeleteLibOutput = (id: string): Promise<string> => {
   return request.delete(`/api/lib/outputs/${id}`);
+};
+
+export const httpGetLibRunning = (params?: Partial<RunningQuery>): Promise<RunningItem[]> => {
+  return request.get('/api/lib/running', { params });
 };

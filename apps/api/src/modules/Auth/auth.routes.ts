@@ -2,7 +2,7 @@ import { githubCallbackSchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { env } from '../../config/env';
 import { createSuccessResponse } from '../../types/response';
-import { BadRequestError } from '../../utils/errors';
+import { QueryValidation } from '../../utils/schame';
 import { githubService } from '../Passport/github.service';
 import { authenticate } from './auth.middleware';
 import { authService } from './auth.services';
@@ -10,11 +10,8 @@ import { JwtPayload, pickUserBasicInfo } from './auth.types';
 
 export async function authRoutes(app: FastifyInstance) {
   app.get('/github/callback', async (request, reply) => {
-    const queryResult = githubCallbackSchema.safeParse(request.query);
-    if (!queryResult.success) {
-      throw new BadRequestError('invalid callback params');
-    }
-    const { code } = queryResult.data;
+    const queryResult = QueryValidation(githubCallbackSchema, request.query);
+    const { code } = queryResult;
 
     const { access_token } = await githubService.getAccessToken(code);
     const userInfo = await githubService.getUserInfo(access_token);

@@ -7,6 +7,7 @@ import Container from '../Container';
 import { Content, EmptyText, EmptyWrapper, Header, MasonryStyles, Wrapper } from './components';
 import ImageArgs from './components/ImageArgs';
 import ImageRender from './components/ImageRender';
+import RunningRender from './components/RunningRender';
 
 const apiUrl = Fetch.apiUrl;
 const fileUrl = Fetch.fileUrl;
@@ -52,6 +53,14 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
     }
   );
 
+  const {
+    data: runningData,
+    mutate: mutateRunning,
+    refresh,
+  } = useRequest(Fetch.getLibRunning, {
+    defaultParams: [{ projectId }],
+  });
+
   const { run: deleteOutput } = useRequest(Fetch.deleteLibOutput, {
     manual: true,
     onSuccess: (id) => {
@@ -60,6 +69,25 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
         list: pre?.list?.filter((item) => item.id !== id) || [],
       }));
     },
+  });
+
+  const handleTaskCompleted = useMemoizedFn(
+    (task: Awaited<ReturnType<typeof Fetch.httpGetTask>>) => {
+      mutateRunning((pre) => pre?.filter((item) => item.id !== task.id));
+      if (task.s3Key) {
+        console.log(task.createdAt, 'task');
+
+        mutate((pre) => ({
+          ...pre!,
+          list: [{ ...task } as LibOutput, ...(pre?.list || [])],
+          total: (pre?.total || 0) + 1,
+        }));
+      }
+    }
+  );
+
+  const handleTaskFailed = useMemoizedFn((taskId: string) => {
+    mutateRunning((pre) => pre?.filter((item) => item.id !== taskId));
   });
 
   const handleSearch = useMemoizedFn((values: QueryForm = {}) => {
@@ -71,17 +99,61 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
     setPreviewVisibleIndex(index);
   });
 
-  const items = useMemo(
-    () => (data?.list || []).map((item) => ({ key: item.id, data: item })),
-    [data?.list]
+  type AllItem =
+    | { key: string; isRunning: true; data: RunningItem }
+    | { key: string; isRunning: false; data: LibOutput };
+
+  const allItems = useMemo<AllItem[]>(() => {
+    const running: AllItem[] =
+      runningData?.map((item) => ({
+        key: item.id,
+        isRunning: true,
+        data: item,
+      })) || [];
+    const completed: AllItem[] =
+      data?.list?.map((item) => ({
+        key: item.id,
+        isRunning: false,
+        data: item,
+      })) || [];
+    return [...running, ...completed].sort(
+      (a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
+    );
+  }, [runningData, data?.list]);
+
+  const completedItems = useMemo(
+    () => allItems.filter((i): i is Extract<AllItem, { isRunning: false }> => !i.isRunning),
+    [allItems]
   );
 
-  const addTask = useMemoizedFn((taskId: string) => {});
+  const groupedByDate = useMemo(() => {
+    const groups = new Map<string, AllItem[]>();
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
 
-  const empty = error || items.length === 0;
+    for (const item of allItems) {
+      const d = new Date(item.data.createdAt);
+      let label: string;
+
+      if (d.toDateString() === today.toDateString()) {
+        label = 'Today';
+      } else if (d.toDateString() === yesterday.toDateString()) {
+        label = 'Yesterday';
+      } else {
+        label = d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+      if (!groups.has(label)) groups.set(label, []);
+      groups.get(label)!.push(item);
+    }
+
+    return Array.from(groups.entries()).map(([date, items]) => ({ date, items }));
+  }, [allItems]);
+
+  const empty = error || allItems.length === 0;
 
   useImperativeHandle(ref, () => ({
-    addTask,
+    addTask: refresh,
   }));
 
   return (
@@ -124,20 +196,40 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
               <EmptyText>Anyone here?</EmptyText>
             </EmptyWrapper>
           ) : (
-            <Masonry
-              breakpointCols={{ default: 2 }}
-              className="lib-masonry"
-              columnClassName="lib-masonry-column"
-            >
-              {items.map((item, index) => (
-                <ImageRender
-                  key={item.key}
-                  data={item.data}
-                  onClick={() => handlePreview(index)}
-                  onDelete={() => deleteOutput(item.key)}
-                />
+            <>
+              {groupedByDate.map(({ date, items: dateItems }) => (
+                <div key={date}>
+                  <Divider style={{ fontSize: 12, color: '#888' }}>{date}</Divider>
+                  <Masonry
+                    breakpointCols={{ default: 2 }}
+                    className="lib-masonry"
+                    columnClassName="lib-masonry-column"
+                  >
+                    {dateItems.map((item) => {
+                      if (item.isRunning) {
+                        return (
+                          <RunningRender
+                            key={item.key}
+                            data={item.data}
+                            onCompleted={handleTaskCompleted}
+                            onFailed={handleTaskFailed}
+                          />
+                        );
+                      }
+                      const previewIndex = completedItems.findIndex((i) => i.key === item.key);
+                      return (
+                        <ImageRender
+                          key={item.key}
+                          data={item.data}
+                          onClick={() => handlePreview(previewIndex)}
+                          onDelete={() => deleteOutput(item.key)}
+                        />
+                      );
+                    })}
+                  </Masonry>
+                </div>
               ))}
-            </Masonry>
+            </>
           )}
 
           {loadingMore && <Skeleton.Button style={{ marginTop: 20 }} block active />}
@@ -145,7 +237,7 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
         </Content>
 
         <Image.PreviewGroup
-          items={items.map((item) => `${apiUrl}${fileUrl}/${item.data.s3Key}`)}
+          items={completedItems.map((item) => `${apiUrl}${fileUrl}/${item.data.s3Key}`)}
           preview={{
             visible: previewVisibleIndex !== null,
             current: previewVisibleIndex ?? 0,
@@ -155,7 +247,8 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
             },
             onChange: (current) => setPreviewVisibleIndex(current),
             imageRender: (originalNode) => {
-              const args = items[previewVisibleIndex as number]?.data.args as BaseArgsType | null;
+              const args = completedItems[previewVisibleIndex as number]?.data
+                .args as BaseArgsType | null;
               return (
                 <>
                   {originalNode}

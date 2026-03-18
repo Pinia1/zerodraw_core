@@ -14,7 +14,6 @@ interface ImageRenderProps {
 }
 const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete }) => {
   const sizeStr = data.args?.size as string | undefined;
-  const [w, h] = sizeStr?.split('x').map(Number) ?? [];
   const [_, loading] = useImage(`${Fetch.apiUrl}${Fetch.thumbnailUrl}/${data.s3Key}`);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -29,7 +28,8 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete }) =>
           style={{
             width: '100%',
             display: 'block',
-            aspectRatio: w && h ? `${w} / ${h}` : 1,
+            objectFit: 'cover',
+            aspectRatio: 1,
           }}
         />
       </Spin>

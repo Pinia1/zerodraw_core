@@ -1,10 +1,10 @@
-import { aiTask, eq } from '@zeroDraw/db';
+import { aiTask, eq, sql } from '@zeroDraw/db';
 import { randomUUID } from 'crypto';
 import { db } from '../../db';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
-import { GenerateParams } from './generators/base.generator';
 import { generateQueue } from './generate.queue';
+import { GenerateParams } from './generators/base.generator';
 
 class GenerateService {
   private readonly TASK_CACHE_PREFIX = 'ai-task:';
@@ -37,10 +37,23 @@ class GenerateService {
       if (data.userId !== userId) {
         throw new NotFoundError('Task not found');
       }
+
       return data;
     }
 
-    const [task] = await db.select().from(aiTask).where(eq(aiTask.id, taskId));
+    const [task] = await db
+      .select({
+        id: aiTask.id,
+        userId: aiTask.userId,
+        action: aiTask.action,
+        status: aiTask.status,
+        error: aiTask.error,
+        s3Key: aiTask.s3Key,
+        args: aiTask.args,
+        createdAt: sql<number>`UNIX_TIMESTAMP(${aiTask.createdAt}) * 1000`,
+      })
+      .from(aiTask)
+      .where(eq(aiTask.id, taskId));
 
     if (!task || task.userId !== userId) {
       throw new NotFoundError('Task not found');
