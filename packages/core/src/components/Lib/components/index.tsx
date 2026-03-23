@@ -94,6 +94,7 @@ export const ImageCard = styled.div`
   background: #f5f5f5;
   cursor: pointer;
   position: relative;
+  aspect-ratio: 1;
 
   img {
     display: block;

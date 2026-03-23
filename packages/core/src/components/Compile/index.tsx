@@ -1,4 +1,9 @@
-import { ArrowRightOutlined, CloseOutlined, RedoOutlined } from '@ant-design/icons';
+import {
+  ArrowRightOutlined,
+  CloseOutlined,
+  LoadingOutlined,
+  RedoOutlined,
+} from '@ant-design/icons';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -30,6 +35,7 @@ export interface PromptEditorProps {
   placeholder?: string;
   /** 自动聚焦 */
   autoFocus?: boolean;
+  loading?: boolean;
 }
 
 export interface PromptEditorRef {
@@ -49,6 +55,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       onSubmit,
       placeholder = 'Describe your changes...',
       autoFocus = true,
+      loading = false,
     },
     ref
   ) => {
@@ -132,6 +139,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     });
 
     const handleSubmit = () => {
+      if (loading) return;
       const val = getValue();
       onSubmit?.(val);
     };
@@ -179,7 +187,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
             </ToolButton>
           </ToolGroup>
           <SubmitBtn onClick={handleSubmit}>
-            <ArrowRightOutlined />
+            {loading ? <LoadingOutlined /> : <ArrowRightOutlined />}
           </SubmitBtn>
         </Toolbar>
       </Wrapper>

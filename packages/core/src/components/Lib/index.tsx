@@ -75,8 +75,6 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
     (task: Awaited<ReturnType<typeof Fetch.httpGetTask>>) => {
       mutateRunning((pre) => pre?.filter((item) => item.id !== task.id));
       if (task.s3Key) {
-        console.log(task.createdAt, 'task');
-
         mutate((pre) => ({
           ...pre!,
           list: [{ ...task } as LibOutput, ...(pre?.list || [])],
@@ -85,10 +83,6 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
       }
     }
   );
-
-  const handleTaskFailed = useMemoizedFn((taskId: string) => {
-    mutateRunning((pre) => pre?.filter((item) => item.id !== taskId));
-  });
 
   const handleSearch = useMemoizedFn((values: QueryForm = {}) => {
     queryRef.current = { pageSize: PAGE_SIZE, keyword: values.keyword || undefined };
@@ -212,7 +206,6 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
                             key={item.key}
                             data={item.data}
                             onCompleted={handleTaskCompleted}
-                            onFailed={handleTaskFailed}
                           />
                         );
                       }

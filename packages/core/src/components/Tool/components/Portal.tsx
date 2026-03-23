@@ -42,7 +42,7 @@ const Portal: React.FC<PortalConfProps> = ({
         open={visible}
         zIndex={1031}
         styles={{
-          body: {
+          container: {
             ...popoverStyles,
           },
         }}

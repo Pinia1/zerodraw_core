@@ -261,8 +261,9 @@ const Tool: React.FC = () => {
       trigger="click"
       content={PopoverContent}
       open={PopoverContent ? open : false}
+      style={{ padding: 0 }}
       styles={{
-        body: {
+        container: {
           padding: 4,
         },
       }}

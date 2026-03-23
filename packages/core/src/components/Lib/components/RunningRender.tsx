@@ -12,10 +12,7 @@ interface RunningRenderProps {
 }
 
 const RunningRender: React.FC<RunningRenderProps> = ({ data, onCompleted, onFailed }) => {
-  const sizeStr = data.args?.size as string | undefined;
-  const [w, h] = sizeStr?.split('x').map(Number) ?? [];
-
-  const { cancel } = useRequest(() => Fetch.httpGetTask(data.id), {
+  const { cancel, data: result } = useRequest(() => Fetch.httpGetTask(data.id), {
     pollingInterval: 1200,
     pollingWhenHidden: false,
     onSuccess: (res) => {
@@ -24,8 +21,6 @@ const RunningRender: React.FC<RunningRenderProps> = ({ data, onCompleted, onFail
       }
       if (res.status === 'completed') {
         onCompleted?.(res);
-      } else if (res.status === 'failed') {
-        onFailed?.(res.id);
       }
     },
     onError: () => {
@@ -34,13 +29,21 @@ const RunningRender: React.FC<RunningRenderProps> = ({ data, onCompleted, onFail
     },
   });
 
+  if (result?.status === 'failed') {
+    return (
+      <ImageCard style={{ color: 'black', padding: 10, overflow: 'auto' }}>
+        {result.error}
+      </ImageCard>
+    );
+  }
+
   return (
     <ImageCard>
       <Spin spinning={true}>
         <div
           style={{
-            width: '100%',
             aspectRatio: 1,
+            width: '100%',
             background: 'rgba(255,255,255,0.04)',
             minHeight: 80,
           }}

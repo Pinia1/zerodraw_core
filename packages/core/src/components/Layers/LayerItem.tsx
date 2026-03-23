@@ -240,7 +240,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
           placement="bottom"
           trigger="click"
           styles={{
-            body: { padding: '3px 10px' },
+            container: { padding: '3px 10px' },
           }}
           destroyOnHidden
           onOpenChange={onOpenChange}

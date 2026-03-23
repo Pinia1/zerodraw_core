@@ -9,6 +9,7 @@ import PromptEditor, { type PromptEditorRef } from '../../../Compile';
 import { MentionItem } from '../../../Compile/MentionList';
 import type { LibRef as LibRefType } from '../../../Lib';
 import History from '../../../Lib';
+import { getSizeOptions, sizeMap } from './config';
 
 const nanobananaGenerate = Fetch.nanobananaGenerate;
 const projectId = '1';
@@ -26,7 +27,7 @@ const CreateWithAI = () => {
   const [form] = Form.useForm();
   const model = Form.useWatch('model', form);
 
-  const { run: generate } = useRequest(nanobananaGenerate, {
+  const { run: generate, loading } = useRequest(nanobananaGenerate, {
     manual: true,
     onSuccess: (data) => {
       const { taskId } = data;
@@ -34,31 +35,7 @@ const CreateWithAI = () => {
     },
   });
 
-  const sizeOptions = useMemo(() => {
-    const opt = [
-      {
-        label: '1K',
-        value: '1K',
-      },
-      {
-        label: '2K',
-        value: '2K',
-      },
-      {
-        label: '4K',
-        value: '4K',
-      },
-    ];
-
-    if (model === 'nano-banana-2') {
-      opt.unshift({
-        label: '512px',
-        value: '512px',
-      });
-    }
-
-    return opt;
-  }, [model]);
+  const sizeOptions = useMemo(() => getSizeOptions(model), [model]);
 
   const handleSubmit = useMemoizedFn(() => {
     form.validateFields().then((values) => {
@@ -75,6 +52,14 @@ const CreateWithAI = () => {
     });
   });
 
+  const handleModelChange = (value: string) => {
+    const imageSize = form.getFieldValue('imageSize');
+    const nextOptions = getSizeOptions(value);
+    if (!nextOptions.find((i) => i.value === imageSize)) {
+      form.setFieldValue('imageSize', nextOptions[0].value);
+    }
+  };
+
   const layersItems = useMemo(() => {
     return layers.map((layer) => ({
       id: layer.id,
@@ -87,7 +72,7 @@ const CreateWithAI = () => {
       <Form
         initialValues={{
           prompt: '',
-          model: 'nano-banana',
+          model: Object.keys(sizeMap)[0],
           aspectRatio: 'auto',
           imageSize: '1K',
         }}
@@ -106,24 +91,13 @@ const CreateWithAI = () => {
             autoFocus={false}
             mentionItems={layersItems}
             onSubmit={handleSubmit}
+            loading={loading}
           />
         </Form.Item>
         <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
           <Select
-            options={[
-              {
-                label: 'nano-banana',
-                value: 'nano-banana',
-              },
-              {
-                label: 'nano-banana-2',
-                value: 'nano-banana-2',
-              },
-              {
-                label: 'nano-banana-pro',
-                value: 'nano-banana-pro',
-              },
-            ]}
+            onChange={handleModelChange}
+            options={Object.keys(sizeMap).map((i) => ({ label: i, value: i }))}
           />
         </Form.Item>
         <Form.Item
