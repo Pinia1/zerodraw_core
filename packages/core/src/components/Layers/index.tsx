@@ -10,7 +10,7 @@ import useUpload from '../../hooks/useUpload';
 import { IconAdd } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
-import { CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
+import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
 import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import DragList from './DragList';
@@ -119,7 +119,7 @@ const Layers: React.FC = () => {
         left: 12,
         top: 80,
         height: 'calc(100% - 170px)',
-        width: 250,
+        width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,
         fontSize: 14,

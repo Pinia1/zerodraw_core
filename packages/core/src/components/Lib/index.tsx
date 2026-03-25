@@ -26,14 +26,15 @@ interface QueryParams extends QueryForm {
 
 interface LibProps {
   projectId?: string;
+  handleQuote?: (data: LibOutput) => void;
 }
 
 export interface LibRef {
   addTask: (taskId: string) => void;
 }
 
-const Lib = forwardRef<any, LibProps>((props, ref) => {
-  const { projectId } = props;
+const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
+  const { projectId, handleQuote } = props;
   const [previewVisibleIndex, setPreviewVisibleIndex] = useState<number | null>(null);
   const [form] = Form.useForm<QueryForm>();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -75,11 +76,21 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
     (task: Awaited<ReturnType<typeof Fetch.httpGetTask>>) => {
       mutateRunning((pre) => pre?.filter((item) => item.id !== task.id));
       if (task.s3Key) {
-        mutate((pre) => ({
-          ...pre!,
-          list: [{ ...task } as LibOutput, ...(pre?.list || [])],
-          total: (pre?.total || 0) + 1,
-        }));
+        mutate((pre) => {
+          const completedItems = [{ ...task } as LibOutput, ...(pre?.list || [])];
+          if (previewVisibleIndex !== null) {
+            const currentItemId = pre?.list?.[previewVisibleIndex].id;
+            const nextPreviewVisibleIndex = completedItems.findIndex(
+              (item) => item.id === currentItemId
+            );
+            setPreviewVisibleIndex(nextPreviewVisibleIndex);
+          }
+          return {
+            ...pre!,
+            list: completedItems,
+            total: (pre?.total || 0) + 1,
+          };
+        });
       }
     }
   );
@@ -216,6 +227,7 @@ const Lib = forwardRef<any, LibProps>((props, ref) => {
                           data={item.data}
                           onClick={() => handlePreview(previewIndex)}
                           onDelete={() => deleteOutput(item.key)}
+                          onQuote={() => handleQuote?.(item.data)}
                         />
                       );
                     })}

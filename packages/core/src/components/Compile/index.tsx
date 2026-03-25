@@ -2,20 +2,21 @@ import {
   ArrowRightOutlined,
   CloseOutlined,
   LoadingOutlined,
-  RedoOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
 import Mention from '@tiptap/extension-mention';
 import Placeholder from '@tiptap/extension-placeholder';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useMemoizedFn } from '@zeroDraw/common';
+import { Tooltip } from 'antd';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import styled from 'styled-components';
+import Fetch from '../../fetch';
 import { MentionItem } from './MentionList';
 import { createMentionSuggestion } from './mentionSuggestion';
 
-const apiUrl = 'https://api.zero-draw.com';
-const thumbnailUrl = 'https://api.zero-draw.com/thumbnail';
+const thumbnailUrl = Fetch.apiUrl + Fetch.thumbnailUrl;
 
 export interface EditorValue {
   /** 纯文本内容 */
@@ -45,6 +46,8 @@ export interface PromptEditorRef {
   focus: () => void;
   /** 获取当前值 */
   getValue: () => EditorValue;
+  /** 设置被 @ 引用的条目 */
+  setMentionedList: React.Dispatch<React.SetStateAction<MentionItem[]>>;
 }
 
 const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
@@ -119,7 +122,9 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       editor?.commands.focus();
     };
 
-    useImperativeHandle(ref, () => ({ clear, focus, getValue }));
+    const uploadImage = () => {};
+
+    useImperativeHandle(ref, () => ({ clear, focus, getValue, setMentionedList }));
 
     const removeMention = useMemoizedFn((id: string) => {
       setMentionedList((prev) => prev.filter((i) => i.id !== id));
@@ -146,7 +151,6 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
 
     const handleEditorClick = useMemoizedFn((e: React.MouseEvent) => {
       if (!editor) return;
-      // 如果有选中的文本，不处理
       const { from, to } = editor.state.selection;
       if (from !== to) return;
 
@@ -162,11 +166,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           <MentionedImages>
             {mentionedList.map((item, idx) => (
               <MentionedThumb key={item.id}>
-                <img
-                  src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`}
-                  alt={item.label}
-                  draggable={false}
-                />
+                <img src={`${thumbnailUrl}/${item.s3Key}`} alt={item.label} draggable={false} />
                 <Badge>{idx + 1}</Badge>
                 <RemoveButton onClick={() => removeMention(item.id)}>
                   <CloseOutlined style={{ fontSize: 8 }} />
@@ -182,13 +182,17 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
 
         <Toolbar>
           <ToolGroup>
-            <ToolButton onClick={clear}>
-              <RedoOutlined />
-            </ToolButton>
+            <Tooltip title="Upload Image">
+              <ToolButton onClick={uploadImage}>
+                <PlusOutlined />
+              </ToolButton>
+            </Tooltip>
           </ToolGroup>
-          <SubmitBtn onClick={handleSubmit}>
-            {loading ? <LoadingOutlined /> : <ArrowRightOutlined />}
-          </SubmitBtn>
+          <Tooltip title="Submit">
+            <SubmitBtn onClick={handleSubmit}>
+              {loading ? <LoadingOutlined /> : <ArrowRightOutlined />}
+            </SubmitBtn>
+          </Tooltip>
         </Toolbar>
       </Wrapper>
     );

@@ -50,6 +50,7 @@
   "dependencies": {
     "@zeroDraw/api-contract": "workspace:^",
     "@zeroDraw/common": "workspace:*",
+    "file-saver": "^2.0.5",
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {

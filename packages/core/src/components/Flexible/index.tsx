@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { IconAdd, IconFull, IconIncomplete, IconReduce, IconSuitable } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
-import { CANVAS_CONTAINER_ID, WIDTH } from '../../utils/drawing';
+import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, WIDTH } from '../../utils/drawing';
 import Container from '../Container';
 import { ToolItem } from '../index';
 
@@ -122,7 +122,7 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         right: 12,
         bottom: '2rem',
         height: 48,
-        width: shrinkTools ? 48 : 250,
+        width: shrinkTools ? 48 : ASIDE_WIDTH,
         transition: 'width 0.2s ease-in-out',
         borderRadius: 16,
         padding: 8,

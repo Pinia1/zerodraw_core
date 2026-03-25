@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
-import { CANVAS_CONTAINER_ID } from '../../utils/drawing';
+import { ASIDE_WIDTH, CANVAS_CONTAINER_ID } from '../../utils/drawing';
 import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import { StyledTabs } from '../Layers';
@@ -13,6 +13,7 @@ import CreateWithAI from './components/CreateWithAI';
 const Prompt: React.FC = () => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+
   const { shrinkTools } = useDrawingStore(
     useShallow((state) => ({
       shrinkTools: state.shrinkTools,
@@ -35,7 +36,7 @@ const Prompt: React.FC = () => {
         right: 12,
         top: 80,
         height: 'calc(100% - 170px)',
-        width: 250,
+        width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,
         fontSize: 14,

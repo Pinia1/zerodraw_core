@@ -20,7 +20,6 @@ const CreateWithAI = () => {
       layers: state.layers,
     }))
   );
-
   const libRef = useRef<LibRefType>(null);
   const editorRef = useRef<PromptEditorRef>(null);
 
@@ -39,8 +38,11 @@ const CreateWithAI = () => {
 
   const handleSubmit = useMemoizedFn(() => {
     form.validateFields().then((values) => {
+      const images = editorRef.current?.getValue();
+      const s3Keys = images?.mentions.map((i) => i.s3Key) ?? [];
       generate({
         action: 'GRAAI_NANO_BANANA',
+        s3Key: s3Keys.filter((i) => i !== undefined),
         args: {
           model: values.model,
           prompt: values.prompt.text,
@@ -67,6 +69,13 @@ const CreateWithAI = () => {
     })) as MentionItem[];
   }, [layers]);
 
+  const handleQuote = useMemoizedFn((e: LibOutput) => {
+    editorRef.current?.setMentionedList((pre) => [
+      ...pre,
+      { id: e.id, label: e.args?.prompt ?? '', url: '', s3Key: e.s3Key },
+    ]);
+  });
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Form
@@ -92,6 +101,7 @@ const CreateWithAI = () => {
             mentionItems={layersItems}
             onSubmit={handleSubmit}
             loading={loading}
+            ref={editorRef}
           />
         </Form.Item>
         <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
@@ -162,7 +172,7 @@ const CreateWithAI = () => {
           <Select options={sizeOptions} />
         </Form.Item>
       </Form>
-      <History ref={libRef} projectId={projectId} />
+      <History handleQuote={handleQuote} ref={libRef} projectId={projectId} />
     </div>
   );
 };

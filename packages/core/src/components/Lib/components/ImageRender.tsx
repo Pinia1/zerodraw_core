@@ -1,6 +1,7 @@
 import Icon, { DeleteOutlined } from '@ant-design/icons';
 import { useHover } from '@zeroDraw/common';
 import { Flex, Popconfirm, Spin } from 'antd';
+import { saveAs } from 'file-saver';
 import { useRef } from 'react';
 import useImage from 'use-image';
 import { ActionButton, ImageCard, ImageCardMask } from '.';
@@ -11,13 +12,17 @@ interface ImageRenderProps {
   data: Awaited<ReturnType<typeof Fetch.getLibOutputs>>['list'][number];
   onClick: () => void;
   onDelete: () => void;
+  onQuote: () => void;
 }
-const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete }) => {
-  const sizeStr = data.args?.size as string | undefined;
+const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQuote }) => {
   const [_, loading] = useImage(`${Fetch.apiUrl}${Fetch.thumbnailUrl}/${data.s3Key}`);
 
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
+
+  const onDownload = () => {
+    saveAs(`${Fetch.apiUrl}${Fetch.fileUrl}/${data.s3Key}`);
+  };
 
   return (
     <ImageCard onClick={onClick} ref={ref}>
@@ -34,17 +39,13 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete }) =>
         />
       </Spin>
       <ImageCardMask $isHover={isHover}>
-        <Flex gap={4}>
-          <ActionButton tooltip="Edit">
-            <Icon component={Icons.IconEdit} />
-          </ActionButton>
-          <ActionButton tooltip="Download">
-            <Icon component={Icons.IconDownload} />
-          </ActionButton>
-          <ActionButton tooltip="Favorite">
+        <Flex wrap gap={4}>
+          <ActionButton onClick={onQuote} tooltip="Quote">
             <Icon component={Icons.IconStar} />
           </ActionButton>
-
+          <ActionButton onClick={onDownload} tooltip="Download">
+            <Icon component={Icons.IconDownload} />
+          </ActionButton>
           <ActionButton tooltip="Delete">
             <Popconfirm
               title="Delete the image"

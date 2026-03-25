@@ -1,3 +1,5 @@
+declare module 'file-saver';
+
 interface BaseArgsType {
   image?: string[];
   prompt?: string;

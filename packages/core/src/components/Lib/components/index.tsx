@@ -106,8 +106,6 @@ export const ImageCardMask = styled.div<{ $isHover: boolean }>`
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
   padding: 8px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 60%);
   opacity: ${({ $isHover }) => ($isHover ? 1 : 0)};
