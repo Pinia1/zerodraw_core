@@ -1,7 +1,7 @@
 import { hexToRgba, useMemoizedFn, useMount } from '@zeroDraw/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
@@ -165,22 +165,52 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return layers[layers.length - 1];
   }, [layers]);
 
+  const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
+
   const init = useMemoizedFn(() => {
-    const width = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
-    const height = width / RATIO;
-    setLayerConfig({
-      ...layerConfig,
-      width,
-      height,
-      x: (size.width - PROMPT_WIDTH - width + ASIDE_WIDTH) / 2,
-      y: (size.height - height) / 2,
-    });
+    const availableWidth = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
+    const availableHeight = availableWidth / RATIO;
+
+    if (!layerConfig.width) {
+      setLayerConfig({
+        ...layerConfig,
+        width: availableWidth,
+        height: availableHeight,
+        x: (size.width - PROMPT_WIDTH - availableWidth + ASIDE_WIDTH) / 2,
+        y: (size.height - availableHeight) / 2,
+      });
+      setStageConfig({ scale: 1, x: 0, y: 0 });
+    } else {
+      const scale = availableWidth / layerConfig.width;
+      const screenCenterX = (size.width - PROMPT_WIDTH + ASIDE_WIDTH) / 2;
+      const layerX = screenCenterX / scale - layerConfig.width / 2;
+      const layerY = size.height / (2 * scale) - layerConfig.height / 2;
+      setLayerConfig({ ...layerConfig, x: layerX, y: layerY });
+      setStageConfig({ scale, x: 0, y: 0 });
+    }
+    prevSizeRef.current = size;
+  });
+
+  const handleResize = useMemoizedFn((newSize: typeof size, prevSize: typeof size) => {
+    const deltaX = (newSize.width - prevSize.width) / 2;
+    const deltaY = (newSize.height - prevSize.height) / 2;
     setStageConfig({
-      scale: 1,
-      x: 0,
-      y: 0,
+      ...stageConfig,
+      x: stageConfig.x + deltaX,
+      y: stageConfig.y + deltaY,
     });
   });
+
+  useEffect(() => {
+    const prev = prevSizeRef.current;
+    if (!prev) {
+      prevSizeRef.current = size;
+      return;
+    }
+    if (prev.width === size.width && prev.height === size.height) return;
+    handleResize(size, prev);
+    prevSizeRef.current = size;
+  }, [size.width, size.height]);
 
   const commitActiveDiagramToLayer = useMemoizedFn((layer: Layers): Layers => {
     const active = activeDiagramRef.current?.activeDiagram;

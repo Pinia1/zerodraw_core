@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware';
  * 约定：
  * - angle: 0..360，0°=→，90°=↓（屏幕坐标系）
  * - stops: 0..1 的色标位置，至少 2 个；使用前应按 offset 排序
- * - color: 不包含透明度（透明度你说单独配置）
+ * - color: 不包含透明度
  */
 export type GradientStop = {
   id: string;
@@ -54,11 +54,7 @@ const genId = () => `s_${Math.random().toString(16).slice(2, 8)}`;
 const defaultGradient: FillConfig = {
   type: 'linear',
   angle: 35,
-  stops: [
-    { id: 's1', offset: 0, color: '#ff6a00' },
-    { id: 's2', offset: 0.5, color: '#6a5cff' },
-    { id: 's3', offset: 1, color: '#00d4ff' },
-  ],
+  stops: [{ id: 's1', offset: 0, color: '#000000' }],
 };
 
 const defaultSelectedStopId = 's2';
