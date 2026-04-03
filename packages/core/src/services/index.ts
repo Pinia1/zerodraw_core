@@ -3,7 +3,7 @@ import { axios, AxiosError, InternalAxiosRequestConfig } from '@zeroDraw/common'
 const request = axios.create({
   //@ts-ignore
   baseURL: import.meta.env.VITE_API_URL || '',
-  timeout: 1000 * 60 * 5,
+  timeout: 1000 * 60 * 20,
   headers: {
     'Content-Type': 'application/json',
   },
