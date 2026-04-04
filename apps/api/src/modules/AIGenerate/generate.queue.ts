@@ -14,7 +14,7 @@ export interface GenerateJobData {
 
 class GenerateQueue {
   private readonly QUEUE_NAME = 'ai-generate';
-  private readonly CONCURRENCY = 5;
+  private readonly CONCURRENCY = 16;
 
   private queue: Queue<GenerateJobData>;
   private worker: Worker<GenerateJobData> | null = null;
@@ -78,13 +78,14 @@ class GenerateQueue {
 
     // 使用工厂模式获取对应的生成器
     const generator = generatorFactory.getGenerator(params.action);
-    
+
     // 调用生成器生成图片
     const generateResult = await generator.generate(params);
 
     // 下载图片并上传到 S3
     const imageRes = await fetch(generateResult.imageUrl);
-    const contentType = imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
+    const contentType =
+      imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const ext = contentType.includes('jpeg') ? '.jpg' : '.png';
     const imageBuffer = await imageRes.arrayBuffer();
     const s3Key = await volcService.uploadFile(

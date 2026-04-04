@@ -54,3 +54,15 @@ export const httpDeleteLibOutput = (id: string): Promise<string> => {
 export const httpGetLibRunning = (params?: Partial<RunningQuery>): Promise<RunningItem[]> => {
   return request.get('/api/lib/running', { params });
 };
+
+export const httpUpload = (formData: FormData): Promise<string> => {
+  return request.post('/api/file/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const httpGetFileUrl = (key: string): Promise<string> => {
+  return request.get(`/api/file/url/${key}`);
+};

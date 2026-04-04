@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import Fetch from '../fetch';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../store/useLayer';
 import { Fill, Layers } from '../types/Layers';
+import { generateUUID } from '../utils/drawing';
 
 export function findMissingorder(layers: Layers[]): number {
   if (!layers.length) return 1;
@@ -27,7 +29,7 @@ const useCreateLayer = () => {
       pushHistory: state.pushHistory,
     }))
   );
-  const run = async (id: string, imageUrl?: string, initLayer?: Partial<Layers>) => {
+  const run = async (key: string, fetchUrl?: string, initLayer?: Partial<Layers>) => {
     return new Promise(async (resolve) => {
       setLoading(true);
       const order = findMissingorder(layers);
@@ -37,10 +39,12 @@ const useCreateLayer = () => {
         name: `Layer ${order + 1}`,
         order,
       };
-      if (imageUrl) {
-        await new Promise((res) => {
+      if (fetchUrl && key) {
+        await new Promise(async (res) => {
+          const imageUrl = await Fetch.httpGetFileUrl(key);
           const img = new window.Image();
           img.src = imageUrl;
+          img.crossOrigin = 'Anonymous';
           img.onload = async () => {
             const imgWidth = img.naturalWidth || img.width;
             const imgHeight = img.naturalHeight || img.height;
@@ -67,7 +71,7 @@ const useCreateLayer = () => {
             const y = (canvasHeight - targetHeight) / 2;
 
             const image: Fill = {
-              id,
+              id: generateUUID(),
               x,
               y,
               width: targetWidth,

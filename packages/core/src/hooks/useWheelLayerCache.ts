@@ -147,6 +147,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
           if (!blob) return;
           const url = URL.createObjectURL(blob);
           const img = new Image();
+          img.crossOrigin = 'Anonymous';
           img.onload = () => {
             URL.revokeObjectURL(url);
             setThumbnail(img);

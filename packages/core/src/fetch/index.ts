@@ -1,9 +1,11 @@
 import {
   httpDeleteLibOutput,
+  httpGetFileUrl,
   httpGetLibOutputs,
   httpGetLibRunning,
   httpGetTask,
   httpNanobananaGenerate,
+  httpUpload,
 } from '../services/generate';
 
 const getEnv = (key: 'VITE_API_URL' | 'VITE_IMAGE_THUMBNAIL' | 'VITE_IMAGE_FILE') => {
@@ -26,6 +28,8 @@ class Fetch {
   static nanobananaGenerate = httpNanobananaGenerate;
   static getLibRunning = httpGetLibRunning;
   static httpGetTask = httpGetTask;
+  static httpUploadImage = httpUpload;
+  static httpGetFileUrl = httpGetFileUrl;
 }
 
 export default Fetch;

@@ -13,6 +13,8 @@ import { Tooltip } from 'antd';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import styled from 'styled-components';
 import Fetch from '../../fetch';
+import useUpload from '../../hooks/useUpload';
+import { generateUUID } from '../../utils/drawing';
 import { MentionItem } from './MentionList';
 import { createMentionSuggestion } from './mentionSuggestion';
 
@@ -63,7 +65,14 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     ref
   ) => {
     const [mentionedList, setMentionedList] = useState<MentionItem[]>([]);
-
+    const { run: uploadImage } = useUpload({
+      onSuccess: (result) => {
+        setMentionedList((pre) => [
+          ...pre,
+          { id: generateUUID(), label: result.url, s3Key: result.id },
+        ]);
+      },
+    });
     const mentionItemsRef = useRef(mentionItems);
     mentionItemsRef.current = mentionItems;
 
@@ -74,7 +83,6 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       });
     });
 
-    // 只创建一次，内部通过 ref 读取最新数据
     const [suggestion] = useState(() =>
       createMentionSuggestion(() => mentionItemsRef.current, handleMentionSelect)
     );
@@ -122,10 +130,6 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       editor?.commands.focus();
     };
 
-    const uploadImage = () => {};
-
-    useImperativeHandle(ref, () => ({ clear, focus, getValue, setMentionedList }));
-
     const removeMention = useMemoizedFn((id: string) => {
       setMentionedList((prev) => prev.filter((i) => i.id !== id));
       if (!editor) return;
@@ -159,6 +163,8 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         editor.chain().focus().setTextSelection(pos.pos).run();
       }
     });
+
+    useImperativeHandle(ref, () => ({ clear, focus, getValue, setMentionedList }));
 
     return (
       <Wrapper>

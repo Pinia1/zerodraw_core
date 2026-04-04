@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { generateUUID } from '../utils/drawing';
-import imageManager from '../utils/imageManager';
+import Fetch from '../fetch';
 
 interface UseUploadOptions {
   onSuccess: ({ id, url }: { id: string; url: string }) => void;
@@ -19,11 +18,8 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
       input.type = 'file';
       input.accept = accept || 'image/*';
       input.multiple = multiple || false;
-      input.style.position = 'fixed';
-      input.style.left = '-9999px';
-      input.style.top = '-9999px';
+      input.style.display = 'none';
 
-      // iOS Safari 兼容：必须先 append 到 DOM，且在选择完成前不能移除
       document.body.appendChild(input);
 
       let resolved = false;
@@ -58,12 +54,15 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
           Promise.allSettled(
             Array.from(files).map(async (file) => {
               try {
-                const id = generateUUID();
-                const url = URL.createObjectURL(file);
-                // 保存时带上 mimeType，iOS 更严格
-                await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
-                onSuccess?.({ id, url });
-                return { id, url };
+                // const id = generateUUID();
+                // const url = URL.createObjectURL(file);
+                // await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
+                const formData = new FormData();
+                formData.append('file', file);
+                const data = await Fetch.httpUploadImage(formData);
+                const url = Fetch.apiUrl + Fetch.fileUrl + '/' + data;
+                onSuccess?.({ id: data, url: url });
+                return { id: data, url: url };
               } catch (error) {
                 onError?.(error as Error);
                 return { id: '', url: '' };
@@ -85,7 +84,6 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
         }
       };
 
-      // 允许重复选择同一文件
       input.value = '';
       input.click();
     });

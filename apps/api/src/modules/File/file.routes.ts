@@ -46,4 +46,13 @@ export async function fileRoutes(app: FastifyInstance) {
     reply.header('Content-Type', 'image/png');
     return reply.send(stream);
   });
+
+  app.get('/url/:key', async (request, reply) => {
+    const { key } = request.params as { key: string };
+    if (!key) {
+      throw new BadRequestError();
+    }
+    const url = volcService.getSignedUrl(key);
+    return reply.send(createSuccessResponse(url));
+  });
 }
