@@ -6,8 +6,13 @@ import { MOSIC_LAYER_ID } from '../Drawing/components/Mosic';
 import { THUMBNAIL_LAYER_ID } from '../Drawing/components/Thumbnail';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
+import useThumbnailStore from '../store/useThumbnail';
 import { WIDTH } from '../utils/drawing';
 import { isMobile } from '../utils/platform';
+
+const LAYER_PREVIEW_WIDTH = 62;
+const LAYER_PREVIEW_HEIGHT = 35;
+const SKIP_LAYER_IDS = new Set([THUMBNAIL_LAYER_ID, MOSIC_LAYER_ID]);
 
 type StageRef = React.RefObject<Konva.Stage> | null | undefined;
 
@@ -20,6 +25,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   const { endWait = 220 } = options;
   const isInteractingRef = useRef(false);
   const prevLayerVisibilityRef = useRef<Array<{ layer: Konva.Layer; visible: boolean }>>([]);
+  const prevLayersLengthRef = useRef(0);
 
   const { layerConfig, setThumbnail, stageConfig } = useDrawingStore(
     useShallow((state) => ({
@@ -29,9 +35,16 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
     }))
   );
 
-  const { layers } = useLayerStore(
+  const { layers, drawingLayerId } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
+      drawingLayerId: state.drawingLayer?.id,
+    }))
+  );
+
+  const { setLayerThumbnail } = useThumbnailStore(
+    useShallow((state) => ({
+      setLayerThumbnail: state.setLayerThumbnail,
     }))
   );
 
@@ -39,11 +52,22 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
     () => {
       if (isInteractingRef.current) return;
       getBitmapSync();
+      // 图层数量变化（初始加载、新增、删除）时全量截图，否则只截当前绘制图层
+      const isStructuralChange = layers.length !== prevLayersLengthRef.current;
+      prevLayersLengthRef.current = layers.length;
+      captureLayerThumbnails(isStructuralChange ? undefined : drawingLayerId);
     },
     [layers, layerConfig.backgroundVisible, layerConfig.backgroundColor],
-    {
-      wait: 20,
-    }
+    { wait: 20 }
+  );
+
+  // 切换图层时捕捉新选图层的缩略图（layers 不一定变化）
+  useDebounceEffect(
+    () => {
+      if (drawingLayerId) captureLayerThumbnails(drawingLayerId);
+    },
+    [drawingLayerId],
+    { wait: 100 }
   );
 
   const hideOtherLayers = useMemoizedFn(() => {
@@ -164,6 +188,62 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
         if (mosicLayer && typeof prevMosicVisible === 'boolean') {
           mosicLayer.visible(prevMosicVisible);
         }
+      }
+    });
+  });
+
+  const captureLayerThumbnails = useMemoizedFn((targetId?: string) => {
+    requestAnimationFrame(() => {
+      const stage = stageRef?.current;
+      if (!stage) return;
+
+      const stageW = stage.width();
+      if (!stageW || !stage.height()) return;
+
+      const vx = layerConfig.x * stageConfig.scale + stageConfig.x;
+      const vy = layerConfig.y * stageConfig.scale + stageConfig.y;
+      const vw = layerConfig.width * stageConfig.scale;
+      const vh = layerConfig.height * stageConfig.scale;
+      if (!vw || !vh) return;
+
+      const konvaLayers = stage.getLayers().filter((konvaLayer) => {
+        const layerId = konvaLayer.attrs?.id as string | undefined;
+        if (!layerId || SKIP_LAYER_IDS.has(layerId)) return false;
+        if (!konvaLayer.visible()) return false;
+        if (targetId && layerId !== targetId) return false;
+        return true;
+      });
+
+      for (const konvaLayer of konvaLayers) {
+        const layerId = konvaLayer.attrs.id as string;
+        const canvasEl = (konvaLayer.getCanvas() as any)?._canvas as
+          | HTMLCanvasElement
+          | undefined;
+        if (!canvasEl?.width || !canvasEl?.height) continue;
+
+        const pr = canvasEl.width / stageW;
+        const sx = vx * pr;
+        const sy = vy * pr;
+        const sw = vw * pr;
+        const sh = vh * pr;
+
+        const tmp = document.createElement('canvas');
+        tmp.width = LAYER_PREVIEW_WIDTH;
+        tmp.height = LAYER_PREVIEW_HEIGHT;
+        const ctx = tmp.getContext('2d');
+        if (!ctx) continue;
+
+        const scale = Math.min(LAYER_PREVIEW_WIDTH / sw, LAYER_PREVIEW_HEIGHT / sh);
+        const drawW = sw * scale;
+        const drawH = sh * scale;
+        const offsetX = (LAYER_PREVIEW_WIDTH - drawW) / 2;
+        const offsetY = (LAYER_PREVIEW_HEIGHT - drawH) / 2;
+
+        ctx.drawImage(canvasEl, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
+        tmp.toBlob((blob) => {
+          if (!blob) return;
+          setLayerThumbnail(layerId, URL.createObjectURL(blob));
+        }, 'image/webp');
       }
     });
   });
