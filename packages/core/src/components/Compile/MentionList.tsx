@@ -66,6 +66,8 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(({ items, comma
           <Thumbnail>
             {item.s3Key ? (
               <img src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`} alt={item.label} />
+            ) : item.url ? (
+              <img src={item.url} alt={item.label} />
             ) : (
               <PlaceholderThumb>{item.label.charAt(0).toUpperCase()}</PlaceholderThumb>
             )}

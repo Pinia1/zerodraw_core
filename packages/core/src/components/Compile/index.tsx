@@ -172,7 +172,11 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           <MentionedImages>
             {mentionedList.map((item, idx) => (
               <MentionedThumb key={item.id}>
-                <img src={`${thumbnailUrl}/${item.s3Key}`} alt={item.label} draggable={false} />
+                <img
+                  src={item.s3Key ? `${thumbnailUrl}/${item.s3Key}` : (item.url ?? '')}
+                  alt={item.label}
+                  draggable={false}
+                />
                 <Badge>{idx + 1}</Badge>
                 <RemoveButton onClick={() => removeMention(item.id)}>
                   <CloseOutlined style={{ fontSize: 8 }} />

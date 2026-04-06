@@ -10,8 +10,8 @@ import useThumbnailStore from '../store/useThumbnail';
 import { WIDTH } from '../utils/drawing';
 import { isMobile } from '../utils/platform';
 
-const LAYER_PREVIEW_WIDTH = 62;
-const LAYER_PREVIEW_HEIGHT = 35;
+const LAYER_PREVIEW_WIDTH = 620;
+const LAYER_PREVIEW_HEIGHT = 350;
 const SKIP_LAYER_IDS = new Set([THUMBNAIL_LAYER_ID, MOSIC_LAYER_ID]);
 
 type StageRef = React.RefObject<Konva.Stage> | null | undefined;
@@ -216,9 +216,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
 
       for (const konvaLayer of konvaLayers) {
         const layerId = konvaLayer.attrs.id as string;
-        const canvasEl = (konvaLayer.getCanvas() as any)?._canvas as
-          | HTMLCanvasElement
-          | undefined;
+        const canvasEl = (konvaLayer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
         if (!canvasEl?.width || !canvasEl?.height) continue;
 
         const pr = canvasEl.width / stageW;

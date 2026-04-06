@@ -16,17 +16,9 @@ export const createMentionSuggestion = (
   },
 
   command: ({ editor, range, props }) => {
-    // 插入 mention 节点
-    editor
-      .chain()
-      .focus()
-      .insertContentAt(range, [
-        { type: 'mention', attrs: props },
-        { type: 'text', text: ' ' },
-      ])
-      .run();
+    // 只删掉 @query 文本，不插入 mention 节点，条目通过 onSelect 推入图片栏
+    editor.chain().focus().deleteRange(range).run();
 
-    // 通知外部：被 @ 的条目
     const item = getItems().find((i) => i.id === props.id);
     if (item) onSelect?.(item);
   },

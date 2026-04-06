@@ -43,8 +43,8 @@ const useCreateLayer = () => {
         await new Promise(async (res) => {
           const imageUrl = await Fetch.httpGetFileUrl(key);
           const img = new window.Image();
-          img.src = imageUrl;
           img.crossOrigin = 'Anonymous';
+          img.src = imageUrl;
           img.onload = async () => {
             const imgWidth = img.naturalWidth || img.width;
             const imgHeight = img.naturalHeight || img.height;

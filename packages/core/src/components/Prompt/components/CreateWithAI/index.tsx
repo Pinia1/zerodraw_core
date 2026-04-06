@@ -3,8 +3,12 @@ import { Form, Select } from 'antd';
 import { useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
+import { MOSIC_LAYER_ID } from '../../../../Drawing/components/Mosic';
+import { THUMBNAIL_LAYER_ID } from '../../../../Drawing/components/Thumbnail';
 import Fetch from '../../../../fetch';
+import { useDrawingStore } from '../../../../store/useDrawing';
 import useLayerStore from '../../../../store/useLayer';
+import useThumbnailStore from '../../../../store/useThumbnail';
 import PromptEditor, { type PromptEditorRef } from '../../../Compile';
 import { MentionItem } from '../../../Compile/MentionList';
 import type { LibRef as LibRefType } from '../../../Lib';
@@ -20,6 +24,15 @@ const CreateWithAI = () => {
       layers: state.layers,
     }))
   );
+
+  const { stageRef, layerConfig } = useDrawingStore(
+    useShallow((state) => ({
+      stageRef: state.stageRef,
+      layerConfig: state.layerConfig,
+    }))
+  );
+
+  const thumbnails = useThumbnailStore((state) => state.thumbnails);
   const libRef = useRef<LibRefType>(null);
   const editorRef = useRef<PromptEditorRef>(null);
 
@@ -36,13 +49,56 @@ const CreateWithAI = () => {
 
   const sizeOptions = useMemo(() => getSizeOptions(model), [model]);
 
-  const handleSubmit = useMemoizedFn(() => {
-    form.validateFields().then((values) => {
+  const captureLayerBlob = useMemoizedFn((layerId: string): Promise<Blob | null> => {
+    const stage = stageRef?.current;
+    if (!stage || !layerConfig.width || !layerConfig.height) return Promise.resolve(null);
+
+    const konvaLayer = stage
+      .getLayers()
+      .find(
+        (l) =>
+          l.attrs?.id === layerId &&
+          l.attrs?.id !== THUMBNAIL_LAYER_ID &&
+          l.attrs?.id !== MOSIC_LAYER_ID
+      );
+    if (!konvaLayer) return Promise.resolve(null);
+
+    return konvaLayer.toBlob({
+      x: layerConfig.x,
+      y: layerConfig.y,
+      width: layerConfig.width,
+      height: layerConfig.height,
+      pixelRatio: 1920 / layerConfig.width,
+      mimeType: 'image/webp',
+    }) as Promise<Blob | null>;
+  });
+
+  const handleSubmit = useMemoizedFn(async () => {
+    try {
+      const values = await form.validateFields();
       const images = editorRef.current?.getValue();
-      const s3Keys = images?.mentions.map((i) => i.s3Key) ?? [];
+      const mentions = images?.mentions ?? [];
+
+      const resolvedMentions = await Promise.all(
+        mentions.map(async (mention) => {
+          if (mention.s3Key) return mention;
+          try {
+            const blob = await captureLayerBlob(mention.id);
+            if (!blob) return mention;
+            const formData = new FormData();
+            formData.append('file', blob, `layer-${mention.id}.webp`);
+            const s3Key = await Fetch.httpUploadImage(formData);
+            return { ...mention, s3Key };
+          } catch {
+            return mention;
+          }
+        })
+      );
+
+      const s3Keys = resolvedMentions.map((i) => i.s3Key).filter((i) => i !== undefined);
       generate({
         action: 'GRAAI_NANO_BANANA',
-        s3Key: s3Keys.filter((i) => i !== undefined),
+        s3Key: s3Keys,
         args: {
           model: values.model,
           prompt: values.prompt.text,
@@ -51,7 +107,7 @@ const CreateWithAI = () => {
           projectId: projectId,
         },
       });
-    });
+    } catch {}
   });
 
   const handleModelChange = (value: string) => {
@@ -66,8 +122,9 @@ const CreateWithAI = () => {
     return layers.map((layer) => ({
       id: layer.id,
       label: layer.name,
+      url: thumbnails[layer.id],
     })) as MentionItem[];
-  }, [layers]);
+  }, [layers, thumbnails]);
 
   const handleQuote = useMemoizedFn((e: LibOutput) => {
     editorRef.current?.setMentionedList((pre) => [
