@@ -40,6 +40,9 @@ interface DrawingState {
   setStageConfig: (config: StageConfigTypes) => void;
   layerConfig: LayerConfigTypes;
   setLayerConfig: (config: LayerConfigTypes) => void;
+  resetLayerConfig: () => void;
+  currentProjectId: string | null;
+  setCurrentProjectId: (id: string | null) => void;
   lineConfig: LineConfigTypes;
   setLineConfig: (config: LineConfigTypes) => void;
   eraserConfig: EraserConfigTypes;
@@ -78,6 +81,9 @@ export const useDrawingStore = create<DrawingState>()(
       //layer config
       layerConfig: defaultLayerConfig,
       setLayerConfig: (config: LayerConfigTypes) => set({ layerConfig: config }),
+      resetLayerConfig: () => set({ layerConfig: defaultLayerConfig }),
+      currentProjectId: null,
+      setCurrentProjectId: (id) => set({ currentProjectId: id }),
       //worker ref
       workerRef: null,
       bindWorkerRef: (ref: WebWorker | null) => set({ workerRef: ref }),

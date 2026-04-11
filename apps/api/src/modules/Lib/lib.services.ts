@@ -1,8 +1,16 @@
-import { libRepo } from './lib.repository';
+import { libRepository } from './lib.repository';
 import { DeleteOutputParams, GetOutputsParams, GetRunningParams } from './lib.type';
 
 class LibService {
-  async getOutputs({ userId, page, pageSize, keyword, projectId, startDate, endDate }: GetOutputsParams) {
+  async getOutputs({
+    userId,
+    page,
+    pageSize,
+    keyword,
+    projectId,
+    startDate,
+    endDate,
+  }: GetOutputsParams) {
     const [total, list] = await Promise.all([
       libRepository.countOutputs({ userId, keyword, projectId, startDate, endDate }),
       libRepository.findOutputs({ userId, page, pageSize, keyword, projectId, startDate, endDate }),

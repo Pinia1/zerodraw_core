@@ -68,7 +68,7 @@ import Thumbnail from './components/Thumbnail';
 type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
 
 const Drawing: React.FC<DrawingProps> = (props) => {
-  const { size, tools = Tools.TOOL } = props;
+  const { size, tools = Tools.TOOL, canvasWidth, canvasHeight } = props;
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
   const lassoStartRef = useRef<Point2D | null>(null);
@@ -168,16 +168,25 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const init = useMemoizedFn(() => {
+    const ratio = canvasWidth && canvasHeight ? canvasWidth / canvasHeight : RATIO;
     const availableWidth = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
-    const availableHeight = availableWidth / RATIO;
+    const availableHeight = size.height - 80;
+
+    // 对竖向/高比例画布，以高度为基准进行适配
+    let initW = availableWidth;
+    let initH = availableWidth / ratio;
+    if (initH > availableHeight) {
+      initH = availableHeight;
+      initW = initH * ratio;
+    }
 
     if (!layerConfig.width) {
       setLayerConfig({
         ...layerConfig,
-        width: availableWidth,
-        height: availableHeight,
-        x: (size.width - PROMPT_WIDTH - availableWidth + ASIDE_WIDTH) / 2,
-        y: (size.height - availableHeight) / 2,
+        width: initW,
+        height: initH,
+        x: (size.width - PROMPT_WIDTH - initW + ASIDE_WIDTH) / 2,
+        y: (size.height - initH) / 2,
       });
       setStageConfig({ scale: 1, x: 0, y: 0 });
     } else {

@@ -15,8 +15,11 @@ export enum Tools {
 export interface DrawingProps {
   size: { width: number; height: number };
   tools: Tools[];
+  canvasWidth?: number;
+  canvasHeight?: number;
 }
 
 export { default as Drawing } from './Drawing';
 export { default as imageManager } from './utils/imageManager';
+export { useDrawingStore } from './store/useDrawing';
 export { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload };
