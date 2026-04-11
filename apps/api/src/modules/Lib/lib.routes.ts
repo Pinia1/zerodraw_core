@@ -34,10 +34,10 @@ export async function libRoutes(app: FastifyInstance) {
   app.get('/running', async (request, reply) => {
     const queryResult = QueryValidation(runningQuerySchema, request.query);
 
-    const { action, startDate, endDate } = queryResult;
+    const { action, projectId, startDate, endDate } = queryResult;
     const userId = request.user.userId;
 
-    const data = await libService.getRunning({ userId, action, startDate, endDate });
+    const data = await libService.getRunning({ userId, action, projectId, startDate, endDate });
 
     return reply.send(createSuccessResponse(data));
   });

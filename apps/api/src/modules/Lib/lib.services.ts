@@ -62,7 +62,7 @@ class LibService {
     return { list, total, page, pageSize };
   }
 
-  async getRunning({ userId, action, startDate, endDate }: GetRunningParams) {
+  async getRunning({ userId, action, projectId, startDate, endDate }: GetRunningParams) {
     const conditions = [
       eq(aiTask.userId, userId),
       sql`${aiTask.status} IN ('pending', 'processing')`,
@@ -71,6 +71,12 @@ class LibService {
 
     if (action) {
       conditions.push(eq(aiTask.action, action));
+    }
+
+    if (projectId) {
+      conditions.push(
+        sql`JSON_UNQUOTE(JSON_EXTRACT(${aiTask.args}, '$.projectId')) = ${projectId}`
+      );
     }
 
     if (startDate) {

@@ -7,6 +7,7 @@ const FlowPage = lazy(() => import('../pages/Flow'));
 const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
+const ProjectPage = lazy(() => import('../pages/Project'));
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,20 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <FlowPage />
+          </Suspense>
+        ),
+      },
+    ],
+  },
+  {
+    path: '/project',
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={null}>
+            <ProjectPage />
           </Suspense>
         ),
       },

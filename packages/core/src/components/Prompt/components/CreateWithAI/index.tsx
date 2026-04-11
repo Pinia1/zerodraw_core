@@ -16,9 +16,10 @@ import History from '../../../Lib';
 import { getSizeOptions, sizeMap } from './config';
 
 const nanobananaGenerate = Fetch.nanobananaGenerate;
-const projectId = '1';
 
 const CreateWithAI = () => {
+  const paramsSearch = new URLSearchParams(window.location.search);
+  const projectId = paramsSearch.get('projectId') ?? '';
   const { layers } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,

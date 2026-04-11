@@ -3,6 +3,7 @@ export * from './github';
 export * from './lib';
 export * from './nanobanana';
 export * from './seedream';
+export * from './project';
 
 export interface ApiResponse<T = unknown> {
   code: number;
