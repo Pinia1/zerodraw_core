@@ -1,43 +1,26 @@
-import { and, eq, NewUser, user } from '@zeroDraw/db';
-import { db } from '../../db';
+import { NewUser } from '@zeroDraw/db';
 import { logger } from '../../utils/logger';
+import { authRepo } from './auth.repository';
 
 class AuthService {
   async findOrCreateUser(userData: NewUser) {
-    const [existingUser] = await db
-      .select()
-      .from(user)
-      .where(and(eq(user.userId, userData.userId!), eq(user.platform, userData.platform)))
-      .limit(1);
-    if (existingUser) {
-      await db.update(user).set(userData).where(eq(user.id, existingUser.id));
+    const existing = await authRepository.findByPlatformUserId(userData.userId!, userData.platform);
 
-      const [updatedUser] = await db
-        .select()
-        .from(user)
-        .where(eq(user.id, existingUser.id))
-        .limit(1);
-
-      logger.info(`User ${existingUser.username} updated`, {
-        userId: updatedUser?.id,
-        platform: updatedUser?.platform,
+    if (existing) {
+      const updated = await authRepository.updateById(existing.id, userData);
+      logger.info(`User ${existing.username} updated`, {
+        userId: updated?.id,
+        platform: updated?.platform,
       });
-
-      return updatedUser;
+      return updated;
     }
 
-    await db.insert(user).values(userData);
-    const [createdUser] = await db
-      .select()
-      .from(user)
-      .where(and(eq(user.userId, userData.userId!), eq(user.platform, userData.platform)))
-      .limit(1);
-
-    logger.info(`User ${createdUser?.username} created`, {
-      userId: createdUser?.id,
-      platform: createdUser?.platform,
+    const created = await authRepository.create(userData);
+    logger.info(`User ${created?.username} created`, {
+      userId: created?.id,
+      platform: created?.platform,
     });
-    return createdUser;
+    return created;
   }
 }
 

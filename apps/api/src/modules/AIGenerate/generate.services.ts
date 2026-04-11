@@ -1,30 +1,19 @@
-import { aiTask, eq, sql } from '@zeroDraw/db';
 import { randomUUID } from 'crypto';
-import { db } from '../../db';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
 import { generateQueue } from './generate.queue';
+import { generateRepo } from './generate.repository';
 import { GenerateParams } from './generators/base.generator';
 
 class GenerateService {
   private readonly TASK_CACHE_PREFIX = 'ai-task:';
-  private readonly TASK_CACHE_TTL = 60 * 60; // 1 小时
+  private readonly TASK_CACHE_TTL = 60 * 60;
 
   async run(userId: number, params: GenerateParams) {
     const taskId = randomUUID();
+    const args = { ...params.args, image: params.s3Key };
 
-    const insertArgs = {
-      ...params.args,
-      image: params.s3Key,
-    };
-    await db.insert(aiTask).values({
-      id: taskId,
-      userId,
-      action: params.action,
-      status: 'pending',
-      args: insertArgs,
-    });
-
+    await generateRepository.create({ id: taskId, userId, action: params.action, args });
     await generateQueue.add(params.action, { taskId, params }, taskId);
 
     return { taskId };
@@ -34,30 +23,12 @@ class GenerateService {
     const cached = await redis.get(`${this.TASK_CACHE_PREFIX}${taskId}`);
     if (cached) {
       const data = JSON.parse(cached);
-      if (data.userId !== userId) {
-        throw new NotFoundError('Task not found');
-      }
-
+      if (data.userId !== userId) throw new NotFoundError('Task not found');
       return data;
     }
 
-    const [task] = await db
-      .select({
-        id: aiTask.id,
-        userId: aiTask.userId,
-        action: aiTask.action,
-        status: aiTask.status,
-        error: aiTask.error,
-        s3Key: aiTask.s3Key,
-        args: aiTask.args,
-        createdAt: sql<number>`UNIX_TIMESTAMP(${aiTask.createdAt}) * 1000`,
-      })
-      .from(aiTask)
-      .where(eq(aiTask.id, taskId));
-
-    if (!task || task.userId !== userId) {
-      throw new NotFoundError('Task not found');
-    }
+    const task = await generateRepository.findById(taskId);
+    if (!task || task.userId !== userId) throw new NotFoundError('Task not found');
 
     const result = {
       id: task.id,

@@ -58,6 +58,7 @@ import {
   httpUpdateProject,
 } from '../../services/project';
 import { fileUrl } from '../../utils';
+import CreateProjectModal, { type RatioOption } from './components/CreateProjectModal';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatRelativeTime(ms: number): string {
@@ -106,6 +107,7 @@ const Project: React.FC = () => {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const renameInputRef = useRef<InputRef>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const isTrash = activeNav === 'trash';
 
@@ -137,15 +139,21 @@ const Project: React.FC = () => {
 
   // ── 新建项目 ──────────────────────────────────────────────────────────────
   const { loading: creating, run: createProject } = useRequest(
-    () => httpCreateProject({ name: 'Untitled', canvasWidth: 800, canvasHeight: 600, backgroundColor: '#ffffff', backgroundVisible: false }),
+    (canvasWidth: number, canvasHeight: number) =>
+      httpCreateProject({ name: 'Untitled', canvasWidth, canvasHeight, backgroundColor: '#ffffff', backgroundVisible: false }),
     {
       manual: true,
       onSuccess: (data) => {
+        setCreateModalOpen(false);
         navigate(`/drawing?projectId=${data.id}`);
       },
       onError: () => message.error('创建项目失败'),
     }
   );
+
+  const handleCreateConfirm = (option: RatioOption) => {
+    createProject(option.width, option.height);
+  };
 
   // ── 重命名 ────────────────────────────────────────────────────────────────
   const { run: renameProject } = useRequest(
@@ -348,7 +356,7 @@ const Project: React.FC = () => {
                 type="primary"
                 icon={<PlusOutlined />}
                 loading={creating}
-                onClick={createProject}
+                onClick={() => setCreateModalOpen(true)}
                 style={{ background: '#6254e8', borderColor: '#6254e8', borderRadius: 8 }}
               >
                 Create new file
@@ -452,6 +460,12 @@ const Project: React.FC = () => {
           </ScrollArea>
         </Main>
       </AppLayout>
+      <CreateProjectModal
+        open={createModalOpen}
+        loading={creating}
+        onConfirm={handleCreateConfirm}
+        onCancel={() => setCreateModalOpen(false)}
+      />
     </ConfigProvider>
   );
 };
