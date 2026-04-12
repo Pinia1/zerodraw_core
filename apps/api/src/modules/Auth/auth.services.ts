@@ -1,6 +1,6 @@
 import { NewUser } from '@zeroDraw/db';
 import { logger } from '../../utils/logger';
-import { authRepo } from './auth.repository';
+import { authRepository } from './auth.repository';
 
 class AuthService {
   async findOrCreateUser(userData: NewUser) {

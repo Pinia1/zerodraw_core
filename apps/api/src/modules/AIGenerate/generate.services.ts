@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
 import { generateQueue } from './generate.queue';
-import { generateRepo } from './generate.repository';
+import { generateRepository } from './generate.repository';
 import { GenerateParams } from './generators/base.generator';
 
 class GenerateService {
