@@ -1,4 +1,4 @@
-import { useRequest, useSize } from '@zeroDraw/common';
+import { useRequest, useSize, useUpdateEffect } from '@zeroDraw/common';
 import { Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -34,8 +34,7 @@ const DrawingPage = () => {
     refreshDeps: [projectId],
   });
 
-  // 当 projectId 变化时先关掉画布，等数据和 reset 就绪后再开
-  useEffect(() => {
+  useUpdateEffect(() => {
     setReadyToRender(false);
   }, [projectId]);
 
@@ -44,7 +43,6 @@ const DrawingPage = () => {
       setReadyToRender(true);
       return;
     }
-    // 等待当前 projectId 对应的数据（避免使用上一个项目的 stale data）
     if (!project || project.id !== projectId) return;
 
     if (projectId !== currentProjectId) {

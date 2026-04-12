@@ -1,6 +1,4 @@
 ﻿import {
-  AppstoreOutlined,
-  BarsOutlined,
   BookOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
@@ -14,11 +12,33 @@
 } from '@ant-design/icons';
 import type { ProjectItem } from '@zeroDraw/api-contract';
 import { useRequest } from '@zeroDraw/common';
-import { Button, ConfigProvider, Dropdown, Input, Menu, MenuProps, Modal, Pagination, Skeleton, Tag, message } from 'antd';
 import type { InputRef } from 'antd';
+import {
+  Button,
+  ConfigProvider,
+  Dropdown,
+  Input,
+  Menu,
+  MenuProps,
+  Modal,
+  Pagination,
+  Skeleton,
+  Tag,
+  message,
+} from 'antd';
 import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  httpCreateProject,
+  httpDeleteProject,
+  httpListProjects,
+  httpPermanentDeleteProject,
+  httpRestoreProject,
+  httpUpdateProject,
+} from '../../services/project';
 import { useUserStore } from '../../store/useUserStore';
+import { apiUrl, thumbnailUrl } from '../../utils';
+import { formatRatio, formatRelativeTime } from '../../utils/project';
 import {
   AppLayout,
   CardGrid,
@@ -42,37 +62,12 @@ import {
   SidebarBottom,
   SidebarTop,
   StyledSider,
-  ViewBtn,
-  ViewToggle,
   WorkspaceAvatar,
   WorkspaceHeader,
   WorkspaceInfo,
   WorkspaceName,
 } from './components';
-import {
-  httpCreateProject,
-  httpDeleteProject,
-  httpListProjects,
-  httpPermanentDeleteProject,
-  httpRestoreProject,
-  httpUpdateProject,
-} from '../../services/project';
-import { fileUrl } from '../../utils';
 import CreateProjectModal, { type RatioOption } from './components/CreateProjectModal';
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatRelativeTime(ms: number): string {
-  const diff = Date.now() - ms;
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
-  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-  return 'just now';
-}
 
 // ─── Menu Theme Config ────────────────────────────────────────────────────────
 const menuTheme = {
@@ -101,7 +96,6 @@ const Project: React.FC = () => {
   const { user } = useUserStore();
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState<string>('recents');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(1);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -111,7 +105,9 @@ const Project: React.FC = () => {
 
   const isTrash = activeNav === 'trash';
 
-  React.useEffect(() => { setPage(1); }, [activeNav, searchValue]);
+  React.useEffect(() => {
+    setPage(1);
+  }, [activeNav, searchValue]);
 
   const workspaceName = user?.name
     ? `${user.name}'s Workspace`
@@ -139,20 +135,28 @@ const Project: React.FC = () => {
 
   // ── 新建项目 ──────────────────────────────────────────────────────────────
   const { loading: creating, run: createProject } = useRequest(
-    (canvasWidth: number, canvasHeight: number) =>
-      httpCreateProject({ name: 'Untitled', canvasWidth, canvasHeight, backgroundColor: '#ffffff', backgroundVisible: false }),
+    (canvasWidth: number, canvasHeight: number, imageKey?: string) =>
+      httpCreateProject({
+        name: 'Untitled',
+        canvasWidth,
+        canvasHeight,
+        backgroundColor: '#ffffff',
+        backgroundVisible: false,
+        ...(imageKey ? { thumbnailKey: imageKey } : {}),
+      }),
     {
       manual: true,
-      onSuccess: (data) => {
+      onSuccess: (data, params) => {
         setCreateModalOpen(false);
-        navigate(`/drawing?projectId=${data.id}`);
+        const imageKey = params[2] as string | undefined;
+        navigate(`/drawing?projectId=${data.id}`, imageKey ? { state: { imageKey } } : undefined);
       },
-      onError: () => message.error('创建项目失败'),
+      onError: () => message.error('Failed to create project'),
     }
   );
 
   const handleCreateConfirm = (option: RatioOption) => {
-    createProject(option.width, option.height);
+    createProject(option.width, option.height, option.imageKey);
   };
 
   // ── 重命名 ────────────────────────────────────────────────────────────────
@@ -161,7 +165,7 @@ const Project: React.FC = () => {
     {
       manual: true,
       onSuccess: () => refresh(),
-      onError: () => message.error('重命名失败'),
+      onError: () => message.error('Failed to rename'),
     }
   );
 
@@ -173,42 +177,33 @@ const Project: React.FC = () => {
   };
 
   // ── 软删除 ────────────────────────────────────────────────────────────────
-  const { run: deleteProject } = useRequest(
-    (id: string) => httpDeleteProject(id),
-    {
-      manual: true,
-      onSuccess: () => refresh(),
-      onError: () => message.error('删除失败'),
-    }
-  );
+  const { run: deleteProject } = useRequest((id: string) => httpDeleteProject(id), {
+    manual: true,
+    onSuccess: () => refresh(),
+    onError: () => message.error('Failed to delete'),
+  });
 
   // ── 恢复 ─────────────────────────────────────────────────────────────────
-  const { run: restoreProject } = useRequest(
-    (id: string) => httpRestoreProject(id),
-    {
-      manual: true,
-      onSuccess: () => refresh(),
-      onError: () => message.error('恢复失败'),
-    }
-  );
+  const { run: restoreProject } = useRequest((id: string) => httpRestoreProject(id), {
+    manual: true,
+    onSuccess: () => refresh(),
+    onError: () => message.error('Failed to restore'),
+  });
 
   // ── 永久删除 ──────────────────────────────────────────────────────────────
-  const { run: permanentDelete } = useRequest(
-    (id: string) => httpPermanentDeleteProject(id),
-    {
-      manual: true,
-      onSuccess: () => refresh(),
-      onError: () => message.error('删除失败'),
-    }
-  );
+  const { run: permanentDelete } = useRequest((id: string) => httpPermanentDeleteProject(id), {
+    manual: true,
+    onSuccess: () => refresh(),
+    onError: () => message.error('Failed to delete permanently'),
+  });
 
   const handlePermanentDelete = (id: string) => {
     Modal.confirm({
-      title: '永久删除',
-      content: '此操作不可恢复，确认删除？',
-      okText: '删除',
+      title: 'Delete permanently',
+      content: 'This action cannot be undone. Are you sure?',
+      okText: 'Delete',
       okButtonProps: { danger: true },
-      cancelText: '取消',
+      cancelText: 'Cancel',
       onOk: () => permanentDelete(id),
     });
   };
@@ -263,7 +258,8 @@ const Project: React.FC = () => {
           {
             key: 'rename',
             label: 'Rename',
-            onClick: () => {
+            onClick: (e) => {
+              e.domEvent.stopPropagation();
               setRenamingId(item.id);
               setRenameValue(item.name);
               setTimeout(() => renameInputRef.current?.focus(), 50);
@@ -372,35 +368,32 @@ const Project: React.FC = () => {
                 </FilterButton>
               </Dropdown>
             </FilterLeft>
-            <ViewToggle>
-              <ViewBtn $active={viewMode === 'grid'} onClick={() => setViewMode('grid')}>
-                <AppstoreOutlined />
-              </ViewBtn>
-              <ViewBtn $active={viewMode === 'list'} onClick={() => setViewMode('list')}>
-                <BarsOutlined />
-              </ViewBtn>
-            </ViewToggle>
           </FilterBar>
 
           <ScrollArea>
             {loading ? (
               <Skeleton active paragraph={{ rows: 4 }} />
             ) : (
-              <CardGrid $list={viewMode === 'list'}>
+              <CardGrid $list={false}>
                 {projects.map((item) => (
                   <ProjectCard
                     key={item.id}
-                    $list={viewMode === 'list'}
-                    onClick={() => !isTrash && renamingId !== item.id && navigate(`/drawing?projectId=${item.id}`)}
+                    $list={false}
+                    onClick={() =>
+                      !isTrash &&
+                      renamingId !== item.id &&
+                      navigate(`/drawing?projectId=${item.id}`)
+                    }
                   >
-                    <CardThumbnail $list={viewMode === 'list'}>
+                    <CardThumbnail $list={false}>
                       {item.thumbnailKey ? (
-                        <img src={`${fileUrl}/${item.thumbnailKey}`} alt={item.name} />
+                        <img
+                          src={`${apiUrl}${thumbnailUrl}/${item.thumbnailKey}`}
+                          alt={item.name}
+                        />
                       ) : (
                         <EmptyThumb>
-                          <FileOutlined
-                            style={{ fontSize: viewMode === 'list' ? 16 : 24, color: '#444' }}
-                          />
+                          <FileOutlined style={{ fontSize: 24, color: '#444' }} />
                         </EmptyThumb>
                       )}
                     </CardThumbnail>
@@ -429,10 +422,16 @@ const Project: React.FC = () => {
                         )}
                         <CardMeta>
                           {isTrash ? 'Deleted' : `Edited · ${formatRelativeTime(item.updatedAt)}`}
+                          {item.canvasWidth && item.canvasHeight
+                            ? ` · ${formatRatio(item.canvasWidth, item.canvasHeight)}`
+                            : null}
                         </CardMeta>
                       </CardInfoLeft>
                       <Dropdown
-                        menu={{ items: cardMenu(item) }}
+                        menu={{
+                          items: cardMenu(item),
+                          onClick: (e) => e.domEvent.stopPropagation(),
+                        }}
                         trigger={['click']}
                         overlayStyle={{ minWidth: 160 }}
                       >

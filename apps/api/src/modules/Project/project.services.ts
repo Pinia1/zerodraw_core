@@ -44,9 +44,9 @@ class ProjectService {
     };
   }
 
-  async createProject({ userId, name, canvasWidth, canvasHeight, backgroundColor, backgroundVisible }: CreateProjectParams) {
+  async createProject({ userId, name, canvasWidth, canvasHeight, backgroundColor, backgroundVisible, thumbnailKey }: CreateProjectParams) {
     const id = crypto.randomUUID();
-    const row = await projectRepository.create({ id, userId, name, canvasWidth, canvasHeight, backgroundColor, backgroundVisible });
+    const row = await projectRepository.create({ id, userId, name, canvasWidth, canvasHeight, backgroundColor, backgroundVisible, ...(thumbnailKey ? { thumbnailKey } : {}) });
     return row as ProjectItem;
   }
 

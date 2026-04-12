@@ -30,6 +30,7 @@ export interface CreateProjectData {
   canvasHeight: number;
   backgroundColor: string;
   backgroundVisible: boolean;
+  thumbnailKey?: string;
 }
 
 class ProjectRepository {

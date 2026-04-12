@@ -113,6 +113,7 @@ export const createProjectSchema = z.object({
   canvasHeight: z.number().int().min(1).default(600),
   backgroundColor: z.string().default('#ffffff'),
   backgroundVisible: z.boolean().default(false),
+  thumbnailKey: z.string().optional(),
 });
 
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;

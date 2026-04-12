@@ -170,9 +170,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const init = useMemoizedFn(() => {
     const ratio = canvasWidth && canvasHeight ? canvasWidth / canvasHeight : RATIO;
     const availableWidth = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
-    const availableHeight = size.height - 80;
+    const availableHeight = size.height - 160;
 
-    // 对竖向/高比例画布，以高度为基准进行适配
     let initW = availableWidth;
     let initH = availableWidth / ratio;
     if (initH > availableHeight) {
@@ -190,7 +189,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       });
       setStageConfig({ scale: 1, x: 0, y: 0 });
     } else {
-      const scale = availableWidth / layerConfig.width;
+      let scale = availableWidth / layerConfig.width;
+      if (layerConfig.height * scale > availableHeight) {
+        scale = availableHeight / layerConfig.height;
+      }
       const screenCenterX = (size.width - PROMPT_WIDTH + ASIDE_WIDTH) / 2;
       const layerX = screenCenterX / scale - layerConfig.width / 2;
       const layerY = size.height / (2 * scale) - layerConfig.height / 2;

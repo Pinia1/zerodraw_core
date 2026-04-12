@@ -14,7 +14,7 @@ export const RATIO = 16 / 9;
 /**最大缩放比例 */
 export const MAX_SCALE = 2000;
 /**最小缩放比例 */
-export const MIN_SCALE = 30;
+export const MIN_SCALE = 10;
 /**画布宽度 */
 export const WIDTH = 1920;
 /**画布高度 */
