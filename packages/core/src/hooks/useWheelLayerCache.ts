@@ -28,11 +28,12 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   const prevLayerVisibilityRef = useRef<Array<{ layer: Konva.Layer; visible: boolean }>>([]);
   const prevLayersLengthRef = useRef(0);
 
-  const { layerConfig, setThumbnail, stageConfig } = useDrawingStore(
+  const { layerConfig, setThumbnail, stageConfig, imageLoadVersion } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       setThumbnail: state.setThumbnail,
       stageConfig: state.stageConfig,
+      imageLoadVersion: state.imageLoadVersion,
     }))
   );
 
@@ -58,7 +59,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
       prevLayersLengthRef.current = layers.length;
       captureLayerThumbnails(isStructuralChange ? undefined : drawingLayerId);
     },
-    [layers, layerConfig.backgroundVisible, layerConfig.backgroundColor],
+    [layers, layerConfig.backgroundVisible, layerConfig.backgroundColor, imageLoadVersion],
     { wait: 20 }
   );
 
@@ -136,7 +137,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   });
 
   const getBitmapSync = useMemoizedFn(() => {
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       const stage = stageRef?.current;
       if (!stage) return;
 
@@ -201,7 +202,7 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
           mosicLayer.visible(prevMosicVisible);
         }
       }
-    });
+    }));
   });
 
   const captureLayerThumbnails = useMemoizedFn((targetId?: string) => {

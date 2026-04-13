@@ -3,6 +3,7 @@ import Konva from 'konva';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
 import useHit from '../../../hooks/useHit';
+import { useDrawingStore } from '../../../store/useDrawing';
 import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
@@ -40,6 +41,7 @@ const Image = React.forwardRef<Konva.Image, FillType & Partial<Konva.ImageConfig
       const blob = new Blob([stored.buffer], { type: stored.mimeType || 'image/webp' });
       const bitmap = await createImageBitmap(blob);
       setImageBitmap(bitmap);
+      useDrawingStore.getState().bumpImageLoadVersion();
     });
 
     const handleDragStart = useMemoizedFn((e: Konva.KonvaEventObject<DragEvent>) => {

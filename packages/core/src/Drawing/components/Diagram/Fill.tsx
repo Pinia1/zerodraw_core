@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Image as KonvaImage } from 'react-konva';
 import useGetHitFunc from '../../../hooks/useGetHitFunc';
 import useHit from '../../../hooks/useHit';
+import { useDrawingStore } from '../../../store/useDrawing';
 import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
@@ -33,6 +34,7 @@ const Fill: React.FC<FillType> = (props) => {
 
     bitmapCache.set(props.id, bitmap);
     setDisplayBitmap(bitmap);
+    useDrawingStore.getState().bumpImageLoadVersion();
   }, [props.id]);
 
   const hitRect = useMemo(() => {

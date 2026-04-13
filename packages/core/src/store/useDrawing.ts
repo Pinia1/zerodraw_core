@@ -66,6 +66,8 @@ interface DrawingState {
   setShrinkTools: (shrinkTools: boolean) => void;
   thumbnail: CanvasImageSource | null;
   setThumbnail: (thumbnail: CanvasImageSource | null) => void;
+  imageLoadVersion: number;
+  bumpImageLoadVersion: () => void;
 }
 
 export const useDrawingStore = create<DrawingState>()(
@@ -89,6 +91,8 @@ export const useDrawingStore = create<DrawingState>()(
       bindWorkerRef: (ref: WebWorker | null) => set({ workerRef: ref }),
       thumbnail: null,
       setThumbnail: (thumbnail: CanvasImageSource | null) => set({ thumbnail: thumbnail }),
+      imageLoadVersion: 0,
+      bumpImageLoadVersion: () => set((s) => ({ imageLoadVersion: s.imageLoadVersion + 1 })),
 
       //line config
       lineConfig: {
@@ -147,8 +151,8 @@ export const useDrawingStore = create<DrawingState>()(
         brushDetailConfPosition: defaultBrushDetailConfPosition,
         stageConfig: defaultStageConfig,
         stageRef: null,
-        // thumbnail 是运行期大对象，且不可序列化：不要持久化
         thumbnail: null,
+        imageLoadVersion: 0,
       }),
     }
   )
