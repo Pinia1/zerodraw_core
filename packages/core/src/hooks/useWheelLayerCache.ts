@@ -159,28 +159,37 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
 
         const pixelRatio = (WIDTH / Math.max(1, width)) * (isMobile ? 0.2 : 0.4);
 
-        const canvas = stage.toCanvas({
-          x,
-          y,
-          width,
-          height,
-          pixelRatio,
-        }) as HTMLCanvasElement;
+        let canvas: HTMLCanvasElement;
+        try {
+          canvas = stage.toCanvas({
+            x,
+            y,
+            width,
+            height,
+            pixelRatio,
+          }) as HTMLCanvasElement;
+        } catch {
+          return;
+        }
 
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const img = new Image();
-          img.crossOrigin = 'Anonymous';
-          img.onload = () => {
-            URL.revokeObjectURL(url);
-            setThumbnail(img);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-          };
-          img.src = url;
-        }, 'image/webp');
+        try {
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+              URL.revokeObjectURL(url);
+              setThumbnail(img);
+            };
+            img.onerror = () => {
+              URL.revokeObjectURL(url);
+            };
+            img.src = url;
+          }, 'image/webp');
+        } catch {
+          // tainted canvas — ImageBitmap 来源的 canvas 无法导出，跳过本次缩略图更新
+        }
       } finally {
         if (thumbnailLayer && typeof prevThumbVisible === 'boolean') {
           thumbnailLayer.visible(prevThumbVisible);
@@ -237,11 +246,15 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
         const offsetX = (LAYER_PREVIEW_WIDTH - drawW) / 2;
         const offsetY = (LAYER_PREVIEW_HEIGHT - drawH) / 2;
 
-        ctx.drawImage(canvasEl, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
-        tmp.toBlob((blob) => {
-          if (!blob) return;
-          setLayerThumbnail(layerId, URL.createObjectURL(blob));
-        }, 'image/webp');
+        try {
+          ctx.drawImage(canvasEl, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
+          tmp.toBlob((blob) => {
+            if (!blob) return;
+            setLayerThumbnail(layerId, URL.createObjectURL(blob));
+          }, 'image/webp');
+        } catch {
+          // tainted canvas，跳过该图层缩略图
+        }
       }
     });
   });

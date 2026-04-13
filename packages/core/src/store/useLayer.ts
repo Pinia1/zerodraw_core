@@ -1,6 +1,12 @@
 import { HistoryManager } from '@zeroDraw/common';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  clearLayersSnapshot,
+  loadLayersSnapshot,
+  saveLayersSnapshot,
+  saveLayersSnapshotNow,
+} from '../local/indexDb';
 import type { DrawLayer, Layers } from '../types/Layers';
 import { generateUUID } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
@@ -89,13 +95,26 @@ interface LayerState {
   replaceCurrentHistory: (layers: Layers[]) => void;
   undoHistory: (version?: DrawLayer['version']) => void;
   redoHistory: (version?: DrawLayer['version']) => void;
+
+  // persistence
+  /** 是否正在从 IndexedDB 恢复数据，用于展示 loading */
+  hydrating: boolean;
+  /** 从 IndexedDB 恢复图层快照，应在应用启动时调用一次 */
+  rehydrateFromStorage: () => Promise<void>;
+  /** 立即将当前图层写入 IndexedDB（不防抖），适合页面卸载前调用 */
+  flushStorageNow: () => Promise<void>;
+  /** 清除 IndexedDB 中保存的图层快照 */
+  clearStorage: () => Promise<void>;
 }
 
 const useLayerStore = create<LayerState>()(
   persist(
     (set, get) => ({
       layers: [init],
-      setLayers: (layers) => set({ layers }),
+      setLayers: (layers) => {
+        set({ layers });
+        saveLayersSnapshot(layers);
+      },
 
       //
       drawingLayer: { version: generateUUID(), ...init },
@@ -125,16 +144,17 @@ const useLayerStore = create<LayerState>()(
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
         });
+        saveLayersSnapshot(layers);
       },
 
       replaceCurrentHistory: (layers: Layers[]) => {
-        // 直接替换当前 present，不新增历史记录
         historyManager.replaceCurrent(layers);
         set({
           layers,
           canUndo: historyManager.canUndo,
           canRedo: historyManager.canRedo,
         });
+        saveLayersSnapshot(layers);
       },
 
       undoHistory: (version?: string) => {
@@ -182,12 +202,65 @@ const useLayerStore = create<LayerState>()(
           canRedo: historyManager.canRedo,
         });
       },
+
+      // ── persistence ──────────────────────────────────────────────────────
+
+      hydrating: false,
+
+      rehydrateFromStorage: async () => {
+        set({ hydrating: true });
+        try {
+          const layers = await loadLayersSnapshot();
+
+          if (!layers?.length) {
+            const freshLayer = initialDrawingLayer();
+            historyManager.clearAll();
+            set({
+              layers: [freshLayer],
+              drawingLayer: { ...freshLayer, version: generateUUID() },
+              canUndo: false,
+              canRedo: false,
+            });
+            return;
+          }
+
+          const lastLayer = layers[layers.length - 1];
+          historyManager.setInitial(layers);
+
+          set({
+            layers,
+            drawingLayer: { ...lastLayer, version: generateUUID() },
+            canUndo: historyManager.canUndo,
+            canRedo: historyManager.canRedo,
+          });
+        } finally {
+          set({ hydrating: false });
+        }
+      },
+
+      flushStorageNow: async () => {
+        await saveLayersSnapshotNow(get().layers);
+      },
+
+      clearStorage: async () => {
+        await clearLayersSnapshot();
+      },
     }),
     {
       name: 'drawing-layers-storage',
       partialize: (state) => ({
-        // layers: state.layers,
-        // drawingLayer: state.drawingLayer,
+        layersMeta: state.layers.map(
+          ({ id, name, order, opacity, visible, blendMode, filter }) => ({
+            id,
+            name,
+            order,
+            opacity,
+            visible,
+            blendMode,
+            filter,
+          })
+        ),
+        activeLayerId: state.drawingLayer?.id ?? null,
       }),
     }
   )

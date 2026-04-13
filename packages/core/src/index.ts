@@ -22,4 +22,8 @@ export interface DrawingProps {
 export { default as Drawing } from './Drawing';
 export { default as imageManager } from './utils/imageManager';
 export { useDrawingStore } from './store/useDrawing';
+export { default as useLayerStore } from './store/useLayer';
+export { setStorageProvider, getStorageProvider, setCurrentProject, getCurrentProject } from './local/indexDb';
+export type { StorageProvider, StorageLoadResult, ImageResource, SerializedLayer, SerializedFill } from './local/types';
+export { IndexedDBStorageProvider } from './local/indexedDBProvider';
 export { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload };

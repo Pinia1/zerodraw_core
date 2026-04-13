@@ -20,6 +20,7 @@ import {
   normalizeKonvaPointerEvent,
 } from '../input/normalizeKonvaPointerEvent';
 import type { NormalizedPointerEvent } from '../input/types';
+import { setCurrentProject } from '../local/indexDb';
 import { useDrawingStore } from '../store/useDrawing';
 import { useFillStore } from '../store/useFill';
 import useHitStore from '../store/useHit';
@@ -142,6 +143,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     pushHistory,
     getDrawingLayer,
     drawingLayerId,
+    hydrating,
+    rehydrateFromStorage,
+    flushStorageNow,
   } = useLayerStore(
     useShallow((state) => ({
       setDrawingLayer: state.setDrawingLayer,
@@ -151,6 +155,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       getDrawingLayer: state.getDrawingLayer,
       drawingLayerId: state.drawingLayer?.id,
       drawingVisible: state.drawingLayer?.visible,
+      hydrating: state.hydrating,
+      rehydrateFromStorage: state.rehydrateFromStorage,
+      flushStorageNow: state.flushStorageNow,
     }))
   );
 
@@ -465,9 +472,21 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   }, [stageDraggable, activeKey, drawingVisible]);
 
   useMount(() => {
+    setCurrentProject(useDrawingStore.getState().currentProjectId);
     init();
-    initHistory();
+    rehydrateFromStorage().then(() => {
+      initHistory();
+    });
   });
+
+  // 页面卸载前强制落盘
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      flushStorageNow();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [flushStorageNow]);
 
   useDrawingKeyboard({
     isDrawing,
@@ -1434,6 +1453,38 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     e.evt.preventDefault();
     setCursorVisible(false);
   });
+
+  if (hydrating) {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255,255,255,0.15)',
+          zIndex: 9999,
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              margin: '0 auto 12px',
+              border: '3px solid #e0e0e0',
+              borderTopColor: '#666',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+          <div style={{ color: '#666', fontSize: 14 }}>loading…</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
