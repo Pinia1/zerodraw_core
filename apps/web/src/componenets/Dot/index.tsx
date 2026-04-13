@@ -11,6 +11,7 @@ const DotContainer = styled(Flex)`
   font-size: 12px;
   align-items: center;
   user-select: none;
+  color: #fff;
 `;
 
 const Dot = () => {

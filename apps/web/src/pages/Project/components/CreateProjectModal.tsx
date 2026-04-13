@@ -2,7 +2,6 @@ import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import { Modal, message } from 'antd';
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
-import { httpUpload } from '../../../services/volc';
 
 const LONG_SIDE = 1920;
 
@@ -12,7 +11,7 @@ export interface RatioOption {
   h: number;
   width: number;
   height: number;
-  imageKey?: string;
+  imageFile?: File;
 }
 
 function makeOption(label: string, w: number, h: number): RatioOption {
@@ -176,9 +175,6 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
     setUploading(true);
     try {
       const { width: imgW, height: imgH, previewUrl } = await readImageFile(file);
-      const formData = new FormData();
-      formData.append('file', file);
-      const s3Key = await httpUpload(formData);
 
       const ratio = imgW / imgH;
       const isLandscape = ratio >= 1;
@@ -191,7 +187,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
         h: imgH,
         width: canvasW,
         height: canvasH,
-        imageKey: s3Key,
+        imageFile: file,
       };
       setImagePreview(previewUrl);
       setSelected(customOption);
@@ -213,7 +209,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
     onCancel();
   };
 
-  const isImageSelected = !!selected.imageKey;
+  const isImageSelected = !!imagePreview && selected.label === 'Custom';
 
   return (
     <>
@@ -307,7 +303,6 @@ function readImageFile(file: File): Promise<{ width: number; height: number; pre
     const img = new Image();
     img.onload = () => {
       resolve({ width: img.naturalWidth, height: img.naturalHeight, previewUrl: url });
-      URL.revokeObjectURL(url);
     };
     img.onerror = reject;
     img.src = url;

@@ -164,29 +164,31 @@ const Project: React.FC = () => {
   const projects: ProjectItem[] = listData?.list ?? [];
 
   // ── 新建项目 ──────────────────────────────────────────────────────────────
+  const pendingImageRef = useRef<File | undefined>();
   const { loading: creating, run: createProject } = useRequest(
-    (canvasWidth: number, canvasHeight: number, imageKey?: string) =>
+    (canvasWidth: number, canvasHeight: number) =>
       httpCreateProject({
         name: 'Untitled',
         canvasWidth,
         canvasHeight,
         backgroundColor: '#ffffff',
         backgroundVisible: false,
-        ...(imageKey ? { thumbnailKey: imageKey } : {}),
       }),
     {
       manual: true,
-      onSuccess: (data, params) => {
+      onSuccess: (data) => {
         setCreateModalOpen(false);
-        const imageKey = params[2] as string | undefined;
-        navigate(`/drawing?projectId=${data.id}`, imageKey ? { state: { imageKey } } : undefined);
+        const imageFile = pendingImageRef.current;
+        pendingImageRef.current = undefined;
+        navigate(`/drawing?projectId=${data.id}`, imageFile ? { state: { imageFile } } : undefined);
       },
       onError: () => message.error('Failed to create project'),
     }
   );
 
   const handleCreateConfirm = (option: RatioOption) => {
-    createProject(option.width, option.height, option.imageKey);
+    pendingImageRef.current = option.imageFile;
+    createProject(option.width, option.height);
   };
 
   // ── 重命名 ────────────────────────────────────────────────────────────────

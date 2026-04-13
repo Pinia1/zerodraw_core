@@ -1,7 +1,7 @@
 import { useRequest, useSize, useUpdateEffect } from '@zeroDraw/common';
 import { Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import { httpGetProject } from '../../services/project';
@@ -17,6 +17,8 @@ const DrawingPage = () => {
   const size = useSize(containerRef);
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
+  const location = useLocation();
+  const initialImageFile = (location.state as any)?.imageFile as File | undefined;
 
   const { currentProjectId, setCurrentProjectId, resetLayerConfig } = useDrawingStore(
     useShallow((s) => ({
@@ -63,6 +65,7 @@ const DrawingPage = () => {
           tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]}
           canvasWidth={project?.canvasWidth}
           canvasHeight={project?.canvasHeight}
+          initialImageFile={initialImageFile}
         />
       )}
     </Container>

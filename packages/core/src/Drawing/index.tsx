@@ -69,7 +69,7 @@ import Thumbnail from './components/Thumbnail';
 type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
 
 const Drawing: React.FC<DrawingProps> = (props) => {
-  const { size, tools = Tools.TOOL, canvasWidth, canvasHeight } = props;
+  const { size, tools = Tools.TOOL, canvasWidth, canvasHeight, initialImageFile } = props;
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
   const lassoStartRef = useRef<Point2D | null>(null);
@@ -471,10 +471,56 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     return 'default';
   }, [stageDraggable, activeKey, drawingVisible]);
 
+  const createInitialImageLayer = useMemoizedFn(async (file: File) => {
+    const blobUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.crossOrigin = 'Anonymous';
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+      img.onerror = () => resolve();
+      img.src = blobUrl;
+    });
+    if (!img.naturalWidth) return;
+
+    const { width: cw, height: ch } = useDrawingStore.getState().layerConfig;
+    const scale = Math.min(cw / img.naturalWidth, ch / img.naturalHeight, 1);
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+
+    const fillId = generateUUID();
+    const buffer = await file.arrayBuffer();
+    await imageManager.saveImage(fillId, buffer, file.type || 'image/png');
+
+    const fill: FillType = {
+      id: fillId,
+      x: (cw - w) / 2,
+      y: (ch - h) / 2,
+      width: w,
+      height: h,
+      img,
+      src: blobUrl,
+      maxWidth: img.naturalWidth,
+      maxHeight: img.naturalHeight,
+      visible: true,
+    };
+
+    const layer = useLayerStore.getState().layers[0];
+    const updated: Layers = {
+      ...layer,
+      image: fill,
+      diagrams: [{ id: fillId, type: 'image' }],
+    };
+    useLayerStore.getState().setLayers([updated]);
+    setDrawingLayer({ ...updated, version: generateUUID() });
+  });
+
   useMount(() => {
     setCurrentProject(useDrawingStore.getState().currentProjectId);
     init();
-    rehydrateFromStorage().then(() => {
+    rehydrateFromStorage().then(async () => {
+      if (initialImageFile && useLayerStore.getState().layers.length <= 1) {
+        await createInitialImageLayer(initialImageFile);
+      }
       initHistory();
     });
   });

@@ -17,6 +17,8 @@ export interface DrawingProps {
   tools: Tools[];
   canvasWidth?: number;
   canvasHeight?: number;
+  /** 新建项目时传入的初始图片文件，仅在无历史记录时自动创建为图层 */
+  initialImageFile?: File;
 }
 
 export { default as Drawing } from './Drawing';

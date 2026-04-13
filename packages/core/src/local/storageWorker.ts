@@ -339,7 +339,7 @@ export class StorageWorkerClient {
 
   loadCover(snapshotKey: string): Promise<WorkerCoverResult | null> {
     return this.send<WorkerCoverResult>('loadCover', { snapshotKey }).then((res) =>
-      res.buffer ? { buffer: res.buffer, mimeType: res.mimeType } : null,
+      res.buffer ? { buffer: res.buffer, mimeType: res.mimeType } : null
     );
   }
 

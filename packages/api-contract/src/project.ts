@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 // ─── Layer Content Schemas ────────────────────────────────────────────────────
-// 对应前端 Fill，去掉无法序列化的 HTMLImageElement
 const serializableFillSchema = z.object({
   id: z.string(),
   x: z.number(),
