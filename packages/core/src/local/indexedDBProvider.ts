@@ -71,6 +71,17 @@ export class IndexedDBStorageProvider implements StorageProvider {
     await directSave(layers, projectId);
   }
 
+  async saveCover(projectId: string, buffer: ArrayBuffer, mimeType: string): Promise<void> {
+    await this.client.saveCover(projectId, buffer, mimeType);
+  }
+
+  async loadCover(projectId: string): Promise<string | null> {
+    const result = await this.client.loadCover(projectId);
+    if (!result?.buffer) return null;
+    const blob = new Blob([result.buffer], { type: result.mimeType ?? 'image/webp' });
+    return URL.createObjectURL(blob);
+  }
+
   destroy(): void {
     this.client.destroy();
   }

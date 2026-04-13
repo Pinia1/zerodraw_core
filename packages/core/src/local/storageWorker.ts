@@ -28,8 +28,13 @@ var IMAGES_DB_NAME = 'drawing-image-db';
 var IMAGES_STORE   = 'images';
 var IMAGES_DB_VER  = 1;
 
+var COVERS_DB_NAME = 'drawing-covers-db';
+var COVERS_STORE   = 'covers';
+var COVERS_DB_VER  = 1;
+
 var layersDb = null;
 var imagesDb = null;
+var coversDb = null;
 
 function openDB(name, version, storeName, keyPath, indexName) {
   return new Promise(function (resolve, reject) {
@@ -56,6 +61,12 @@ function getImagesDB() {
   if (imagesDb) return Promise.resolve(imagesDb);
   return openDB(IMAGES_DB_NAME, IMAGES_DB_VER, IMAGES_STORE, 'id', 'createdAt')
     .then(function (db) { imagesDb = db; return db; });
+}
+
+function getCoversDB() {
+  if (coversDb) return Promise.resolve(coversDb);
+  return openDB(COVERS_DB_NAME, COVERS_DB_VER, COVERS_STORE, 'key', null)
+    .then(function (db) { coversDb = db; return db; });
 }
 
 /* ── save ─────────────────────────────────────────────────── */
@@ -152,6 +163,36 @@ function clearLayers(snapshotKey) {
   });
 }
 
+/* ── cover ────────────────────────────────────────────────── */
+
+function saveCover(projectKey, buffer, mimeType) {
+  return getCoversDB().then(function (db) {
+    return new Promise(function (resolve, reject) {
+      var tx    = db.transaction(COVERS_STORE, 'readwrite');
+      var store = tx.objectStore(COVERS_STORE);
+      store.put({ key: projectKey, buffer: buffer, mimeType: mimeType, savedAt: Date.now() });
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror    = function () { reject(tx.error); };
+      tx.onabort    = function () { reject(tx.error); };
+    });
+  });
+}
+
+function loadCover(projectKey) {
+  return getCoversDB().then(function (db) {
+    return new Promise(function (resolve, reject) {
+      var tx    = db.transaction(COVERS_STORE, 'readonly');
+      var store = tx.objectStore(COVERS_STORE);
+      var req   = store.get(projectKey);
+      req.onsuccess = function () {
+        var r = req.result;
+        resolve(r ? { buffer: r.buffer, mimeType: r.mimeType } : null);
+      };
+      req.onerror = function () { reject(req.error); };
+    });
+  });
+}
+
 /* ── message handler ──────────────────────────────────────── */
 
 onmessage = function (e) {
@@ -185,6 +226,22 @@ onmessage = function (e) {
         .then(function () { postMessage({ id: id, type: 'cleared' }); })
         .catch(fail);
       break;
+    case 'saveCover':
+      saveCover(snapshotKey, msg.buffer, msg.mimeType)
+        .then(function () { postMessage({ id: id, type: 'coverSaved' }); })
+        .catch(fail);
+      break;
+    case 'loadCover':
+      loadCover(snapshotKey)
+        .then(function (result) {
+          if (result) {
+            postMessage({ id: id, type: 'coverLoaded', buffer: result.buffer, mimeType: result.mimeType }, [result.buffer]);
+          } else {
+            postMessage({ id: id, type: 'coverLoaded', buffer: null, mimeType: null });
+          }
+        })
+        .catch(fail);
+      break;
     default:
       fail(new Error('Unknown type: ' + type));
   }
@@ -202,6 +259,11 @@ interface WorkerLoadResult {
   type: 'loaded';
   layers: SerializedLayer[] | null;
   images: Record<string, ImageBuffer>;
+}
+
+interface WorkerCoverResult {
+  buffer: ArrayBuffer | null;
+  mimeType: string | null;
 }
 
 // ─── 主线程客户端 ─────────────────────────────────────────────────────────────
@@ -269,6 +331,16 @@ export class StorageWorkerClient {
 
   clear(snapshotKey: string): Promise<void> {
     return this.send('clear', { snapshotKey });
+  }
+
+  saveCover(snapshotKey: string, buffer: ArrayBuffer, mimeType: string): Promise<void> {
+    return this.send('saveCover', { snapshotKey, buffer, mimeType });
+  }
+
+  loadCover(snapshotKey: string): Promise<WorkerCoverResult | null> {
+    return this.send<WorkerCoverResult>('loadCover', { snapshotKey }).then((res) =>
+      res.buffer ? { buffer: res.buffer, mimeType: res.mimeType } : null,
+    );
   }
 
   destroy(): void {

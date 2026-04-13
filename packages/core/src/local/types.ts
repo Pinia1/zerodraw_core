@@ -81,6 +81,22 @@ export interface StorageProvider {
    */
   saveImmediate?(layers: SerializedLayer[], projectId: string): Promise<void>;
 
+  /**
+   * 保存项目封面快照（可选）。
+   * 用于在项目列表中展示缩略图预览。
+   * @param projectId 项目标识
+   * @param buffer 图片二进制数据
+   * @param mimeType MIME 类型，如 'image/webp'
+   */
+  saveCover?(projectId: string, buffer: ArrayBuffer, mimeType: string): Promise<void>;
+
+  /**
+   * 加载项目封面快照（可选）。
+   * 返回 blob URL（调用方负责 revoke），无封面时返回 null。
+   * @param projectId 项目标识
+   */
+  loadCover?(projectId: string): Promise<string | null>;
+
   /** 释放资源（可选）。如 Worker、WebSocket 连接等。 */
   destroy?(): void;
 }

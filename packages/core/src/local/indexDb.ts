@@ -203,3 +203,28 @@ export async function loadLayersSnapshot(): Promise<Layers[] | null> {
 export async function clearLayersSnapshot(): Promise<void> {
   await _provider.clear(_currentProjectId);
 }
+
+// ─── Cover（项目封面快照） ───────────────────────────────────────────────────
+
+let coverTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * 防抖保存项目封面快照（2s），自动绑定当前 projectId。
+ * 由 Drawing 组件在图层变更时调用。
+ */
+export function saveStageCover(buffer: ArrayBuffer, mimeType = 'image/webp'): void {
+  const pid = _currentProjectId;
+  if (coverTimer !== null) clearTimeout(coverTimer);
+  coverTimer = setTimeout(() => {
+    _provider.saveCover?.(pid, buffer, mimeType).catch(console.error);
+    coverTimer = null;
+  }, 2000);
+}
+
+/**
+ * 加载指定项目的封面快照。
+ * 返回 blob URL（调用方使用后应 revoke），无封面时返回 null。
+ */
+export async function loadStageCover(projectId: string): Promise<string | null> {
+  return _provider.loadCover?.(projectId) ?? null;
+}

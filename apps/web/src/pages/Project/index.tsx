@@ -26,7 +26,8 @@ import {
   Tag,
   message,
 } from 'antd';
-import React, { useMemo, useRef, useState } from 'react';
+import { loadStageCover } from '@zeroDraw/core';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   httpCreateProject,
@@ -89,6 +90,35 @@ const menuTheme = {
       fontSize: 12.5,
     },
   },
+};
+
+// ─── 项目封面：服务端 thumbnailKey → 本地 IndexedDB fallback → 空占位 ────────
+const CoverImage: React.FC<{ item: ProjectItem }> = ({ item }) => {
+  const [localCover, setLocalCover] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (item.thumbnailKey) return;
+    let revoked = false;
+    loadStageCover(item.id).then((url) => {
+      if (!revoked && url) setLocalCover(url);
+    });
+    return () => {
+      revoked = true;
+      if (localCover) URL.revokeObjectURL(localCover);
+    };
+  }, [item.id, item.thumbnailKey]);
+
+  if (item.thumbnailKey) {
+    return <img src={`${apiUrl}${thumbnailUrl}/${item.thumbnailKey}`} alt={item.name} />;
+  }
+  if (localCover) {
+    return <img src={localCover} alt={item.name} />;
+  }
+  return (
+    <EmptyThumb>
+      <FileOutlined style={{ fontSize: 24, color: '#444' }} />
+    </EmptyThumb>
+  );
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -386,16 +416,7 @@ const Project: React.FC = () => {
                     }
                   >
                     <CardThumbnail $list={false}>
-                      {item.thumbnailKey ? (
-                        <img
-                          src={`${apiUrl}${thumbnailUrl}/${item.thumbnailKey}`}
-                          alt={item.name}
-                        />
-                      ) : (
-                        <EmptyThumb>
-                          <FileOutlined style={{ fontSize: 24, color: '#444' }} />
-                        </EmptyThumb>
-                      )}
+                      <CoverImage item={item} />
                     </CardThumbnail>
                     <CardInfo>
                       <CardInfoLeft>

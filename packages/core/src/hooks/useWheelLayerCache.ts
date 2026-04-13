@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { MOSIC_LAYER_ID } from '../Drawing/components/Mosic';
 import { THUMBNAIL_LAYER_ID } from '../Drawing/components/Thumbnail';
+import { saveStageCover } from '../local/indexDb';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useThumbnailStore from '../store/useThumbnail';
@@ -175,6 +176,8 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
         try {
           canvas.toBlob((blob) => {
             if (!blob) return;
+            // 复用同一份 blob 存为项目封面
+            blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
             const url = URL.createObjectURL(blob);
             const img = new Image();
             img.crossOrigin = 'Anonymous';
