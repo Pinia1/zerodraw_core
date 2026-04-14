@@ -2,6 +2,7 @@ export * from './generate';
 export * from './github';
 export * from './lib';
 export * from './nanobanana';
+export * from './payment';
 export * from './seedream';
 export * from './project';
 

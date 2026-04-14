@@ -1,13 +1,15 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 
 const DrawingPage = lazy(() => import('../pages/Drawing'));
-const FlowPage = lazy(() => import('../pages/Flow'));
 const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 const ProjectPage = lazy(() => import('../pages/Project'));
+const ListPage = lazy(() => import('../pages/List'));
+const PlanPage = lazy(() => import('../pages/Plan'));
+const PaymentResultPage = lazy(() => import('../pages/PaymentResult'));
 
 export const router = createBrowserRouter([
   {
@@ -15,26 +17,38 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       {
-        index: true,
-        element: (
-          <Suspense fallback={null}>
-            <FlowPage />
-          </Suspense>
-        ),
-      },
-    ],
-  },
-  {
-    path: '/project',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
         element: (
           <Suspense fallback={null}>
             <ProjectPage />
           </Suspense>
         ),
+        children: [
+          { index: true, element: <Navigate to="list" replace /> },
+          {
+            path: 'list',
+            element: (
+              <Suspense fallback={null}>
+                <ListPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'plan',
+            element: (
+              <Suspense fallback={null}>
+                <PlanPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'payment/result',
+            element: (
+              <Suspense fallback={null}>
+                <PaymentResultPage />
+              </Suspense>
+            ),
+          },
+        ],
       },
     ],
   },

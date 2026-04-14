@@ -30,6 +30,7 @@ import type { Point2D } from '../types/Drawing';
 import { Actions, EraserConfigTypes, GroupPos, LassoMode, LineConfigTypes } from '../types/Drawing';
 import type {
   Diagram,
+  DrawLayer as DrawLayerType,
   Ellipse as EllipseType,
   Fill as FillType,
   Lasso,
@@ -505,13 +506,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     };
 
     const layer = useLayerStore.getState().layers[0];
-    const updated: Layers = {
+    const updated: DrawLayerType = {
       ...layer,
       image: fill,
       diagrams: [{ id: fillId, type: 'image' }],
+      version: generateUUID(),
     };
     useLayerStore.getState().setLayers([updated]);
-    setDrawingLayer({ ...updated, version: generateUUID() });
+    setDrawingLayer(updated);
   });
 
   useMount(() => {
