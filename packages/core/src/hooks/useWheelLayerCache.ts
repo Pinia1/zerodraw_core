@@ -8,14 +8,12 @@ import { saveStageCover } from '../local/indexDb';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useThumbnailStore from '../store/useThumbnail';
-import { blendModeToCompositeOperation, layerFilterToCssFilter } from '../utils/BlendMode';
+import { exportStageWithBlendModes, layerFilterToCssFilter } from '../utils/BlendMode';
 import { WIDTH } from '../utils/drawing';
 import { isMobile } from '../utils/platform';
 
 const LAYER_PREVIEW_WIDTH = 620;
 const LAYER_PREVIEW_HEIGHT = 350;
-const SKIP_LAYER_IDS = new Set([THUMBNAIL_LAYER_ID, MOSIC_LAYER_ID]);
-
 type StageRef = React.RefObject<Konva.Stage> | null | undefined;
 
 export type UseWheelLayerCacheOptions = {
@@ -29,11 +27,10 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   const prevLayerVisibilityRef = useRef<Array<{ layer: Konva.Layer; visible: boolean }>>([]);
   const prevLayersLengthRef = useRef(0);
 
-  const { layerConfig, setThumbnail, stageConfig, imageLoadVersion } = useDrawingStore(
+  const { layerConfig, setThumbnail, imageLoadVersion } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
       setThumbnail: state.setThumbnail,
-      stageConfig: state.stageConfig,
       imageLoadVersion: state.imageLoadVersion,
     }))
   );
@@ -138,94 +135,39 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   });
 
   const getBitmapSync = useMemoizedFn(() => {
-    requestAnimationFrame(() => requestAnimationFrame(() => {
+    requestAnimationFrame(() => requestAnimationFrame(async () => {
       const stage = stageRef?.current;
-      if (!stage) return;
+      if (!stage || !layerConfig.width || !layerConfig.height) return;
 
-      const vx = layerConfig.x * stageConfig.scale + stageConfig.x;
-      const vy = layerConfig.y * stageConfig.scale + stageConfig.y;
-      const vw = layerConfig.width * stageConfig.scale;
-      const vh = layerConfig.height * stageConfig.scale;
-      if (!vw || !vh) return;
-
-      const pixelRatio = (WIDTH / Math.max(1, vw)) * (isMobile ? 0.2 : 0.4);
-      const outW = Math.max(1, Math.round(vw * pixelRatio));
-      const outH = Math.max(1, Math.round(vh * pixelRatio));
-
-      const stageW = stage.width();
-      const stageH = stage.height();
-      if (!stageW || !stageH) return;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = outW;
-      canvas.height = outH;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      const sortedStoreLayers = [...layers]
-        .filter((l) => l.visible !== false)
-        .sort((a, b) => a.order - b.order);
-
-      let hasBackdrop = false;
+      const thumbWidth = Math.round(WIDTH * (isMobile ? 0.2 : 0.4));
 
       try {
-        const allKonvaLayers = stage.getLayers();
+        const dataUrl = await exportStageWithBlendModes(stage, layers, {
+          applyStageTransform: false,
+          cropX: layerConfig.x,
+          cropY: layerConfig.y,
+          cropWidth: layerConfig.width,
+          cropHeight: layerConfig.height,
+          targetWidth: thumbWidth,
+          backgroundColor: layerConfig.backgroundVisible
+            ? layerConfig.backgroundColor
+            : 'transparent',
+          mimeType: 'image/webp',
+          quality: 0.8,
+        });
 
-        // 先绘制背景层（mosic）
-        if (layerConfig.backgroundVisible) {
-          const mosicKonva = allKonvaLayers.find((l) => l?.attrs?.id === MOSIC_LAYER_ID);
-          const mosicCanvas = (mosicKonva?.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
-          if (mosicCanvas?.width && mosicCanvas?.height) {
-            const pr = mosicCanvas.width / stageW;
-            ctx.drawImage(mosicCanvas, vx * pr, vy * pr, vw * pr, vh * pr, 0, 0, outW, outH);
-            hasBackdrop = true;
-          }
-        }
+        if (!dataUrl) return;
 
-        // 逐层合成用户图层，应用 filter + blendMode
-        for (let i = 0; i < sortedStoreLayers.length; i++) {
-          const layerData = sortedStoreLayers[i];
-          const konvaLayer = allKonvaLayers.find((l) => l?.attrs?.id === layerData.id);
-          if (!konvaLayer) continue;
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
 
-          const layerCanvas = (konvaLayer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
-          if (!layerCanvas?.width || !layerCanvas?.height) continue;
-
-          const pr = layerCanvas.width / stageW;
-          const sx = vx * pr;
-          const sy = vy * pr;
-          const sw = vw * pr;
-          const sh = vh * pr;
-
-          ctx.save();
-          const composite = !hasBackdrop && i === 0
-            ? 'source-over'
-            : blendModeToCompositeOperation(layerData.blendMode);
-          ctx.globalCompositeOperation = composite as GlobalCompositeOperation;
-          ctx.globalAlpha = 1;
-          ctx.filter = layerFilterToCssFilter(layerData.filter);
-
-          ctx.drawImage(layerCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
-          ctx.restore();
-        }
-
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
-          const url = URL.createObjectURL(blob);
-          const img = new Image();
-          img.crossOrigin = 'Anonymous';
-          img.onload = () => {
-            URL.revokeObjectURL(url);
-            setThumbnail(img);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-          };
-          img.src = url;
-        }, 'image/webp');
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => setThumbnail(img);
+        img.src = dataUrl;
       } catch {
-        // tainted canvas — ImageBitmap 来源的 canvas 无法导出，跳过本次缩略图更新
+        // tainted canvas
       }
     }));
   });
@@ -233,64 +175,72 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   const captureLayerThumbnails = useMemoizedFn((targetId?: string) => {
     requestAnimationFrame(() => {
       const stage = stageRef?.current;
-      if (!stage) return;
+      if (!stage || !layerConfig.width || !layerConfig.height) return;
 
-      const stageW = stage.width();
-      if (!stageW || !stage.height()) return;
+      const cropX = layerConfig.x;
+      const cropY = layerConfig.y;
+      const cropW = layerConfig.width;
+      const cropH = layerConfig.height;
 
-      const vx = layerConfig.x * stageConfig.scale + stageConfig.x;
-      const vy = layerConfig.y * stageConfig.scale + stageConfig.y;
-      const vw = layerConfig.width * stageConfig.scale;
-      const vh = layerConfig.height * stageConfig.scale;
-      if (!vw || !vh) return;
-
-      const konvaLayers = stage.getLayers().filter((konvaLayer) => {
-        const layerId = konvaLayer.attrs?.id as string | undefined;
-        if (!layerId || SKIP_LAYER_IDS.has(layerId)) return false;
-        if (!konvaLayer.visible()) return false;
-        if (targetId && layerId !== targetId) return false;
+      const targetLayers = layers.filter((l) => {
+        if (l.visible === false) return false;
+        if (targetId && l.id !== targetId) return false;
         return true;
       });
 
-      for (const konvaLayer of konvaLayers) {
-        const layerId = konvaLayer.attrs.id as string;
-        const canvasEl = (konvaLayer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
-        if (!canvasEl?.width || !canvasEl?.height) continue;
+      const stageLayers = stage.getLayers();
 
-        const pr = canvasEl.width / stageW;
-        const sx = vx * pr;
-        const sy = vy * pr;
-        const sw = vw * pr;
-        const sh = vh * pr;
-
-        const tmp = document.createElement('canvas');
-        tmp.width = LAYER_PREVIEW_WIDTH;
-        tmp.height = LAYER_PREVIEW_HEIGHT;
-        const ctx = tmp.getContext('2d');
-        if (!ctx) continue;
-
-        const scale = Math.min(LAYER_PREVIEW_WIDTH / sw, LAYER_PREVIEW_HEIGHT / sh);
-        const drawW = sw * scale;
-        const drawH = sh * scale;
-        const offsetX = (LAYER_PREVIEW_WIDTH - drawW) / 2;
-        const offsetY = (LAYER_PREVIEW_HEIGHT - drawH) / 2;
+      for (const layerData of targetLayers) {
+        const liveLayer = stageLayers.find((l) => l?.attrs?.id === layerData.id);
+        if (!liveLayer) continue;
 
         try {
-          const layerData = layers.find((l) => l.id === layerId);
-          if (layerData?.filter) {
-            const filterStr = layerFilterToCssFilter(layerData.filter);
-            if (filterStr !== 'none') {
-              ctx.filter = filterStr;
-            }
+          const offContainer = document.createElement('div');
+          const offW = Math.max(stage.width(), cropX + cropW);
+          const offH = Math.max(stage.height(), cropY + cropH);
+          const offStage = new Konva.Stage({ container: offContainer, width: offW, height: offH });
+          const cloned = liveLayer.clone({ listening: false });
+          offStage.add(cloned);
+          offStage.draw();
+
+          const clonedCanvas = (cloned.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+          if (!clonedCanvas?.width || !clonedCanvas?.height) {
+            offStage.destroy();
+            continue;
           }
 
-          ctx.drawImage(canvasEl, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
+          const pr = clonedCanvas.width / offW;
+          const sx = cropX * pr;
+          const sy = cropY * pr;
+          const sw = cropW * pr;
+          const sh = cropH * pr;
+
+          const tmp = document.createElement('canvas');
+          tmp.width = LAYER_PREVIEW_WIDTH;
+          tmp.height = LAYER_PREVIEW_HEIGHT;
+          const ctx = tmp.getContext('2d');
+          if (!ctx) { offStage.destroy(); continue; }
+
+          const scale = Math.min(LAYER_PREVIEW_WIDTH / sw, LAYER_PREVIEW_HEIGHT / sh);
+          const drawW = sw * scale;
+          const drawH = sh * scale;
+          const offsetX = (LAYER_PREVIEW_WIDTH - drawW) / 2;
+          const offsetY = (LAYER_PREVIEW_HEIGHT - drawH) / 2;
+
+          const filterStr = layerFilterToCssFilter(layerData.filter);
+          if (filterStr !== 'none') {
+            ctx.filter = filterStr;
+          }
+
+          ctx.drawImage(clonedCanvas, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
+          offStage.destroy();
+
           tmp.toBlob((blob) => {
             if (!blob) return;
-            setLayerThumbnail(layerId, URL.createObjectURL(blob));
+            setLayerThumbnail(layerData.id, URL.createObjectURL(blob));
           }, 'image/webp');
         } catch {
-          // tainted canvas，跳过该图层缩略图
+          // tainted canvas
         }
       }
     });

@@ -181,8 +181,8 @@ export const exportStageWithBlendModes = async (
   // 注意：每个 Konva.Layer 的内部 canvas 尺寸跟 Stage 尺寸一致。
   // 你的业务里图层内容是以 `layerConfig.x/y` 偏移放在“视口 stage”中间的，所以离屏 stage 必须跟原 stage 同尺寸，
   // 否则 layerCanvas 的裁剪 (x,y,width,height) 会失效或错位。
-  const viewportW = stage.width();
-  const viewportH = stage.height();
+  const viewportW = Math.max(stage.width(), srcX + srcW);
+  const viewportH = Math.max(stage.height(), srcY + srcH);
   const offscreenStage = new Konva.Stage({
     container: offscreenContainer,
     width: viewportW,
