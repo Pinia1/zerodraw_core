@@ -8,6 +8,7 @@ import { saveStageCover } from '../local/indexDb';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
 import useThumbnailStore from '../store/useThumbnail';
+import { blendModeToCompositeOperation, layerFilterToCssFilter } from '../utils/BlendMode';
 import { WIDTH } from '../utils/drawing';
 import { isMobile } from '../utils/platform';
 
@@ -141,66 +142,90 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
       const stage = stageRef?.current;
       if (!stage) return;
 
-      const mosicLayer = stage.findOne(`#${MOSIC_LAYER_ID}`) as any;
-      const thumbnailLayer = stage.findOne(`#${THUMBNAIL_LAYER_ID}`) as any;
+      const vx = layerConfig.x * stageConfig.scale + stageConfig.x;
+      const vy = layerConfig.y * stageConfig.scale + stageConfig.y;
+      const vw = layerConfig.width * stageConfig.scale;
+      const vh = layerConfig.height * stageConfig.scale;
+      if (!vw || !vh) return;
 
-      const prevMosicVisible = mosicLayer?.visible?.();
-      const prevThumbVisible = thumbnailLayer?.visible?.();
+      const pixelRatio = (WIDTH / Math.max(1, vw)) * (isMobile ? 0.2 : 0.4);
+      const outW = Math.max(1, Math.round(vw * pixelRatio));
+      const outH = Math.max(1, Math.round(vh * pixelRatio));
+
+      const stageW = stage.width();
+      const stageH = stage.height();
+      if (!stageW || !stageH) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = outW;
+      canvas.height = outH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const sortedStoreLayers = [...layers]
+        .filter((l) => l.visible !== false)
+        .sort((a, b) => a.order - b.order);
+
+      let hasBackdrop = false;
 
       try {
-        thumbnailLayer?.visible?.(false);
+        const allKonvaLayers = stage.getLayers();
 
-        if (!layerConfig.backgroundVisible) {
-          mosicLayer?.visible?.(false);
+        // 先绘制背景层（mosic）
+        if (layerConfig.backgroundVisible) {
+          const mosicKonva = allKonvaLayers.find((l) => l?.attrs?.id === MOSIC_LAYER_ID);
+          const mosicCanvas = (mosicKonva?.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+          if (mosicCanvas?.width && mosicCanvas?.height) {
+            const pr = mosicCanvas.width / stageW;
+            ctx.drawImage(mosicCanvas, vx * pr, vy * pr, vw * pr, vh * pr, 0, 0, outW, outH);
+            hasBackdrop = true;
+          }
         }
 
-        const x = layerConfig.x * stageConfig.scale + stageConfig.x;
-        const y = layerConfig.y * stageConfig.scale + stageConfig.y;
-        const width = layerConfig.width * stageConfig.scale;
-        const height = layerConfig.height * stageConfig.scale;
+        // 逐层合成用户图层，应用 filter + blendMode
+        for (let i = 0; i < sortedStoreLayers.length; i++) {
+          const layerData = sortedStoreLayers[i];
+          const konvaLayer = allKonvaLayers.find((l) => l?.attrs?.id === layerData.id);
+          if (!konvaLayer) continue;
 
-        const pixelRatio = (WIDTH / Math.max(1, width)) * (isMobile ? 0.2 : 0.4);
+          const layerCanvas = (konvaLayer.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+          if (!layerCanvas?.width || !layerCanvas?.height) continue;
 
-        let canvas: HTMLCanvasElement;
-        try {
-          canvas = stage.toCanvas({
-            x,
-            y,
-            width,
-            height,
-            pixelRatio,
-          }) as HTMLCanvasElement;
-        } catch {
-          return;
+          const pr = layerCanvas.width / stageW;
+          const sx = vx * pr;
+          const sy = vy * pr;
+          const sw = vw * pr;
+          const sh = vh * pr;
+
+          ctx.save();
+          const composite = !hasBackdrop && i === 0
+            ? 'source-over'
+            : blendModeToCompositeOperation(layerData.blendMode);
+          ctx.globalCompositeOperation = composite as GlobalCompositeOperation;
+          ctx.globalAlpha = 1;
+          ctx.filter = layerFilterToCssFilter(layerData.filter);
+
+          ctx.drawImage(layerCanvas, sx, sy, sw, sh, 0, 0, outW, outH);
+          ctx.restore();
         }
 
-        try {
-          canvas.toBlob((blob) => {
-            if (!blob) return;
-            // 复用同一份 blob 存为项目封面
-            blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
-            const url = URL.createObjectURL(blob);
-            const img = new Image();
-            img.crossOrigin = 'Anonymous';
-            img.onload = () => {
-              URL.revokeObjectURL(url);
-              setThumbnail(img);
-            };
-            img.onerror = () => {
-              URL.revokeObjectURL(url);
-            };
-            img.src = url;
-          }, 'image/webp');
-        } catch {
-          // tainted canvas — ImageBitmap 来源的 canvas 无法导出，跳过本次缩略图更新
-        }
-      } finally {
-        if (thumbnailLayer && typeof prevThumbVisible === 'boolean') {
-          thumbnailLayer.visible(prevThumbVisible);
-        }
-        if (mosicLayer && typeof prevMosicVisible === 'boolean') {
-          mosicLayer.visible(prevMosicVisible);
-        }
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
+          const url = URL.createObjectURL(blob);
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            setThumbnail(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        }, 'image/webp');
+      } catch {
+        // tainted canvas — ImageBitmap 来源的 canvas 无法导出，跳过本次缩略图更新
       }
     }));
   });
@@ -251,6 +276,14 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
         const offsetY = (LAYER_PREVIEW_HEIGHT - drawH) / 2;
 
         try {
+          const layerData = layers.find((l) => l.id === layerId);
+          if (layerData?.filter) {
+            const filterStr = layerFilterToCssFilter(layerData.filter);
+            if (filterStr !== 'none') {
+              ctx.filter = filterStr;
+            }
+          }
+
           ctx.drawImage(canvasEl, sx, sy, sw, sh, offsetX, offsetY, drawW, drawH);
           tmp.toBlob((blob) => {
             if (!blob) return;
