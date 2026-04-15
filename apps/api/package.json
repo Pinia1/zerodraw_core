@@ -23,7 +23,6 @@
     "@volcengine/tos-sdk": "^2.9.0",
     "@zeroDraw/api-contract": "workspace:*",
     "@zeroDraw/db": "workspace:*",
-    "alipay-sdk": "^4.14.0",
     "bullmq": "^5.67.3",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.4",

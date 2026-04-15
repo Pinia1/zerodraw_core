@@ -1,0 +1,15 @@
+{
+  "name": "@zeroDraw/docs",
+  "private": true,
+  "scripts": {
+    "dev": "dumi dev",
+    "build": "dumi build",
+    "preview": "dumi preview"
+  },
+  "dependencies": {
+    "@zeroDraw/core": "workspace:*"
+  },
+  "devDependencies": {
+    "dumi": "^2.4.0"
+  }
+}

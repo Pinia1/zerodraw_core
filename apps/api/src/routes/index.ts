@@ -3,7 +3,7 @@ import { generateRoutes } from '../modules/AIGenerate';
 import { authRoutes } from '../modules/Auth/auth.routes';
 import { fileRoutes } from '../modules/File';
 import { libRoutes } from '../modules/Lib';
-import { paymentRoutes } from '../modules/Payment/payment.routes';
+
 import { projectRoutes } from '../modules/Project';
 import { createSuccessResponse } from '../types/response';
 
@@ -27,9 +27,6 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   await app.register(libRoutes, {
     prefix: '/api/lib',
-  });
-  await app.register(paymentRoutes, {
-    prefix: '/api/payment',
   });
   await app.register(projectRoutes, {
     prefix: '/api/project',

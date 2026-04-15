@@ -23,6 +23,12 @@ export default defineConfig(({ mode }) => {
       fs: {
         allow: [path.resolve(__dirname, '../..')],
       },
+      proxy: {
+        '/docs': {
+          target: 'http://localhost:8001',
+          changeOrigin: true,
+        },
+      },
     },
     optimizeDeps: {
       exclude: ['@zeroDraw/core', '@zeroDraw/common'],

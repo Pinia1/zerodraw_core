@@ -71,13 +71,16 @@ const Project: React.FC = () => {
   const bottomMenuItems = useMemo<MenuProps['items']>(
     () => [
       { key: 'trash', icon: <DeleteOutlined />, label: 'Trash' },
-      { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help & feedback' },
+      { key: 'docs', icon: <QuestionCircleOutlined />, label: 'Docs' },
     ],
     []
   );
 
   const handleMenuSelect = ({ key }: { key: string }) => {
-    if (key === 'help') return;
+    if (key === 'docs') {
+      window.open('/docs', '_blank');
+      return;
+    }
     if (key === 'trash') {
       navigate('/list?view=trash');
       return;

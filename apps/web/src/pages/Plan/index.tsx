@@ -1,9 +1,7 @@
 import { CheckOutlined } from '@ant-design/icons';
-import type { PlanKey } from '@zeroDraw/api-contract';
-import { Button, message } from 'antd';
+import { Button } from 'antd';
 import React, { useState } from 'react';
 import styled, { css } from 'styled-components';
-import { httpCreateOrder } from '../../services/payment';
 import { MainHeader, PageTitle, ScrollArea } from '../Project/components';
 
 interface PlanOption {
@@ -197,20 +195,6 @@ const Plan: React.FC = () => {
   const [subtitle] = useState(pickLine);
   const [footer] = useState(() => pick(footerLines));
   const [plans] = useState(buildPlans);
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleSubscribe = async (planKey: string) => {
-    if (planKey === 'free') return;
-    setLoading(planKey);
-    try {
-      const { payUrl } = await httpCreateOrder({ planKey: planKey as PlanKey });
-      window.location.href = payUrl;
-    } catch {
-      message.error('创建订单失败，请稍后重试');
-    } finally {
-      setLoading(null);
-    }
-  };
 
   return (
     <>
@@ -255,12 +239,7 @@ const Plan: React.FC = () => {
                     </FeatureList>
                     <ActionBtn
                       $accent={plan.accent}
-                      disabled={plan.key === 'free'}
-                      loading={loading === plan.key}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSubscribe(plan.key);
-                      }}
+                      disabled
                     >
                       {plan.buttonText}
                     </ActionBtn>

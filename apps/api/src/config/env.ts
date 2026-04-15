@@ -37,11 +37,6 @@ const envSchema = z.object({
   REDIS_DB: z.string().transform(Number).default('0'),
 
   NANOBANANA_API_KEY: z.string(),
-
-  ALIPAY_APP_ID: z.string().default(''),
-  ALIPAY_PRIVATE_KEY: z.string().default(''),
-  ALIPAY_PUBLIC_KEY: z.string().default(''),
-  ALIPAY_NOTIFY_URL: z.string().default(''),
 });
 
 function validateEnv() {

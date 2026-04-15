@@ -9,7 +9,6 @@ const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 const ProjectPage = lazy(() => import('../pages/Project'));
 const ListPage = lazy(() => import('../pages/List'));
 const PlanPage = lazy(() => import('../pages/Plan'));
-const PaymentResultPage = lazy(() => import('../pages/PaymentResult'));
 
 export const router = createBrowserRouter([
   {
@@ -37,14 +36,6 @@ export const router = createBrowserRouter([
             element: (
               <Suspense fallback={null}>
                 <PlanPage />
-              </Suspense>
-            ),
-          },
-          {
-            path: 'payment/result',
-            element: (
-              <Suspense fallback={null}>
-                <PaymentResultPage />
               </Suspense>
             ),
           },
