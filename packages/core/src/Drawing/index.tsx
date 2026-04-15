@@ -52,6 +52,7 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
+import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import {
   buildEllipseLassoPoints,
   buildRectLassoPoints,
@@ -73,6 +74,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const { size, tools = Tools.TOOL, canvasWidth, canvasHeight, initialImageFile } = props;
   const stageRef = useBindStageRef();
   const isDrawing = useRef<boolean>(false);
+  const shiftAnchorRef = useRef<{ idx: number } | null>(null);
   const lassoStartRef = useRef<Point2D | null>(null);
   const activeDiagramRef = useRef<ActiveDiagramRef | null>(null);
 
@@ -299,6 +301,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const pushDrawingHistory = () => {
     isDrawing.current = false;
+    shiftAnchorRef.current = null;
 
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
@@ -908,11 +911,35 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const lastLine = activeDiagramRef.current?.activeDiagram?.props as unknown as Line;
     if (!lastLine) return;
 
-    const updatedLine: Line = {
-      ...lastLine,
-      points: [...lastLine.points, input.canvasPoint.x, input.canvasPoint.y],
-      pressure: [...lastLine.pressure, input.pressure || 0],
-    };
+    let updatedLine: Line;
+    if (input.shiftKey && lastLine.points.length >= 2) {
+      if (!shiftAnchorRef.current) {
+        shiftAnchorRef.current = { idx: lastLine.points.length - 2 };
+      }
+      const anchorIdx = shiftAnchorRef.current.idx;
+      const snapped = snapPointTo45(
+        lastLine.points[anchorIdx],
+        lastLine.points[anchorIdx + 1],
+        input.canvasPoint.x,
+        input.canvasPoint.y
+      );
+      const { points, pressure } = buildShiftLine(
+        lastLine.points,
+        lastLine.pressure,
+        anchorIdx,
+        snapped.x,
+        snapped.y,
+        input.pressure || 0
+      );
+      updatedLine = { ...lastLine, points, pressure };
+    } else {
+      shiftAnchorRef.current = null;
+      updatedLine = {
+        ...lastLine,
+        points: [...lastLine.points, input.canvasPoint.x, input.canvasPoint.y],
+        pressure: [...lastLine.pressure, input.pressure || 0],
+      };
+    }
 
     if (activeKey === Actions.ERASER) {
       const drawingLayer = getDrawingLayer();
