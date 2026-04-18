@@ -1,6 +1,6 @@
 ﻿import { DeleteOutlined, FileOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { ConfigProvider, Menu, Tag } from 'antd';
+import { ConfigProvider, Menu } from 'antd';
 import React, { useMemo } from 'react';
 import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserStore } from '../../store/useUserStore';
@@ -92,7 +92,7 @@ const Project: React.FC = () => {
               <WorkspaceAvatar>{user?.username?.charAt(0)?.toUpperCase() ?? 'C'}</WorkspaceAvatar>
               <WorkspaceInfo>
                 <WorkspaceName>{workspaceName}</WorkspaceName>
-                <Tag
+                {/* <Tag
                   style={{
                     fontSize: 10,
                     padding: '0 5px',
@@ -105,7 +105,7 @@ const Project: React.FC = () => {
                   }}
                 >
                   Free plan
-                </Tag>
+                </Tag> */}
               </WorkspaceInfo>
             </WorkspaceHeader>
 
