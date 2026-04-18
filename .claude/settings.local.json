@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /d/code/zeroDraw/*.json)",
+      "WebSearch",
+      "WebFetch(domain:docs.cursor.com)"
+    ]
+  }
+}
