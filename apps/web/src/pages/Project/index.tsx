@@ -1,9 +1,4 @@
-﻿import {
-  BookOutlined,
-  DeleteOutlined,
-  FileOutlined,
-  QuestionCircleOutlined,
-} from '@ant-design/icons';
+﻿import { DeleteOutlined, FileOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { ConfigProvider, Menu, Tag } from 'antd';
 import React, { useMemo } from 'react';
@@ -63,7 +58,7 @@ const Project: React.FC = () => {
   const topMenuItems = useMemo<MenuProps['items']>(
     () => [
       { key: 'list', icon: <FileOutlined />, label: 'Projects' },
-      { key: 'plan', icon: <BookOutlined />, label: 'Plan' },
+      // { key: 'plan', icon: <BookOutlined />, label: 'Plan' },
     ],
     []
   );
