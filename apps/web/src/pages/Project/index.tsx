@@ -1,4 +1,4 @@
-﻿import { DeleteOutlined, FileOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+﻿import { DeleteOutlined, FileOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { ConfigProvider, Menu, Tag } from 'antd';
 import React, { useMemo } from 'react';
@@ -66,7 +66,7 @@ const Project: React.FC = () => {
   const bottomMenuItems = useMemo<MenuProps['items']>(
     () => [
       { key: 'trash', icon: <DeleteOutlined />, label: 'Trash' },
-      { key: 'docs', icon: <QuestionCircleOutlined />, label: 'Docs' },
+      // { key: 'docs', icon: <QuestionCircleOutlined />, label: 'Docs' },
     ],
     []
   );
