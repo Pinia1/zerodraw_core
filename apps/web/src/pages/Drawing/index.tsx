@@ -1,6 +1,7 @@
-import { useRequest, useSize, useUpdateEffect } from '@zeroDraw/common';
+import { useMediaQuery, useRequest, useSize, useUpdateEffect } from '@zeroDraw/common';
 import { Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
-import { useEffect, useRef, useState } from 'react';
+import { ConfigProvider, theme } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
@@ -19,7 +20,7 @@ const DrawingPage = () => {
   const projectId = searchParams.get('projectId');
   const location = useLocation();
   const initialImageFile = (location.state as any)?.imageFile as File | undefined;
-
+  const [windowTheme] = useMediaQuery();
   const { currentProjectId, setCurrentProjectId, resetLayerConfig } = useDrawingStore(
     useShallow((s) => ({
       currentProjectId: s.currentProjectId,
@@ -54,21 +55,36 @@ const DrawingPage = () => {
     setReadyToRender(true);
   }, [project, projectId]);
 
+  const algorithm = useMemo(() => {
+    return windowTheme === 'dark' ? theme.darkAlgorithm : theme.compactAlgorithm;
+  }, [windowTheme]);
+
   const ready = size && readyToRender;
 
   return (
-    <Container ref={containerRef}>
-      {ready && (
-        <Drawing
-          key={projectId ?? 'default'}
-          size={size!}
-          tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]}
-          canvasWidth={project?.canvasWidth}
-          canvasHeight={project?.canvasHeight}
-          initialImageFile={initialImageFile}
-        />
-      )}
-    </Container>
+    <ConfigProvider
+      theme={{
+        algorithm: [algorithm, theme.compactAlgorithm],
+      }}
+    >
+      <Container
+        style={{
+          background: windowTheme === 'dark' ? '#000' : '#fff',
+        }}
+        ref={containerRef}
+      >
+        {ready && (
+          <Drawing
+            key={projectId ?? 'default'}
+            size={size!}
+            tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]}
+            canvasWidth={project?.canvasWidth}
+            canvasHeight={project?.canvasHeight}
+            initialImageFile={initialImageFile}
+          />
+        )}
+      </Container>
+    </ConfigProvider>
   );
 };
 

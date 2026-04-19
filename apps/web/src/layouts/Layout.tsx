@@ -8,7 +8,7 @@ import { getUserInfo } from '../services/login';
 import { useUserStore } from '../store/useUserStore';
 import Aside from './components/Aside';
 
-const Root = styled.div<{ $theme: any }>`
+export const Root = styled.div<{ $theme: any }>`
   width: 100%;
   min-height: 100vh;
   background: ${({ $theme }) => ($theme === 'dark' ? '#000' : '#fff')};

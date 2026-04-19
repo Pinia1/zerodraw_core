@@ -35,17 +35,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/drawing',
-    element: <Layout />,
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={null}>
-            <DrawingPage />
-          </Suspense>
-        ),
-      },
-    ],
+    element: (
+      <Suspense fallback={null}>
+        <DrawingPage />
+      </Suspense>
+    ),
   },
   {
     path: 'login',
