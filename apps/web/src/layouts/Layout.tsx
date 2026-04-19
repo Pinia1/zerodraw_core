@@ -1,16 +1,26 @@
 import { useMediaQuery, useRequest } from '@zeroDraw/common';
-import { ConfigProvider, Skeleton, theme } from 'antd';
+import { Layout as AntdLayout, ConfigProvider, Skeleton, theme } from 'antd';
 import { useMemo } from 'react';
 import { Outlet } from 'react-router-dom';
 import styled from 'styled-components';
 import Dot from '../componenets/Dot';
 import { getUserInfo } from '../services/login';
 import { useUserStore } from '../store/useUserStore';
+import Aside from './components/Aside';
 
 const Root = styled.div<{ $theme: any }>`
   width: 100%;
   min-height: 100vh;
   background: ${({ $theme }) => ($theme === 'dark' ? '#000' : '#fff')};
+`;
+
+const Main = styled(AntdLayout.Content)`
+  && {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #111;
+  }
 `;
 
 function Layout() {
@@ -30,15 +40,15 @@ function Layout() {
 
   if (loading) {
     return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          padding: '20px',
+      <ConfigProvider
+        theme={{
+          algorithm: [algorithm, theme.compactAlgorithm],
         }}
       >
-        <Skeleton active />
-      </div>
+        <Root $theme={windowTheme} style={{ padding: '20px' }}>
+          <Skeleton active />
+        </Root>
+      </ConfigProvider>
     );
   }
 
@@ -48,8 +58,13 @@ function Layout() {
         algorithm: [algorithm, theme.compactAlgorithm],
       }}
     >
-      <Root $theme={windowTheme}>
-        <Outlet />
+      <Root style={{ display: 'flex' }} $theme={windowTheme}>
+        <Aside />
+
+        <Main>
+          <Outlet />
+        </Main>
+
         <Dot />
       </Root>
     </ConfigProvider>

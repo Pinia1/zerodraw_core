@@ -1,5 +1,6 @@
 import { githubClientId } from '@/utils';
 import { GithubOutlined, LoadingOutlined } from '@ant-design/icons';
+import { useUnmount } from '@zeroDraw/common';
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
@@ -133,8 +134,6 @@ const Footer = styled.span`
   margin-top: 4px;
 `;
 
-/* ---- component ---- */
-
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const { user } = useUserStore();
@@ -147,6 +146,10 @@ const Login = () => {
     window.open(url, '_self');
     setLoading(true);
   };
+
+  useUnmount(() => setLoading(false));
+
+  const time = new Date().getFullYear();
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -165,7 +168,7 @@ const Login = () => {
           {loading ? <LoadingOutlined /> : <GithubOutlined />}
           {loading ? 'Redirecting...' : 'Continue with GitHub'}
         </GithubButton>
-        <Footer>&copy; {new Date().getFullYear()} ZeroDraw</Footer>
+        <Footer>&copy; {time} ZeroDraw</Footer>
       </Card>
     </Page>
   );

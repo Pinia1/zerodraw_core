@@ -7,7 +7,6 @@ const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 const ProjectPage = lazy(() => import('../pages/Project'));
-const ListPage = lazy(() => import('../pages/List'));
 const PlanPage = lazy(() => import('../pages/Plan'));
 
 export const router = createBrowserRouter([
@@ -15,31 +14,22 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Layout />,
     children: [
+      { index: true, element: <Navigate to="projects" replace /> },
       {
+        path: 'projects',
         element: (
           <Suspense fallback={null}>
             <ProjectPage />
           </Suspense>
         ),
-        children: [
-          { index: true, element: <Navigate to="list" replace /> },
-          {
-            path: 'list',
-            element: (
-              <Suspense fallback={null}>
-                <ListPage />
-              </Suspense>
-            ),
-          },
-          {
-            path: 'plan',
-            element: (
-              <Suspense fallback={null}>
-                <PlanPage />
-              </Suspense>
-            ),
-          },
-        ],
+      },
+      {
+        path: 'plan',
+        element: (
+          <Suspense fallback={null}>
+            <PlanPage />
+          </Suspense>
+        ),
       },
     ],
   },
