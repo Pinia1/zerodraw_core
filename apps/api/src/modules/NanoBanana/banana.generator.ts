@@ -37,21 +37,24 @@ export class BananaGenerator extends AIGenerator {
     };
   }
 
-  /** 轮询获取生成结果 */
-  private async pollResult(taskId: string, maxAttempts = 120, interval = 5000): Promise<string> {
-    for (let i = 0; i < maxAttempts; i++) {
-      const result = await bananaService.getResult(taskId);
+  /** 轮询获取生成结果，3分钟超时 */
+  private async pollResult(taskId: string, timeout = 3 * 60 * 1000, interval = 5000): Promise<string> {
+    const deadline = Date.now() + timeout;
 
-      if (result.code !== 0) {
-        throw new Error(`Failed to get result (code: ${result.code}): ${result.msg}`);
-      }
+    while (Date.now() < deadline) {
+      try {
+        const result = await bananaService.getResult(taskId);
 
-      if (result.data.status === 'succeeded') {
-        return result.data.results?.[0]?.url || '';
-      }
-
-      if (result.data.status === 'failed') {
-        throw new Error('Banana generation failed');
+        if (result.code === 0) {
+          if (result.data.status === 'succeeded') {
+            return result.data.results?.[0]?.url || '';
+          }
+          if (result.data.status === 'failed') {
+            throw new Error('Banana generation failed');
+          }
+        }
+      } catch (err: any) {
+        if (err.message === 'Banana generation failed') throw err;
       }
 
       await new Promise((resolve) => setTimeout(resolve, interval));

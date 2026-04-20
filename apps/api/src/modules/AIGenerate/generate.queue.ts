@@ -111,10 +111,7 @@ class GenerateQueue {
     logger.error(`[Worker] Task ${taskId} failed (attempt ${job.attemptsMade})`, err);
 
     if (isFinalAttempt) {
-      await db
-        .update(aiTask)
-        .set({ status: 'failed', error: err.message || 'Unknown error' })
-        .where(eq(aiTask.id, taskId));
+      await generateRepository.updateById(taskId, { status: 'failed', error: err.message || 'Unknown error' });
 
       logger.error(`[Worker] Task ${taskId} permanently failed`, err);
     }

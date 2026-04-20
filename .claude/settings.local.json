@@ -6,7 +6,8 @@
       "WebFetch(domain:docs.cursor.com)",
       "Bash(pnpm add *)",
       "WebFetch(domain:developers.cloudflare.com)",
-      "Bash(mysql *)"
+      "Bash(mysql *)",
+      "Bash(curl *)"
     ]
   }
 }
