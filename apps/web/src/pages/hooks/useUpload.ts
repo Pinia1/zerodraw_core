@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { httpUpload } from '../../services/volc';
+import { httpUploadToR2 } from '../../services/r2';
 
 interface UploadResult {
   s3Key: string;
@@ -60,9 +60,7 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
             Array.from(files).map(async (file) => {
               try {
                 const { width, height } = await getImageSize(file);
-                const formData = new FormData();
-                formData.append('file', file);
-                const data = await httpUpload(formData);
+                const data = await httpUploadToR2(file);
 
                 onSuccess?.({
                   s3Key: data,

@@ -1,6 +1,6 @@
 import useCtrlKeydown from '@/pages/hooks/useCtrlKeydown';
 import { httpDeleteLibOutput, httpGetLibOutputs } from '@/services/generate';
-import { apiUrl, fileUrl } from '@/utils';
+import { getR2Url } from '@/utils';
 import type { NodeProps } from '@xyflow/react';
 import { useInfiniteScroll, useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Container } from '@zeroDraw/core';
@@ -132,7 +132,7 @@ const Lib: React.FC<NodeProps<LibNode>> = ({ selected }) => {
         </Content>
 
         <Image.PreviewGroup
-          items={items.map((item) => `${apiUrl}${fileUrl}/${item.data.s3Key}`)}
+          items={items.map((item) => getR2Url(item.data.s3Key))}
           preview={{
             visible: previewVisibleIndex !== null,
             current: previewVisibleIndex ?? 0,

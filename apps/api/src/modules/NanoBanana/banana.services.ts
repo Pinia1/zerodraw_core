@@ -2,6 +2,9 @@ import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import { env } from '../../config/env';
 import { volcService } from '../Volc/volc.services';
 
+const resolveImageUrl = (key: string) =>
+  key.startsWith('$') ? `${env.R2_PUBLIC_URL}/${key}` : volcService.getSignedUrl(key);
+
 export interface BananaGenerateResponse {
   code: number;
   msg: string;
@@ -32,7 +35,7 @@ class BananaService {
   async generate(params: NanobananaGenerateParams): Promise<BananaGenerateResponse> {
     const { model, prompt, aspectRatio, imageSize } = params.args;
 
-    const imageUrls = params.s3Key?.map((key) => volcService.getSignedUrl(key));
+    const imageUrls = params.s3Key?.map(resolveImageUrl);
 
     const response = await fetch(`${this.BASE_URL}/v1/draw/nano-banana`, {
       method: 'POST',

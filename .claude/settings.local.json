@@ -3,7 +3,10 @@
     "allow": [
       "Bash(ls /d/code/zeroDraw/*.json)",
       "WebSearch",
-      "WebFetch(domain:docs.cursor.com)"
+      "WebFetch(domain:docs.cursor.com)",
+      "Bash(pnpm add *)",
+      "WebFetch(domain:developers.cloudflare.com)",
+      "Bash(mysql *)"
     ]
   }
 }

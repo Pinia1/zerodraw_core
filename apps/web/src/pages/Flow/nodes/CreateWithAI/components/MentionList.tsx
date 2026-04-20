@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import styled from 'styled-components';
-import { apiUrl, thumbnailUrl } from '../../../../../utils';
+import { getR2ThumbnailUrl } from '../../../../../utils';
 
 export interface MentionItem {
   id: string;
@@ -63,7 +63,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(({ items, comma
         >
           <Thumbnail>
             {item.s3Key ? (
-              <img src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`} alt={item.label} />
+              <img src={getR2ThumbnailUrl(item.s3Key)} alt={item.label} />
             ) : (
               <PlaceholderThumb>{item.label.charAt(0).toUpperCase()}</PlaceholderThumb>
             )}

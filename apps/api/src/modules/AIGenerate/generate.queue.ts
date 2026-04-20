@@ -3,7 +3,7 @@ import { Job, Queue, Worker } from 'bullmq';
 import { db } from '../../db';
 import { bullRedisConnection } from '../../redis';
 import { logger } from '../../utils/logger';
-import { volcService } from '../Volc/volc.services';
+import { r2Service } from '../R2/r2.services';
 import { GenerateParams } from './generators/base.generator';
 import { generatorFactory } from './generators/factory';
 
@@ -88,11 +88,7 @@ class GenerateQueue {
       imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const ext = contentType.includes('jpeg') ? '.jpg' : '.png';
     const imageBuffer = await imageRes.arrayBuffer();
-    const s3Key = await volcService.uploadFile(
-      Buffer.from(imageBuffer),
-      `output${ext}`,
-      contentType
-    );
+    const s3Key = await r2Service.uploadFile(Buffer.from(imageBuffer), contentType);
 
     // 更新任务状态
     await db

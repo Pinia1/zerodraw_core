@@ -5,7 +5,7 @@ import { Container, generateUUID, Icons, ToolItem, ToolTypes } from '@zeroDraw/c
 import { Divider } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { apiUrl, fileUrl } from '../../../../utils';
+import { getR2Url } from '../../../../utils';
 import useUpload from '../../../hooks/useUpload';
 import DropMenu from './components/Dropmenu';
 import { Actions, ToolBarProps, ToolMenus } from './type';
@@ -23,7 +23,7 @@ const Toolbar: React.FC<ToolBarProps> = ({ onFitView, setNodes }: ToolBarProps) 
     multiple: false,
     onSuccess: async ({ s3Key, width, height }) => {
       const image = new Image();
-      const url = `${apiUrl}${fileUrl}/${s3Key}`;
+      const url = getR2Url(s3Key);
       image.src = url;
       const ratio = width / height;
       const targetWidth = Math.min(width, 120);

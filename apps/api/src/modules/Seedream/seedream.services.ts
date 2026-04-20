@@ -3,6 +3,9 @@ import { env } from '../../config/env';
 import { InternalServerError } from '../../utils/errors';
 import { volcService } from '../Volc/volc.services';
 
+const resolveImageUrl = (key: string) =>
+  key.startsWith('$') ? `${env.R2_PUBLIC_URL}/${key}` : volcService.getSignedUrl(key);
+
 class SeedreamService {
   private readonly BASE_URL = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
   private readonly API_KEY = env.SEEDREAM_API_KEY;
@@ -20,7 +23,7 @@ class SeedreamService {
       watermark,
     } = params.args;
     const { s3Key } = params;
-    const image = s3Key?.map((key) => volcService.getSignedUrl(key));
+    const image = s3Key?.map(resolveImageUrl);
     const response = await fetch(this.BASE_URL, {
       method: 'POST',
       headers: {

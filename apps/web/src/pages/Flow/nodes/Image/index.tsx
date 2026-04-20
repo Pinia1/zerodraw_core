@@ -11,7 +11,7 @@ import { Container } from '@zeroDraw/core';
 import { Image, Spin } from 'antd';
 import React, { memo, useMemo, useRef, useState } from 'react';
 import { httpGetTask } from '../../../../services/generate';
-import { apiUrl, fileUrl } from '../../../../utils';
+import { getR2Url } from '../../../../utils';
 import {
   Corner,
   ImageContainer,
@@ -66,7 +66,7 @@ const ImageNode: React.FC<NodeProps> = (props) => {
               ...n,
               data: {
                 ...n.data,
-                src: `${apiUrl}${fileUrl}/${data.s3Key}`,
+                src: getR2Url(data.s3Key),
                 s3Key: data.s3Key,
               },
             };

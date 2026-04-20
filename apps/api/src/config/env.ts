@@ -37,6 +37,11 @@ const envSchema = z.object({
   REDIS_DB: z.string().transform(Number).default('0'),
 
   NANOBANANA_API_KEY: z.string(),
+
+  CLOUDFLARE_ACCOUNT_ID: z.string(),
+  CLOUDFLARE_ACCESS_KEY_ID: z.string(),
+  CLOUDFLARE_SECRET_ACCESS_KEY: z.string(),
+  R2_PUBLIC_URL: z.string().default('https://cdn.zerodraw.cn'),
 });
 
 function validateEnv() {

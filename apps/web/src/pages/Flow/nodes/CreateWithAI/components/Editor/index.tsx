@@ -5,7 +5,7 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { apiUrl, thumbnailUrl } from '../../../../../../utils';
+import { getR2ThumbnailUrl } from '../../../../../../utils';
 import {
   Badge,
   EditorArea,
@@ -166,7 +166,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
             {mentionedList.map((item, idx) => (
               <MentionedThumb key={item.id}>
                 <img
-                  src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`}
+                  src={getR2ThumbnailUrl(item.s3Key)}
                   alt={item.label}
                   draggable={false}
                 />

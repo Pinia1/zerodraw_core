@@ -86,17 +86,13 @@ const CreateWithAI = () => {
           try {
             const blob = await captureLayerBlob(mention.id);
             if (blob) {
-              const formData = new FormData();
-              formData.append('file', blob, `layer-${mention.id}.webp`);
-              const s3Key = await Fetch.httpUploadImage(formData);
+              const s3Key = await Fetch.httpUploadImage(new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' }));
               return { ...mention, s3Key };
             }
             if (mention.url) {
               const res = await fetch(mention.url);
               const urlBlob = await res.blob();
-              const formData = new FormData();
-              formData.append('file', urlBlob, `snapshot-${mention.id}.webp`);
-              const s3Key = await Fetch.httpUploadImage(formData);
+              const s3Key = await Fetch.httpUploadImage(new File([urlBlob], `snapshot-${mention.id}.webp`, { type: 'image/webp' }));
               return { ...mention, s3Key };
             }
             return mention;

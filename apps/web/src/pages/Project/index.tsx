@@ -21,7 +21,7 @@ import {
   httpRestoreProject,
   httpUpdateProject,
 } from '../../services/project';
-import { apiUrl, thumbnailUrl } from '../../utils';
+import { getR2ThumbnailUrl } from '../../utils';
 import { formatRatio, formatRelativeTime } from '../../utils/project';
 import {
   CardGrid,
@@ -60,7 +60,7 @@ const CoverImage: React.FC<{ item: ProjectItem }> = ({ item }) => {
   }, [item.id, item.thumbnailKey]);
 
   if (item.thumbnailKey) {
-    return <img src={`${apiUrl}${thumbnailUrl}/${item.thumbnailKey}`} alt={item.name} />;
+    return <img src={getR2ThumbnailUrl(item.thumbnailKey!)} alt={item.name} />;
   }
   if (localCover) {
     return <img src={localCover} alt={item.name} />;

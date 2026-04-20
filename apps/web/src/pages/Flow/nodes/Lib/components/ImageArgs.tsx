@@ -1,4 +1,4 @@
-import { apiUrl, fileUrl, thumbnailUrl } from '@/utils';
+import { getR2ThumbnailUrl, getR2Url } from '@/utils';
 import { CopyOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useCopy } from '@zeroDraw/common';
 import { Container } from '@zeroDraw/core';
@@ -10,7 +10,7 @@ interface ImageArgsProps extends BaseArgsType {}
 
 const resolveImageSrc = (value: string, type: 'thumbnail' | 'original') => {
   if (/^https?:\/\//i.test(value)) return value;
-  return `${apiUrl}${type === 'thumbnail' ? thumbnailUrl : fileUrl}/${value}`;
+  return type === 'thumbnail' ? getR2ThumbnailUrl(value) : getR2Url(value);
 };
 
 const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
@@ -62,7 +62,7 @@ const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
                     <CopyBtn
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleCopy(`${apiUrl}/api/file/volc/stream/${item}`);
+                        handleCopy(getR2Url(item));
                       }}
                     >
                       {loading ? <LoadingOutlined /> : <CopyOutlined />}

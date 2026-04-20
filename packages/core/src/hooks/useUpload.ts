@@ -57,9 +57,7 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
                 // const id = generateUUID();
                 // const url = URL.createObjectURL(file);
                 // await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
-                const formData = new FormData();
-                formData.append('file', file);
-                const data = await Fetch.httpUploadImage(formData);
+                const data = await Fetch.httpUploadImage(file);
                 const url = Fetch.apiUrl + Fetch.fileUrl + '/' + data;
                 onSuccess?.({ id: data, url: url });
                 return { id: data, url: url };
