@@ -32,9 +32,8 @@ class BananaService {
   private readonly API_KEY = env.NANOBANANA_API_KEY;
   private readonly BASE_URL = 'https://grsai.dakka.com.cn';
 
-  async generate(params: NanobananaGenerateParams): Promise<BananaGenerateResponse> {
+  async generate(params: NanobananaGenerateParams, webhookUrl?: string): Promise<BananaGenerateResponse> {
     const { model, prompt, aspectRatio, imageSize } = params.args;
-
     const imageUrls = params.s3Key?.map(resolveImageUrl);
 
     const response = await fetch(`${this.BASE_URL}/v1/draw/nano-banana`, {
@@ -49,7 +48,7 @@ class BananaService {
         aspectRatio,
         imageSize,
         urls: imageUrls,
-        webHook: '-1',
+        webHook: webhookUrl ?? '-1',
         shutProgress: false,
       }),
     });

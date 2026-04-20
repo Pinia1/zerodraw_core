@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import Fetch from '../fetch';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../store/useLayer';
 import { Fill, Layers } from '../types/Layers';
@@ -41,10 +40,9 @@ const useCreateLayer = () => {
       };
       if (fetchUrl && key) {
         await new Promise(async (res) => {
-          const imageUrl = await Fetch.httpGetFileUrl(key);
           const img = new window.Image();
           img.crossOrigin = 'Anonymous';
-          img.src = imageUrl;
+          img.src = fetchUrl;
           img.onload = async () => {
             const imgWidth = img.naturalWidth || img.width;
             const imgHeight = img.naturalHeight || img.height;
@@ -77,7 +75,7 @@ const useCreateLayer = () => {
               width: targetWidth,
               height: targetHeight,
               img,
-              src: imageUrl,
+              src: fetchUrl,
               maxWidth: imgWidth,
               maxHeight: imgHeight,
               visible: true,

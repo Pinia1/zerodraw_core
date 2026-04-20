@@ -1,7 +1,6 @@
-import { aiTask, eq } from '@zeroDraw/db';
 import { Job, Queue, Worker } from 'bullmq';
-import { db } from '../../db';
 import { bullRedisConnection } from '../../redis';
+import { generateRepository } from './generate.repository';
 import { logger } from '../../utils/logger';
 import { r2Service } from '../R2/r2.services';
 import { GenerateParams } from './generators/base.generator';
@@ -74,7 +73,7 @@ class GenerateQueue {
       attempt: job.attemptsMade + 1,
     });
 
-    await db.update(aiTask).set({ status: 'processing' }).where(eq(aiTask.id, taskId));
+    await generateRepository.updateById(taskId, { status: 'processing' });
 
     // 使用工厂模式获取对应的生成器
     const generator = generatorFactory.getGenerator(params.action);
@@ -91,14 +90,11 @@ class GenerateQueue {
     const s3Key = await r2Service.uploadFile(Buffer.from(imageBuffer), contentType);
 
     // 更新任务状态
-    await db
-      .update(aiTask)
-      .set({
-        status: 'completed',
-        output: generateResult.rawResponse,
-        s3Key,
-      })
-      .where(eq(aiTask.id, taskId));
+    await generateRepository.updateById(taskId, {
+      status: 'completed',
+      output: generateResult.rawResponse,
+      s3Key,
+    });
 
     logger.info(`[Worker] Task ${taskId} completed`, { action: params.action });
 

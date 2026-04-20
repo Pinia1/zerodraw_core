@@ -28,8 +28,15 @@ export async function generateRoutes(app: FastifyInstance) {
 
   app.post('/nano-banana', async (request, reply) => {
     const queryResult = QueryValidation(nanobananaGenerateSchema, request.body);
-
     const response = await generateService.run(request.user.userId, queryResult);
     return reply.send(createSuccessResponse(response));
+  });
+}
+
+export async function generateWebhookRoutes(app: FastifyInstance) {
+  app.post('/webhook/:taskId', async (request, reply) => {
+    const { taskId } = request.params as { taskId: string };
+    await generateService.handleWebhook(taskId, request.body);
+    return reply.send({ code: 0 });
   });
 }

@@ -13,6 +13,7 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
   const [loading, setLoading] = useState(false);
 
   const run = async () => {
+    if (loading) return;
     return new Promise(async (resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -58,7 +59,10 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
                 // const url = URL.createObjectURL(file);
                 // await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
                 const data = await Fetch.httpUploadImage(file);
-                const url = Fetch.apiUrl + Fetch.fileUrl + '/' + data;
+                const url = data.startsWith('$')
+                  ? `${Fetch.r2Url}/${data}`
+                  : `${Fetch.apiUrl}${Fetch.fileUrl}/${data}`;
+
                 onSuccess?.({ id: data, url: url });
                 return { id: data, url: url };
               } catch (error) {

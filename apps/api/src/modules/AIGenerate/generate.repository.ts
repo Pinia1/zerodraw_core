@@ -1,4 +1,5 @@
 import { aiTask, eq, sql } from '@zeroDraw/db';
+import { InferInsertModel } from 'drizzle-orm';
 import { db } from '../../db';
 
 interface CreateTaskParams {
@@ -11,6 +12,10 @@ interface CreateTaskParams {
 class GenerateRepository {
   async create({ id, userId, action, args }: CreateTaskParams) {
     await db.insert(aiTask).values({ id, userId, action, status: 'pending', args });
+  }
+
+  async updateById(taskId: string, data: Partial<Pick<InferInsertModel<typeof aiTask>, 'status' | 'error' | 's3Key' | 'output'>>) {
+    await db.update(aiTask).set(data).where(eq(aiTask.id, taskId));
   }
 
   async findById(taskId: string) {

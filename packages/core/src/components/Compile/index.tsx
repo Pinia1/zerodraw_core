@@ -78,7 +78,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     );
     const storeLayers = useLayerStore((s) => s.layers);
 
-    const { run: uploadImage } = useUpload({
+    const { run: uploadImage, loading: uploading } = useUpload({
       onSuccess: (result) => {
         setMentionedList((pre) => [
           ...pre,
@@ -180,10 +180,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      setMentionedList((prev) => [
-        ...prev,
-        { id: generateUUID(), label: 'Stage Snapshot', url },
-      ]);
+      setMentionedList((prev) => [...prev, { id: generateUUID(), label: 'Stage Snapshot', url }]);
     });
 
     const handleSubmit = () => {
@@ -233,7 +230,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           <ToolGroup>
             <Tooltip title="Upload Image">
               <ToolButton onClick={uploadImage}>
-                <PlusOutlined />
+                {uploading ? <LoadingOutlined /> : <PlusOutlined />}
               </ToolButton>
             </Tooltip>
             <Tooltip title="Capture Stage">
