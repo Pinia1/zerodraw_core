@@ -1,6 +1,4 @@
-import { CopyOutlined, LoadingOutlined } from '@ant-design/icons';
-import { useCopy } from '@zeroDraw/common';
-import { message, Typography } from 'antd';
+import { Typography } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import Fetch from '../../../fetch';
@@ -13,16 +11,17 @@ const resolveImageSrc = (value: string, type: 'thumbnail' | 'original') => {
   return `${Fetch.apiUrl}${type === 'thumbnail' ? Fetch.thumbnailUrl : Fetch.fileUrl}/${value}`;
 };
 
-const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
+const ImageArgs: React.FC<ImageArgsProps> = (props) => {
+  const { prompt, aspectRatio, imageSize, image, model } = props;
   const refImages = Array.isArray(image) ? image.filter(Boolean) : [];
-  const { handleCopy, loading } = useCopy({
-    onSuccess: () => {
-      message.success('Copied');
-    },
-    onError: (error) => {
-      message.error(error.message);
-    },
-  });
+  // const { handleCopy, loading } = useCopy({
+  //   onSuccess: () => {
+  //     message.success('Copied');
+  //   },
+  //   onError: (error) => {
+  //     message.error(error.message);
+  //   },
+  // });
 
   return (
     <Container>
@@ -33,7 +32,7 @@ const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
             copyable={{
               tooltips: false,
             }}
-            ellipsis={{ rows: 3, expandable: true, symbol: 'more' }}
+            ellipsis={{ rows: 12, expandable: true, symbol: 'more' }}
           >
             {prompt || '-'}
           </PromptText>
@@ -42,11 +41,18 @@ const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
         <MetaRow>
           <MetaItem>
             <Label>Size</Label>
-            <MetaValue>{size || '-'}</MetaValue>
+            <MetaValue>{imageSize || '-'}</MetaValue>
           </MetaItem>
           <MetaItem>
-            <Label>Refs</Label>
-            <MetaValue>{refImages.length}</MetaValue>
+            <Label>AspectRatio</Label>
+            <MetaValue>{aspectRatio}</MetaValue>
+          </MetaItem>
+        </MetaRow>
+
+        <MetaRow>
+          <MetaItem>
+            <Label>model</Label>
+            <MetaValue>{model || '-'}</MetaValue>
           </MetaItem>
         </MetaRow>
 
@@ -59,14 +65,14 @@ const ImageArgs: React.FC<ImageArgsProps> = ({ prompt, size, image }) => {
                 return (
                   <RefThumbWrap key={item}>
                     <RefThumb src={thumbnail} alt="reference" />
-                    <CopyBtn
+                    {/* <CopyBtn
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCopy(`${Fetch.apiUrl}/api/file/volc/stream/${item}`);
                       }}
                     >
                       {loading ? <LoadingOutlined /> : <CopyOutlined />}
-                    </CopyBtn>
+                    </CopyBtn> */}
                   </RefThumbWrap>
                 );
               })}
@@ -167,8 +173,7 @@ const CopyBtn = styled.button`
 `;
 
 const RefThumb = styled.img`
-  width: 78px;
-  height: 78px;
+  width: 134px;
   border-radius: 8px;
   object-fit: cover;
   background: rgba(255, 255, 255, 0.1);

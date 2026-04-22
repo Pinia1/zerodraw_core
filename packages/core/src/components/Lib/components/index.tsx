@@ -27,7 +27,6 @@ export const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
-  margin-bottom: 10px;
 `;
 
 export const Title = styled.h2`

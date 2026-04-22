@@ -3,6 +3,8 @@ declare module 'file-saver';
 interface BaseArgsType {
   image?: string[];
   prompt?: string;
+  imageSize: string;
+  aspectRatio: string;
   [key: string]: any;
 }
 

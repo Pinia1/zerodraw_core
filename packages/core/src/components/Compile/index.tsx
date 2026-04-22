@@ -285,9 +285,9 @@ export const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 120px;
+  min-height: 160px;
   border-radius: 12px;
-  padding: 12px;
+  padding: 8px;
   border: 1px solid transparent;
   transition:
     border-color 0.2s,
@@ -346,7 +346,7 @@ export const EditorArea = styled.div`
     font-size: 14px;
     line-height: 1.6;
     color: var(--container-color, #e0e0e0);
-    height: 80px;
+    height: 120px;
 
     overflow-y: auto;
     overflow-x: hidden;
@@ -401,7 +401,6 @@ export const Toolbar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 4px;
 `;
 
 export const ToolGroup = styled.div`

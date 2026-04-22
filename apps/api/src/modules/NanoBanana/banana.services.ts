@@ -1,4 +1,5 @@
 import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
+import { getRequestParmas, getRequstUrl } from '.';
 import { env } from '../../config/env';
 import { volcService } from '../Volc/volc.services';
 
@@ -30,23 +31,27 @@ export interface BananaResultResponse {
 
 class BananaService {
   private readonly API_KEY = env.NANOBANANA_API_KEY;
-  private readonly BASE_URL = 'https://grsai.dakka.com.cn';
+  private readonly BASE_URL =
+    env.NODE_ENV === 'development' ? 'https://grsai.dakka.com.cn' : 'https://grsaiapi.com';
 
-  async generate(params: NanobananaGenerateParams, webhookUrl?: string): Promise<BananaGenerateResponse> {
-    const { model, prompt, aspectRatio, imageSize } = params.args;
+  async generate(
+    params: NanobananaGenerateParams,
+    webhookUrl?: string
+  ): Promise<BananaGenerateResponse> {
+    const { model } = params.args;
     const imageUrls = params.s3Key?.map(resolveImageUrl);
 
-    const response = await fetch(`${this.BASE_URL}/v1/draw/nano-banana`, {
+    const requestUrl = getRequstUrl(model);
+    const requestParams = getRequestParmas(model, params.args);
+
+    const response = await fetch(`${this.BASE_URL}${requestUrl}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.API_KEY}`,
       },
       body: JSON.stringify({
-        model,
-        prompt,
-        aspectRatio,
-        imageSize,
+        ...requestParams,
         urls: imageUrls,
         webHook: webhookUrl ?? '-1',
         shutProgress: false,

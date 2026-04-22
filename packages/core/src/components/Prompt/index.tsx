@@ -34,8 +34,8 @@ const Prompt: React.FC = () => {
       style={{
         position: 'absolute',
         right: 12,
-        top: 80,
-        height: 'calc(100% - 170px)',
+        top: 70,
+        height: 'calc(100% - 160px)',
         width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,

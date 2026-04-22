@@ -3,6 +3,7 @@ import { env } from '../../config/env';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
 import { bananaService } from '../NanoBanana/banana.services';
+import { r2Service } from '../R2/';
 import { generateQueue } from './generate.queue';
 import { generateRepository } from './generate.repository';
 import { GenerateParams } from './generators/base.generator';
@@ -37,7 +38,6 @@ class GenerateService {
       const imageUrl = results?.[0]?.url;
       if (!imageUrl) return;
 
-      const { r2Service } = await import('../R2/r2.services');
       const imageRes = await fetch(imageUrl);
       const contentType = imageRes.headers.get('content-type') || 'image/png';
       const buffer = Buffer.from(await imageRes.arrayBuffer());

@@ -60,6 +60,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
     refresh,
   } = useRequest(Fetch.getLibRunning, {
     defaultParams: [{ projectId }],
+    ready: !!projectId,
   });
 
   const { run: deleteOutput } = useRequest(Fetch.deleteLibOutput, {
@@ -77,7 +78,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
       mutateRunning((pre) => pre?.filter((item) => item.id !== task.id));
       if (task.s3Key) {
         mutate((pre) => {
-          const completedItems = [{ ...task } as LibOutput, ...(pre?.list || [])];
+          const completedItems = [{ ...task } as any as LibOutput, ...(pre?.list || [])];
           if (previewVisibleIndex !== null) {
             const currentItemId = pre?.list?.[previewVisibleIndex].id;
             const nextPreviewVisibleIndex = completedItems.findIndex(
@@ -180,6 +181,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
             <Form<QueryForm> form={form} layout="inline" size="small" autoComplete="off">
               <Form.Item name="keyword" noStyle>
                 <Input.Search
+                  style={{ margin: '10px 0px' }}
                   placeholder="Search prompts..."
                   allowClear
                   onSearch={() => handleSearch(form.getFieldsValue())}
@@ -204,7 +206,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
             <>
               {groupedByDate.map(({ date, items: dateItems }) => (
                 <div key={date}>
-                  <Divider style={{ fontSize: 12, color: '#888' }}>{date}</Divider>
+                  <Divider style={{ fontSize: 12, color: '#888', marginTop: 0 }}>{date}</Divider>
                   <Masonry
                     breakpointCols={{ default: 2 }}
                     className="lib-masonry"

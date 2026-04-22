@@ -63,14 +63,14 @@ const Menus: React.FC<MenusProps> = (props) => {
   );
 
   const items: MenuItem[] = [
-    {
-      key: 'Add',
-      label: 'Add to...',
-      children: [
-        { key: 'add-library', label: 'Add to Library' },
-        { key: 'add-workspace', label: 'Add to Workspace' },
-      ],
-    },
+    // {
+    //   key: 'Add',
+    //   label: 'Add to...',
+    //   children: [
+    //     { key: 'add-library', label: 'Add to Library' },
+    //     { key: 'add-workspace', label: 'Add to Workspace' },
+    //   ],
+    // },
     {
       key: 'Copy',
       label: 'Copy',

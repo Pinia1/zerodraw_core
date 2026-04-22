@@ -1,3 +1,4 @@
+import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import { useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
 import { useMemo, useRef } from 'react';
@@ -13,7 +14,7 @@ import PromptEditor, { type PromptEditorRef } from '../../../Compile';
 import { MentionItem } from '../../../Compile/MentionList';
 import type { LibRef as LibRefType } from '../../../Lib';
 import History from '../../../Lib';
-import { getSizeOptions, sizeMap } from './config';
+import { getArOptions, getSizeOptions, sizeMap } from './config';
 
 const nanobananaGenerate = Fetch.nanobananaGenerate;
 
@@ -49,6 +50,10 @@ const CreateWithAI = () => {
   });
 
   const sizeOptions = useMemo(() => getSizeOptions(model), [model]);
+  const arOptiong = useMemo(
+    () => getArOptions(model).map((i) => ({ label: i, value: i })),
+    [model]
+  );
 
   const captureLayerBlob = useMemoizedFn((layerId: string): Promise<Blob | null> => {
     const stage = stageRef?.current;
@@ -86,13 +91,17 @@ const CreateWithAI = () => {
           try {
             const blob = await captureLayerBlob(mention.id);
             if (blob) {
-              const s3Key = await Fetch.httpUploadImage(new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' }));
+              const s3Key = await Fetch.httpUploadImage(
+                new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' })
+              );
               return { ...mention, s3Key };
             }
             if (mention.url) {
               const res = await fetch(mention.url);
               const urlBlob = await res.blob();
-              const s3Key = await Fetch.httpUploadImage(new File([urlBlob], `snapshot-${mention.id}.webp`, { type: 'image/webp' }));
+              const s3Key = await Fetch.httpUploadImage(
+                new File([urlBlob], `snapshot-${mention.id}.webp`, { type: 'image/webp' })
+              );
               return { ...mention, s3Key };
             }
             return mention;
@@ -117,11 +126,16 @@ const CreateWithAI = () => {
     } catch {}
   });
 
-  const handleModelChange = (value: string) => {
+  const handleModelChange = (model: NanobananaGenerateParams['args']['model']) => {
     const imageSize = form.getFieldValue('imageSize');
-    const nextOptions = getSizeOptions(value);
+    const aspectRatio = form.getFieldValue('aspectRatio');
+    const nextOptions = getSizeOptions(model);
     if (!nextOptions.find((i) => i.value === imageSize)) {
       form.setFieldValue('imageSize', nextOptions[0].value);
+    }
+    const nextAr = getArOptions(model);
+    if (!nextAr.find((i) => i === aspectRatio)) {
+      form.setFieldValue('aspectRatio', nextAr[0]);
     }
   };
 
@@ -150,7 +164,6 @@ const CreateWithAI = () => {
           imageSize: '1K',
         }}
         form={form}
-        onFinish={() => {}}
         layout="vertical"
         colon={false}
       >
@@ -179,54 +192,7 @@ const CreateWithAI = () => {
           name="aspectRatio"
           style={{ marginBottom: 12 }}
         >
-          <Select
-            options={[
-              {
-                label: 'auto',
-                value: 'auto',
-              },
-              {
-                label: '1:1',
-                value: '1:1',
-              },
-              {
-                label: '16:9',
-                value: '16:9',
-              },
-              {
-                label: '9:16',
-                value: '9:16',
-              },
-              {
-                label: '4:3',
-                value: '4:3',
-              },
-              {
-                label: '3:4',
-                value: '3:4',
-              },
-              {
-                label: '3:2',
-                value: '3:2',
-              },
-              {
-                label: '2:3',
-                value: '2:3',
-              },
-              {
-                label: '5:4',
-                value: '5:4',
-              },
-              {
-                label: '4:5',
-                value: '4:5',
-              },
-              {
-                label: '21:9',
-                value: '21:9',
-              },
-            ]}
-          />
+          <Select options={arOptiong} />
         </Form.Item>
         <Form.Item
           label={<FormLabel>Image Size</FormLabel>}
