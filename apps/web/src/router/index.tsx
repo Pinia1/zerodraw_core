@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Layout from '../layouts/Layout';
+import DrawingPage from '../pages/Drawing';
 
-const DrawingPage = lazy(() => import('../pages/Drawing'));
 const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));

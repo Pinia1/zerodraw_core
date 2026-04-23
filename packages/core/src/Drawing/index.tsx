@@ -81,7 +81,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const [cursorVisible, setCursorVisible] = useState(true);
 
   const [stageDraggable, setStageDraggable] = useState(false);
-  // iPad/触屏：多指手势期间禁用绘制，避免误触
+  
   const isMultiTouchRef = useRef(false);
 
   // ===== iPad/触屏：双指平移 + 捏合缩放 =====

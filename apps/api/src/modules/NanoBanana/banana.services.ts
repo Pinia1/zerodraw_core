@@ -26,6 +26,7 @@ export interface BananaResultResponse {
       url: string;
       content: string;
     }[];
+    error?: string;
   };
 }
 

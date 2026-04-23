@@ -229,7 +229,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
                           data={item.data}
                           onClick={() => handlePreview(previewIndex)}
                           onDelete={() => deleteOutput(item.key)}
-                          onQuote={() => handleQuote?.(item.data)}
+                          onQuote={projectId ? () => handleQuote?.(item.data) : undefined}
                         />
                       );
                     })}

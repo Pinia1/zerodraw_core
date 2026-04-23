@@ -12,7 +12,7 @@ interface ImageRenderProps {
   data: Awaited<ReturnType<typeof Fetch.getLibOutputs>>['list'][number];
   onClick: () => void;
   onDelete: () => void;
-  onQuote: () => void;
+  onQuote?: () => void;
 }
 const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQuote }) => {
   const [_, loading] = useImage(`${Fetch.apiUrl}${Fetch.thumbnailUrl}/${data.s3Key}`);
@@ -40,9 +40,12 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQu
       </Spin>
       <ImageCardMask $isHover={isHover}>
         <Flex wrap gap={4}>
-          <ActionButton onClick={onQuote} tooltip="Quote">
-            <Icon component={Icons.IconStar} />
-          </ActionButton>
+          {!!onQuote && (
+            <ActionButton onClick={onQuote} tooltip="Quote">
+              <Icon component={Icons.IconStar} />
+            </ActionButton>
+          )}
+
           <ActionButton onClick={onDownload} tooltip="Download">
             <Icon component={Icons.IconDownload} />
           </ActionButton>

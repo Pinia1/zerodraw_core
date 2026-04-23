@@ -38,7 +38,11 @@ export class BananaGenerator extends AIGenerator {
   }
 
   /** 轮询获取生成结果，3分钟超时 */
-  private async pollResult(taskId: string, timeout = 3 * 60 * 1000, interval = 5000): Promise<string> {
+  private async pollResult(
+    taskId: string,
+    timeout = 5 * 60 * 1000,
+    interval = 5000
+  ): Promise<string> {
     const deadline = Date.now() + timeout;
 
     while (Date.now() < deadline) {
@@ -50,7 +54,7 @@ export class BananaGenerator extends AIGenerator {
             return result.data.results?.[0]?.url || '';
           }
           if (result.data.status === 'failed') {
-            throw new Error('Banana generation failed');
+            throw new Error(result.data.error || 'Banana generation failed');
           }
         }
       } catch (err: any) {
