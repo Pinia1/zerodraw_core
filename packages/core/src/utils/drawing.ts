@@ -6,9 +6,9 @@ import { isMobile } from './platform';
 /**最少点 */
 export const MIN_POINT = isMobile ? 4 : 6;
 /**图层控制宽度 */
-export const PROMPT_WIDTH = isMobile ? 175 : 280;
+export const PROMPT_WIDTH = 280;
 /**右侧aside宽度 */
-export const ASIDE_WIDTH = isMobile ? 175 : 280;
+export const ASIDE_WIDTH = 280;
 /**宽高比 */
 export const RATIO = 16 / 9;
 /**最大缩放比例 */

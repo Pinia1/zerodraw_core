@@ -117,7 +117,7 @@ const Layers: React.FC = () => {
       style={{
         position: 'absolute',
         left: 12,
-        top: 70,
+        top: isMobile ? 120 : 70,
         height: 'calc(100% - 160px)',
         width: ASIDE_WIDTH,
         borderRadius: 16,

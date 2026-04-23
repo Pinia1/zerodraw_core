@@ -52,7 +52,6 @@ import {
   WIDTH,
 } from '../utils/drawing';
 import imageManager from '../utils/imageManager';
-import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import {
   buildEllipseLassoPoints,
   buildRectLassoPoints,
@@ -62,6 +61,7 @@ import {
   mergeLassos,
 } from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
+import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import ActiveDiagram, { ActiveDiagramRef } from './components/ActiveDiagram';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
@@ -178,8 +178,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const prevSizeRef = useRef<{ width: number; height: number } | null>(null);
 
   const init = useMemoizedFn(() => {
+    const asideWidth = isMobile ? ASIDE_WIDTH * 0.7 : ASIDE_WIDTH;
+    const promptWdiht = isMobile ? PROMPT_WIDTH * 0.7 : PROMPT_WIDTH;
     const ratio = canvasWidth && canvasHeight ? canvasWidth / canvasHeight : RATIO;
-    const availableWidth = size.width - PROMPT_WIDTH - 80 - ASIDE_WIDTH;
+    const availableWidth = size.width - promptWdiht - 80 - asideWidth;
     const availableHeight = size.height - 160;
 
     let initW = availableWidth;
@@ -194,7 +196,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         ...layerConfig,
         width: initW,
         height: initH,
-        x: (size.width - PROMPT_WIDTH - initW + ASIDE_WIDTH) / 2,
+        x: (size.width - promptWdiht - initW + asideWidth) / 2,
         y: (size.height - initH) / 2,
       });
       setStageConfig({ scale: 1, x: 0, y: 0 });
@@ -203,7 +205,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       if (layerConfig.height * scale > availableHeight) {
         scale = availableHeight / layerConfig.height;
       }
-      const screenCenterX = (size.width - PROMPT_WIDTH + ASIDE_WIDTH) / 2;
+      const screenCenterX = (size.width - promptWdiht + asideWidth) / 2;
       const layerX = screenCenterX / scale - layerConfig.width / 2;
       const layerY = size.height / (2 * scale) - layerConfig.height / 2;
       setLayerConfig({ ...layerConfig, x: layerX, y: layerY });

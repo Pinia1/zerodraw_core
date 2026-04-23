@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { IconAdd, IconFull, IconIncomplete, IconReduce, IconSuitable } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, WIDTH } from '../../utils/drawing';
+import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import { ToolItem } from '../index';
 
@@ -130,6 +131,8 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         display: 'flex',
         gap: 8,
         alignItems: 'center',
+        transformOrigin: 'right top',
+        transform: isMobile ? 'scale(0.7)' : 'scale(1)',
       }}
     >
       {meuns.map((item, idx) => {
