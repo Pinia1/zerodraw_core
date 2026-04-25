@@ -6,7 +6,7 @@ import { InternalServerError } from '../../utils/errors';
 class VolcService {
   private readonly BUCKET_NAME = env.BUCKET_NAME;
   private readonly REGION = env.REGION;
-  private readonly ENDPOINT = `tos-${this.REGION}.volces.com`;
+  private readonly ENDPOINT = `tos-accelerate.volces.com`;
   private client: TosClient;
 
   constructor() {
