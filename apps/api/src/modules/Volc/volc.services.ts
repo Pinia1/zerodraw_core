@@ -4,8 +4,11 @@ import { env } from '../../config/env';
 import { InternalServerError } from '../../utils/errors';
 
 class VolcService {
-  private readonly BUCKET_NAME = 'zerodraw';
-  private readonly REGION = 'cn-shanghai';
+  // private readonly BUCKET_NAME = 'zerodraw';
+  // private readonly REGION = 'cn-shanghai';
+  // private readonly ENDPOINT = `tos-${this.REGION}.volces.com`;
+  private readonly BUCKET_NAME = 'zerodraw2';
+  private readonly REGION = 'cn-hongkong';
   private readonly ENDPOINT = `tos-${this.REGION}.volces.com`;
   private client: TosClient;
 

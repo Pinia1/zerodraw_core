@@ -1,4 +1,6 @@
+import { generateUUID } from '@zeroDraw/common';
 import { useState } from 'react';
+import { imageManager } from '..';
 import Fetch from '../fetch';
 
 interface UseUploadOptions {
@@ -7,9 +9,10 @@ interface UseUploadOptions {
   onComplete: (result: PromiseSettledResult<{ id: string; url: string }>[]) => void;
   accept: string;
   multiple: boolean;
+  local?: boolean;
 }
 const useUpload = (options?: Partial<UseUploadOptions>) => {
-  const { onSuccess, onError, accept, multiple, onComplete } = options || {};
+  const { onSuccess, onError, accept, multiple, onComplete, local } = options || {};
   const [loading, setLoading] = useState(false);
 
   const run = async () => {
@@ -55,15 +58,22 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
           Promise.allSettled(
             Array.from(files).map(async (file) => {
               try {
-                // const id = generateUUID();
-                // const url = URL.createObjectURL(file);
-                // await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
+                if (local) {
+                  const id = generateUUID();
+                  const url = URL.createObjectURL(file);
+                  await imageManager.saveImage(
+                    id,
+                    await file.arrayBuffer(),
+                    file.type || undefined
+                  );
+                  onSuccess?.({ id: id, url: url });
+                  return { id: id, url: url };
+                }
+
                 const formData = new FormData();
                 formData.append('file', file);
                 const data = await Fetch.httpUploadImage(formData);
-                const url = data.startsWith('$')
-                  ? `${Fetch.r2Url}/${data}`
-                  : `${Fetch.fileUrl}/${data}`;
+                const url = Fetch.getFileUrl('file', data);
 
                 onSuccess?.({ id: data, url: url });
                 return { id: data, url: url };

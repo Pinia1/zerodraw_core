@@ -3,7 +3,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../store/useLayer';
 import { Fill, Layers } from '../types/Layers';
-import { generateUUID } from '../utils/drawing';
 
 export function findMissingorder(layers: Layers[]): number {
   if (!layers.length) return 1;
@@ -69,7 +68,7 @@ const useCreateLayer = () => {
             const y = (canvasHeight - targetHeight) / 2;
 
             const image: Fill = {
-              id: generateUUID(),
+              id: key,
               x,
               y,
               width: targetWidth,

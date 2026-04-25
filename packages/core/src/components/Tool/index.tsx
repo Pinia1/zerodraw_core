@@ -72,6 +72,7 @@ const Tool: React.FC = () => {
   const { loading, run } = useUpload({
     accept: 'image/*',
     multiple: false,
+    local: true,
     onSuccess: ({ id, url }) => {
       if (!layerConfig.width || !layerConfig.height) return;
       createLayerRun(id, url);
