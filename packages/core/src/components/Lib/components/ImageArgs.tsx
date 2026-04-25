@@ -6,10 +6,7 @@ import Container from '../../Container';
 
 interface ImageArgsProps extends BaseArgsType {}
 
-const resolveImageSrc = (value: string, type: 'thumbnail' | 'original') => {
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${type === 'thumbnail' ? Fetch.thumbnailUrl : Fetch.fileUrl}/${value}`;
-};
+const { getFileUrl } = Fetch;
 
 const ImageArgs: React.FC<ImageArgsProps> = (props) => {
   const { prompt, aspectRatio, imageSize, image, model } = props;
@@ -61,7 +58,7 @@ const ImageArgs: React.FC<ImageArgsProps> = (props) => {
             <Label>Reference Images</Label>
             <RefList>
               {refImages.map((item) => {
-                const thumbnail = resolveImageSrc(item, 'thumbnail');
+                const thumbnail = getFileUrl('thumbnail', item);
                 return (
                   <RefThumbWrap key={item}>
                     <RefThumb src={thumbnail} alt="reference" />

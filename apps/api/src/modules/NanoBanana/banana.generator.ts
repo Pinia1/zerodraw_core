@@ -48,6 +48,7 @@ export class BananaGenerator extends AIGenerator {
     while (Date.now() < deadline) {
       try {
         const result = await bananaService.getResult(taskId);
+        console.log(result, 'resultresult');
 
         if (result.code === 0) {
           if (result.data.status === 'succeeded') {

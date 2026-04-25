@@ -2,6 +2,7 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 import { env } from '../../config/env';
+import { BadRequestError } from '../../utils/errors';
 
 class R2Service {
   private readonly BUCKET = 'zerodraw';
@@ -24,22 +25,30 @@ class R2Service {
 
   async uploadFile(buffer: Buffer, contentType: string) {
     const key = this.generateObjectKey();
-    await this.client.send(new PutObjectCommand({
-      Bucket: this.BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: contentType,
-    }));
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      })
+    );
     return key;
   }
 
-  async getPresignedUploadUrl(key: string, contentType: string) {
+  async getPresignedUploadUrl(contentType: string) {
+    const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    if (!ALLOWED_TYPES.includes(contentType)) {
+      throw new BadRequestError('Unsupported file type');
+    }
+    const key = this.generateObjectKey();
     const command = new PutObjectCommand({
       Bucket: this.BUCKET,
       Key: key,
       ContentType: contentType,
     });
-    return getSignedUrl(this.client, command, { expiresIn: 300 });
+    const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: 300 });
+    return { key, uploadUrl };
   }
 }
 

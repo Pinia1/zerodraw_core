@@ -71,7 +71,7 @@ class VolcService {
    * @param mimetype 文件 MIME 类型
    * @returns 文件的对象 key
    */
-  async uploadFile(buffer: Buffer, filename: string, mimetype?: string) {
+  async uploadFile(buffer: Buffer, mimetype?: string) {
     const key = this.generateObjectKey();
 
     try {

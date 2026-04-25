@@ -8,7 +8,9 @@ import {
   httpUpload,
 } from '../services/generate';
 
-const getEnv = (key: 'VITE_API_URL' | 'VITE_IMAGE_THUMBNAIL' | 'VITE_IMAGE_FILE' | 'VITE_R2_URL') => {
+const getEnv = (
+  key: 'VITE_API_URL' | 'VITE_IMAGE_THUMBNAIL' | 'VITE_IMAGE_FILE' | 'VITE_R2_URL'
+) => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.[key]) {
     return (import.meta as any).env[key];
   }
@@ -31,6 +33,13 @@ class Fetch {
   static httpGetTask = httpGetTask;
   static httpUploadImage = httpUpload;
   static httpGetFileUrl = httpGetFileUrl;
+
+  static getFileUrl = (type: 'thumbnail' | 'file', s3: string) => {
+    if (type === 'file') {
+      return this.apiUrl + this.fileUrl + '/' + s3;
+    }
+    return this.apiUrl + this.thumbnailUrl + '/' + s3;
+  };
 }
 
 export default Fetch;

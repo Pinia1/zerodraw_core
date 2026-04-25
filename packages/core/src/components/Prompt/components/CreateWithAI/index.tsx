@@ -1,7 +1,7 @@
 import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import { useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import { MOSIC_LAYER_ID } from '../../../../Drawing/components/Mosic';
@@ -21,6 +21,7 @@ const nanobananaGenerate = Fetch.nanobananaGenerate;
 const CreateWithAI = () => {
   const paramsSearch = new URLSearchParams(window.location.search);
   const projectId = paramsSearch.get('projectId') ?? '';
+  const [loading, setLoading] = useState(false);
   const { layers } = useLayerStore(
     useShallow((state) => ({
       layers: state.layers,
@@ -41,11 +42,14 @@ const CreateWithAI = () => {
   const [form] = Form.useForm();
   const model = Form.useWatch('model', form);
 
-  const { run: generate, loading } = useRequest(nanobananaGenerate, {
+  const { run: generate } = useRequest(nanobananaGenerate, {
     manual: true,
     onSuccess: (data) => {
       const { taskId } = data;
       libRef.current?.addTask(taskId);
+    },
+    onFinally() {
+      setLoading(false);
     },
   });
 
@@ -80,6 +84,7 @@ const CreateWithAI = () => {
   });
 
   const handleSubmit = useMemoizedFn(async () => {
+    setLoading(true);
     try {
       const values = await form.validateFields();
       const images = editorRef.current?.getValue();
@@ -91,17 +96,19 @@ const CreateWithAI = () => {
           try {
             const blob = await captureLayerBlob(mention.id);
             if (blob) {
-              const s3Key = await Fetch.httpUploadImage(
-                new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' })
-              );
+              const file = new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' });
+              const formData = new FormData();
+              formData.append('file', file);
+              const s3Key = await Fetch.httpUploadImage(formData);
               return { ...mention, s3Key };
             }
             if (mention.url) {
               const res = await fetch(mention.url);
               const urlBlob = await res.blob();
-              const s3Key = await Fetch.httpUploadImage(
-                new File([urlBlob], `snapshot-${mention.id}.webp`, { type: 'image/webp' })
-              );
+              const file = new File([urlBlob], `layer-${mention.id}.webp`, { type: 'image/webp' });
+              const formData = new FormData();
+              formData.append('file', file);
+              const s3Key = await Fetch.httpUploadImage(formData);
               return { ...mention, s3Key };
             }
             return mention;
@@ -123,7 +130,9 @@ const CreateWithAI = () => {
           projectId: projectId,
         },
       });
-    } catch {}
+    } catch {
+      setLoading(false);
+    }
   });
 
   const handleModelChange = (model: NanobananaGenerateParams['args']['model']) => {

@@ -23,7 +23,7 @@ import { generateUUID } from '../../utils/drawing';
 import { MentionItem } from './MentionList';
 import { createMentionSuggestion } from './mentionSuggestion';
 
-const thumbnailUrl = Fetch.thumbnailUrl;
+const { getFileUrl } = Fetch;
 
 export interface EditorValue {
   /** 纯文本内容 */
@@ -173,7 +173,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         targetWidth: layerConfig.width,
         backgroundColor: layerConfig.backgroundVisible ? undefined : 'transparent',
         mimeType: 'image/webp',
-        quality: 0.9,
+        quality: 1,
       });
 
       if (!dataUrl) return;
@@ -209,7 +209,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
             {mentionedList.map((item, idx) => (
               <MentionedThumb key={item.id}>
                 <img
-                  src={item.s3Key ? `${thumbnailUrl}/${item.s3Key}` : (item.url ?? '')}
+                  src={item.s3Key ? `${getFileUrl('thumbnail', item.s3Key)}` : (item.url ?? '')}
                   alt={item.label}
                   draggable={false}
                 />

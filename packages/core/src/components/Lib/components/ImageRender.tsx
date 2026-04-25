@@ -8,6 +8,8 @@ import { ActionButton, ImageCard, ImageCardMask } from '.';
 import Fetch from '../../../fetch';
 import * as Icons from '../../../icons';
 
+const { getFileUrl } = Fetch;
+
 interface ImageRenderProps {
   data: Awaited<ReturnType<typeof Fetch.getLibOutputs>>['list'][number];
   onClick: () => void;
@@ -15,20 +17,20 @@ interface ImageRenderProps {
   onQuote?: () => void;
 }
 const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQuote }) => {
-  const [_, loading] = useImage(`${Fetch.thumbnailUrl}/${data.s3Key}`);
+  const [_, loading] = useImage(`${getFileUrl('thumbnail', data.s3Key)}`);
 
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
 
   const onDownload = () => {
-    saveAs(`${Fetch.fileUrl}/${data.s3Key}`);
+    saveAs(`${getFileUrl('file', data.s3Key)}`);
   };
 
   return (
     <ImageCard onClick={onClick} ref={ref}>
       <Spin spinning={loading === 'loading'}>
         <img
-          src={`${Fetch.thumbnailUrl}/${data.s3Key}`}
+          src={`${getFileUrl('thumbnail', data.s3Key)}`}
           alt={data.id}
           style={{
             width: '100%',

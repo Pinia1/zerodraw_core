@@ -55,18 +55,12 @@ export const httpGetLibRunning = (params?: Partial<RunningQuery>): Promise<Runni
   return request.get('/api/lib/running', { params });
 };
 
-const httpGetR2PresignUrl = (contentType: string): Promise<{ key: string; uploadUrl: string }> => {
-  return request.post('/api/file/r2/presign', { contentType });
-};
-
-export const httpUpload = async (file: File): Promise<string> => {
-  const { key, uploadUrl } = await httpGetR2PresignUrl(file.type);
-  await fetch(uploadUrl, {
-    method: 'PUT',
-    body: file,
-    headers: { 'Content-Type': file.type },
+export const httpUpload = (formData: FormData): Promise<string> => {
+  return request.post('/api/file/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
   });
-  return key;
 };
 
 export const httpGetFileUrl = (key: string): Promise<string> => {

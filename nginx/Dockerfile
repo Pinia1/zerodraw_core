@@ -29,10 +29,8 @@ COPY tsconfig.base.json ./
 # VITE_API_URL 留空，请求通过 Nginx 代理，使用相对路径
 ARG GITHUB_CLIENT_ID
 ARG VITE_API_URL=""
-# ARG VITE_IMAGE_THUMBNAIL="/api/file/thumbnail"
-ARG VITE_IMAGE_THUMBNAIL="https://cdn.zerodraw.cn/cdn-cgi/image/width=400"
-# ARG VITE_IMAGE_FILE="/api/file/volc"
-ARG VITE_IMAGE_FILE="https://cdn.zerodraw.cn"
+ARG VITE_IMAGE_THUMBNAIL="/api/file/thumbnail"
+ARG VITE_IMAGE_FILE="/api/file/s3"
 ARG VITE_R2_URL="https://cdn.zerodraw.cn"
 ARG VITE_R2_THUMBNAIL_URL="https://cdn.zerodraw.cn/cdn-cgi/image"
 
