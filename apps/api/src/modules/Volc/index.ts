@@ -5,5 +5,5 @@ import { volcService } from './volc.services';
 interface uploadServices {
   uploadFile: (buffer: Buffer, contentType: string) => Promise<string>;
 }
-export const uploadServices: uploadServices =
-  env.NODE_ENV === 'development' ? volcService : r2Service;
+const provider = env.NODE_ENV === 'development' ? 'volc' : env.UPLOAD_PROVIDER;
+export const uploadServices: uploadServices = provider === 'r2' ? r2Service : volcService;

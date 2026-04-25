@@ -43,6 +43,7 @@ const envSchema = z.object({
   CLOUDFLARE_SECRET_ACCESS_KEY: z.string(),
   R2_PUBLIC_URL: z.string().default('https://cdn.zerodraw.cn'),
   SERVER_BASE_URL: z.string().optional(),
+  UPLOAD_PROVIDER: z.enum(['volc', 'r2']).default('volc'),
 });
 
 function validateEnv() {
