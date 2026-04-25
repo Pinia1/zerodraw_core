@@ -8,7 +8,7 @@ interface ImageArgsProps extends BaseArgsType {}
 
 const resolveImageSrc = (value: string, type: 'thumbnail' | 'original') => {
   if (/^https?:\/\//i.test(value)) return value;
-  return `${Fetch.apiUrl}${type === 'thumbnail' ? Fetch.thumbnailUrl : Fetch.fileUrl}/${value}`;
+  return `${type === 'thumbnail' ? Fetch.thumbnailUrl : Fetch.fileUrl}/${value}`;
 };
 
 const ImageArgs: React.FC<ImageArgsProps> = (props) => {

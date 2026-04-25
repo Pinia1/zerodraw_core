@@ -10,6 +10,7 @@ interface ImageArgsProps extends BaseArgsType {}
 
 const resolveImageSrc = (value: string, type: 'thumbnail' | 'original') => {
   if (/^https?:\/\//i.test(value)) return value;
+
   return type === 'thumbnail' ? getR2ThumbnailUrl(value) : getR2Url(value);
 };
 

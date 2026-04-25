@@ -1,8 +1,8 @@
 import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import styled from 'styled-components';
+import Fetch from '../../fetch';
 
-const apiUrl = 'https://api.zero-draw.com';
-const thumbnailUrl = 'https://api.zero-draw.com/thumbnail';
+const thumbnailUrl = Fetch.thumbnailUrl;
 
 export interface MentionItem {
   id: string;
@@ -65,7 +65,7 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>(({ items, comma
         >
           <Thumbnail>
             {item.s3Key ? (
-              <img src={`${apiUrl}${thumbnailUrl}/${item.s3Key}`} alt={item.label} />
+              <img src={`${thumbnailUrl}/${item.s3Key}`} alt={item.label} />
             ) : item.url ? (
               <img src={item.url} alt={item.label} />
             ) : (

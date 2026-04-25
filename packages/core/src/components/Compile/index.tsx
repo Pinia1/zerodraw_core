@@ -23,7 +23,7 @@ import { generateUUID } from '../../utils/drawing';
 import { MentionItem } from './MentionList';
 import { createMentionSuggestion } from './mentionSuggestion';
 
-const thumbnailUrl = Fetch.apiUrl + Fetch.thumbnailUrl;
+const thumbnailUrl = Fetch.thumbnailUrl;
 
 export interface EditorValue {
   /** 纯文本内容 */

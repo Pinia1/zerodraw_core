@@ -9,7 +9,6 @@ import ImageArgs from './components/ImageArgs';
 import ImageRender from './components/ImageRender';
 import RunningRender from './components/RunningRender';
 
-const apiUrl = Fetch.apiUrl;
 const fileUrl = Fetch.fileUrl;
 
 const PAGE_SIZE = 25;
@@ -244,7 +243,7 @@ const Lib = forwardRef<LibRef, LibProps>((props, ref) => {
         </Content>
 
         <Image.PreviewGroup
-          items={completedItems.map((item) => `${apiUrl}${fileUrl}/${item.data.s3Key}`)}
+          items={completedItems.map((item) => `${fileUrl}/${item.data.s3Key}`)}
           preview={{
             visible: previewVisibleIndex !== null,
             current: previewVisibleIndex ?? 0,

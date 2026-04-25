@@ -15,20 +15,20 @@ interface ImageRenderProps {
   onQuote?: () => void;
 }
 const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQuote }) => {
-  const [_, loading] = useImage(`${Fetch.apiUrl}${Fetch.thumbnailUrl}/${data.s3Key}`);
+  const [_, loading] = useImage(`${Fetch.thumbnailUrl}/${data.s3Key}`);
 
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
 
   const onDownload = () => {
-    saveAs(`${Fetch.apiUrl}${Fetch.fileUrl}/${data.s3Key}`);
+    saveAs(`${Fetch.fileUrl}/${data.s3Key}`);
   };
 
   return (
     <ImageCard onClick={onClick} ref={ref}>
       <Spin spinning={loading === 'loading'}>
         <img
-          src={`${Fetch.apiUrl}${Fetch.thumbnailUrl}/${data.s3Key}`}
+          src={`${Fetch.thumbnailUrl}/${data.s3Key}`}
           alt={data.id}
           style={{
             width: '100%',

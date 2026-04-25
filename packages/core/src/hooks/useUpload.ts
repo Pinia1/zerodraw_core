@@ -61,7 +61,7 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
                 const data = await Fetch.httpUploadImage(file);
                 const url = data.startsWith('$')
                   ? `${Fetch.r2Url}/${data}`
-                  : `${Fetch.apiUrl}${Fetch.fileUrl}/${data}`;
+                  : `${Fetch.fileUrl}/${data}`;
 
                 onSuccess?.({ id: data, url: url });
                 return { id: data, url: url };
