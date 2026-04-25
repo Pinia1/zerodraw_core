@@ -64,6 +64,17 @@ class GenerateQueue {
     await this.queue.close();
   }
 
+  private async fetchWithRetry(url: string, retries = 3): Promise<Response> {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) return res;
+      } catch {}
+      if (i < retries - 1) await new Promise((r) => setTimeout(r, 1000 * (i + 1)));
+    }
+    throw new Error('fetch image error');
+  }
+
   /** 处理单个任务 */
   private async process(job: Job<GenerateJobData>) {
     const { taskId, params } = job.data;
@@ -82,7 +93,7 @@ class GenerateQueue {
     const generateResult = await generator.generate(params);
 
     // 下载图片并上传到 S3
-    const imageRes = await fetch(generateResult.imageUrl);
+    const imageRes = await this.fetchWithRetry(generateResult.imageUrl);
     const contentType =
       imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const ext = contentType.includes('jpeg') ? '.jpg' : '.png';

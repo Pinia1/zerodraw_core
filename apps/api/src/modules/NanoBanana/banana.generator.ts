@@ -46,20 +46,21 @@ export class BananaGenerator extends AIGenerator {
     const deadline = Date.now() + timeout;
 
     while (Date.now() < deadline) {
+      let result: Awaited<ReturnType<typeof bananaService.getResult>>;
       try {
-        const result = await bananaService.getResult(taskId);
-        console.log(result, 'resultresult');
+        result = await bananaService.getResult(taskId);
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, interval));
+        continue;
+      }
 
-        if (result.code === 0) {
-          if (result.data.status === 'succeeded') {
-            return result.data.results?.[0]?.url || '';
-          }
-          if (result.data.status === 'failed') {
-            throw new Error(result.data.error || 'Banana generation failed');
-          }
+      if (result.code === 0) {
+        if (result.data.status === 'succeeded') {
+          return result.data.results?.[0]?.url || '';
         }
-      } catch (err: any) {
-        if (err.message === 'Banana generation failed') throw err;
+        if (result.data.status === 'failed') {
+          throw new Error(result.data.error || 'Banana generation failed');
+        }
       }
 
       await new Promise((resolve) => setTimeout(resolve, interval));
