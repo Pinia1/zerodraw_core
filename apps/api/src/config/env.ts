@@ -44,6 +44,9 @@ const envSchema = z.object({
   R2_PUBLIC_URL: z.string().default('https://cdn.zerodraw.cn'),
   SERVER_BASE_URL: z.string().optional(),
   UPLOAD_PROVIDER: z.enum(['volc', 'r2']).default('volc'),
+
+  BUCKET_NAME: z.string().default('zerodraw'),
+  REGION: z.string().default('shanghai'),
 });
 
 function validateEnv() {

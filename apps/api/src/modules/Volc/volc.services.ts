@@ -4,11 +4,8 @@ import { env } from '../../config/env';
 import { InternalServerError } from '../../utils/errors';
 
 class VolcService {
-  // private readonly BUCKET_NAME = 'zerodraw';
-  // private readonly REGION = 'cn-shanghai';
-  // private readonly ENDPOINT = `tos-${this.REGION}.volces.com`;
-  private readonly BUCKET_NAME = 'zerodraw2';
-  private readonly REGION = 'cn-hongkong';
+  private readonly BUCKET_NAME = env.BUCKET_NAME;
+  private readonly REGION = env.REGION;
   private readonly ENDPOINT = `tos-${this.REGION}.volces.com`;
   private client: TosClient;
 
@@ -29,6 +26,7 @@ class VolcService {
    */
   getSignedUrl(key: string, options?: { expires?: number; process?: string }) {
     const { expires = 3600, process } = options ?? {};
+
     return this.client.getPreSignedUrl({
       bucket: this.BUCKET_NAME,
       key,
@@ -88,6 +86,8 @@ class VolcService {
 
       return key;
     } catch (error) {
+      console.log(error, 'errorrrr');
+
       throw new InternalServerError();
     }
   }
