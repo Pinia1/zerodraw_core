@@ -17,6 +17,7 @@ import History from '../../../Lib';
 import { getArOptions, getSizeOptions, sizeMap } from './config';
 
 const nanobananaGenerate = Fetch.nanobananaGenerate;
+type ModelType = NanobananaGenerateParams['args']['model'];
 
 const CreateWithAI = () => {
   const paramsSearch = new URLSearchParams(window.location.search);
@@ -40,7 +41,7 @@ const CreateWithAI = () => {
   const editorRef = useRef<PromptEditorRef>(null);
 
   const [form] = Form.useForm();
-  const model = Form.useWatch('model', form);
+  const model = Form.useWatch('model', form) as ModelType;
 
   const { run: generate } = useRequest(nanobananaGenerate, {
     manual: true,
@@ -135,7 +136,7 @@ const CreateWithAI = () => {
     }
   });
 
-  const handleModelChange = (model: NanobananaGenerateParams['args']['model']) => {
+  const handleModelChange = (model: ModelType) => {
     const imageSize = form.getFieldValue('imageSize');
     const aspectRatio = form.getFieldValue('aspectRatio');
     const nextOptions = getSizeOptions(model);
@@ -176,11 +177,7 @@ const CreateWithAI = () => {
         layout="vertical"
         colon={false}
       >
-        <Form.Item
-          name="prompt"
-          style={{ marginBottom: 12 }}
-          rules={[{ required: true, message: 'Please enter a prompt' }]}
-        >
+        <FormItem name="prompt" rules={[{ required: true, message: 'Please enter a prompt' }]}>
           <PromptEditor
             placeholder="What are you creating?"
             autoFocus={false}
@@ -189,27 +186,23 @@ const CreateWithAI = () => {
             loading={loading}
             ref={editorRef}
           />
-        </Form.Item>
-        <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
+        </FormItem>
+        <FormItem label={<FormLabel>Model</FormLabel>} name="model">
           <Select
             onChange={handleModelChange}
             options={Object.keys(sizeMap).map((i) => ({ label: i, value: i }))}
           />
-        </Form.Item>
-        <Form.Item
-          label={<FormLabel>Aspect Ratio</FormLabel>}
-          name="aspectRatio"
-          style={{ marginBottom: 12 }}
-        >
+        </FormItem>
+        <FormItem label={<FormLabel>Aspect Ratio</FormLabel>} name="aspectRatio">
           <Select options={arOptiong} />
-        </Form.Item>
-        <Form.Item
+        </FormItem>
+        <FormItem
+          hidden={!model?.includes('banana')}
           label={<FormLabel>Image Size</FormLabel>}
           name="imageSize"
-          style={{ marginBottom: 12 }}
         >
           <Select options={sizeOptions} />
-        </Form.Item>
+        </FormItem>
       </Form>
       <History handleQuote={handleQuote} ref={libRef} projectId={projectId} />
     </div>
@@ -222,4 +215,8 @@ const FormLabel = styled.span`
   font-size: 13px;
   font-weight: 500;
   color: var(--container-color, #e0e0e0);
+`;
+
+const FormItem = styled(Form.Item)`
+  margin-bottom: 4px;
 `;

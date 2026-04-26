@@ -121,7 +121,7 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
       style={{
         position: 'absolute',
         right: 12,
-        bottom: '2rem',
+        bottom: 15,
         height: 48,
         width: shrinkTools ? 48 : ASIDE_WIDTH,
         transition: 'width 0.2s ease-in-out',
@@ -131,7 +131,7 @@ const Flexible: React.FC<FlexibleProps> = ({ init }) => {
         display: 'flex',
         gap: 8,
         alignItems: 'center',
-        transformOrigin: 'right top',
+        transformOrigin: 'right bottom',
         transform: isMobile ? 'scale(0.7)' : 'scale(1)',
       }}
     >

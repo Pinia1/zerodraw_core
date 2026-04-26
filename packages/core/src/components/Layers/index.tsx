@@ -99,10 +99,7 @@ const Layers: React.FC = () => {
   }, [container, shrinkTools]);
 
   const tabsItems: TabsProps['items'] = useMemo(() => {
-    return [
-      { key: '1', label: 'Layers', children: <DragList panelScale={panelScale} /> },
-      { key: '2', label: 'Assets', children: 'Content of Tab Pane 2' },
-    ];
+    return [{ key: '1', label: 'Layers', children: <DragList panelScale={panelScale} /> }];
   }, [panelScale]);
 
   const handleCreateLayer = () => {
@@ -117,8 +114,8 @@ const Layers: React.FC = () => {
       style={{
         position: 'absolute',
         left: 12,
-        top: isMobile ? 120 : 70,
-        height: 'calc(100% - 160px)',
+        top: 70,
+        height: isMobile ? 'calc(110% )' : 'calc(100% - 140px)',
         width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,

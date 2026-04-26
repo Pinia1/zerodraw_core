@@ -1,3 +1,4 @@
+import { Form } from 'antd';
 import styled from 'styled-components';
 
 export const Header = styled.div`
@@ -225,4 +226,8 @@ export const FormLabel = styled.span`
   font-size: 13px;
   font-weight: 500;
   color: var(--container-color, #e0e0e0);
+`;
+
+export const FormItem = styled(Form.Item)`
+  margin-bottom: 0px;
 `;

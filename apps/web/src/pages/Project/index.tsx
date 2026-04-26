@@ -1,14 +1,12 @@
 import {
   DownOutlined,
   EllipsisOutlined,
-  FileOutlined,
   PlusOutlined,
   ReloadOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import type { ProjectItem } from '@zeroDraw/api-contract';
 import { useRequest } from '@zeroDraw/common';
-import { loadStageCover } from '@zeroDraw/core';
 import type { InputRef, MenuProps } from 'antd';
 import { Button, Dropdown, Input, Modal, Pagination, Skeleton, message } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
@@ -21,7 +19,6 @@ import {
   httpRestoreProject,
   httpUpdateProject,
 } from '../../services/project';
-import { getR2ThumbnailUrl } from '../../utils';
 import { formatRatio, formatRelativeTime } from '../../utils/project';
 import {
   CardGrid,
@@ -30,7 +27,6 @@ import {
   CardMeta,
   CardName,
   CardThumbnail,
-  EmptyThumb,
   FilterBar,
   FilterButton,
   FilterLeft,
@@ -43,34 +39,7 @@ import {
   SearchWrapper,
 } from '../Project/components';
 import CreateProjectModal, { type RatioOption } from '../Project/components/CreateProjectModal';
-
-const CoverImage: React.FC<{ item: ProjectItem }> = ({ item }) => {
-  const [localCover, setLocalCover] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (item.thumbnailKey) return;
-    let revoked = false;
-    loadStageCover(item.id).then((url) => {
-      if (!revoked && url) setLocalCover(url);
-    });
-    return () => {
-      revoked = true;
-      if (localCover) URL.revokeObjectURL(localCover);
-    };
-  }, [item.id, item.thumbnailKey]);
-
-  if (item.thumbnailKey) {
-    return <img src={getR2ThumbnailUrl(item.thumbnailKey!)} alt={item.name} />;
-  }
-  if (localCover) {
-    return <img src={localCover} alt={item.name} />;
-  }
-  return (
-    <EmptyThumb>
-      <FileOutlined style={{ fontSize: 24, color: '#444' }} />
-    </EmptyThumb>
-  );
-};
+import CoverImage from './components/CoverImage';
 
 const List: React.FC = () => {
   const navigate = useNavigate();

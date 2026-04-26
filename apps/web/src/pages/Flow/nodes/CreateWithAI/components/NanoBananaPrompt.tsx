@@ -2,7 +2,7 @@ import { useMemoizedFn } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
 import React, { useMemo, useRef } from 'react';
 import PromptEditor, { type MentionItem, type PromptEditorRef } from './Editor';
-import { FormLabel } from './index';
+import { FormItem, FormLabel } from './index';
 
 interface PromptProps {
   /** 可 @ 引用的列表 */
@@ -63,14 +63,10 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
         layout="vertical"
         colon={false}
       >
-        <Form.Item
-          name="prompt"
-          style={{ marginBottom: 12 }}
-          rules={[{ required: true, message: 'Please enter a prompt' }]}
-        >
+        <FormItem name="prompt" rules={[{ required: true, message: 'Please enter a prompt' }]}>
           <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={handleSubmit} />
-        </Form.Item>
-        <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
+        </FormItem>
+        <FormItem label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
           <Select
             options={[
               {
@@ -87,12 +83,8 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
               },
             ]}
           />
-        </Form.Item>
-        <Form.Item
-          label={<FormLabel>Aspect Ratio</FormLabel>}
-          name="aspectRatio"
-          style={{ marginBottom: 12 }}
-        >
+        </FormItem>
+        <FormItem label={<FormLabel>Aspect Ratio</FormLabel>} name="aspectRatio">
           <Select
             options={[
               {
@@ -141,14 +133,10 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
               },
             ]}
           />
-        </Form.Item>
-        <Form.Item
-          label={<FormLabel>Image Size</FormLabel>}
-          name="imageSize"
-          style={{ marginBottom: 12 }}
-        >
+        </FormItem>
+        <FormItem label={<FormLabel>Image Size</FormLabel>} name="imageSize">
           <Select options={sizeOptions} />
-        </Form.Item>
+        </FormItem>
       </Form>
     </div>
   );
