@@ -78,6 +78,7 @@ const Layers: React.FC = () => {
   const { run: createReferencePictureRun } = useUpload({
     accept: 'image/*',
     multiple: false,
+    local: true,
     onSuccess: ({ url }) => {
       setReferencePicture(url);
     },
@@ -115,7 +116,7 @@ const Layers: React.FC = () => {
         position: 'absolute',
         left: 12,
         top: 70,
-        height: isMobile ? 'calc(110% )' : 'calc(100% - 140px)',
+        height: isMobile ? 'calc(100% )' : 'calc(100% - 140px)',
         width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,

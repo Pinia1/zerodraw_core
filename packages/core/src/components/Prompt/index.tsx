@@ -35,7 +35,7 @@ const Prompt: React.FC = () => {
         position: 'absolute',
         right: 12,
         top: 70,
-        height: isMobile ? 'calc(110%)' : 'calc(100% - 140px)',
+        height: isMobile ? 'calc(100%)' : 'calc(100% - 140px)',
         width: ASIDE_WIDTH,
         borderRadius: 16,
         padding: 12,
