@@ -1,8 +1,10 @@
-import { FileOutlined } from '@ant-design/icons';
+import { FileOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { ConfigProvider, Menu } from 'antd';
+import { ConfigProvider, Drawer, Menu } from 'antd';
+import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  SidebarBottom,
   SidebarTop,
   StyledSider,
   WorkspaceAvatar,
@@ -38,14 +40,18 @@ const Aside = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const topMenuItems: MenuProps['items'] = [
     { key: 'projects', icon: <FileOutlined />, label: 'Projects' },
   ];
+  const bottomMenuItems: MenuProps['items'] = [
+    { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help' },
+  ];
 
   const handleMenuSelect = ({ key }: { key: string }) => {
-    if (key === 'trash') {
-      navigate('/projects?view=trash');
+    if (key === 'help') {
+      setHelpOpen(true);
       return;
     }
     navigate(`/${key}`);
@@ -83,7 +89,37 @@ const Aside = () => {
             inlineIndent={12}
           />
         </SidebarTop>
+
+        <SidebarBottom>
+          <Menu
+            theme="dark"
+            mode="inline"
+            selectedKeys={[activeNav]}
+            onSelect={handleMenuSelect}
+            items={bottomMenuItems}
+            style={{ background: 'transparent', border: 'none', marginBottom: 80 }}
+            inlineIndent={12}
+          />
+        </SidebarBottom>
       </StyledSider>
+
+      <Drawer
+        title="使用指南"
+        placement="right"
+        width="80vw"
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        styles={{
+          body: { padding: 0, height: '100%', overflow: 'hidden' },
+          wrapper: { height: '100vh' },
+        }}
+      >
+        <iframe
+          //@ts-ignore
+          src={`${import.meta.env.VITE_DOCS_URL ?? ''}/docs/guide`}
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+        />
+      </Drawer>
     </ConfigProvider>
   );
 };

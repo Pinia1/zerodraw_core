@@ -2,7 +2,7 @@
   "name": "@zeroDraw/docs",
   "private": true,
   "scripts": {
-    "dev": "dumi dev",
+    "dev": "dumi dev --port 8001",
     "build": "dumi build",
     "preview": "dumi preview"
   },
