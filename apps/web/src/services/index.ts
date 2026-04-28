@@ -17,7 +17,6 @@ request.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error: AxiosError) => {
@@ -27,16 +26,20 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   (response) => {
-    const { data, code, message } = response.data;
+    const { data, code, message: msg } = response.data;
     if (code !== 1000) {
-      message.error(message);
+      message.error(msg);
     }
     return data;
   },
   (error: AxiosError) => {
     if (error.response) {
       const { status } = error.response;
+
       switch (status) {
+        case 429:
+          message.error('请求过于频繁，请稍后再试');
+          break;
         case 401:
           message.error('登录失败');
           setTimeout(() => {

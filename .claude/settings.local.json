@@ -7,7 +7,12 @@
       "Bash(pnpm add *)",
       "WebFetch(domain:developers.cloudflare.com)",
       "Bash(mysql *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(redis-cli ping *)",
+      "Bash(where redis-server *)",
+      "Bash(C:\\\\Program Files\\\\Redis\\\\redis-server.exe *)",
+      "Bash(wsl --list --verbose)",
+      "Bash(docker --version)"
     ]
   }
 }

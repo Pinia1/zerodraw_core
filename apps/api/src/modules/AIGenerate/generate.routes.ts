@@ -4,10 +4,13 @@ import {
   seedreamGetTaskResponseSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
+import { userRateLimit } from '../../plugins/userRateLimit';
 import { createSuccessResponse } from '../../types/response';
 import { QueryValidation } from '../../utils/schame';
 import { authenticate } from '../Auth/auth.middleware';
 import { generateService } from './generate.services';
+
+const nanoBananaRateLimit = userRateLimit({ max: 6, windowSec: 60, keyPrefix: 'rl:nano-banana' });
 
 export async function generateRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
@@ -26,7 +29,7 @@ export async function generateRoutes(app: FastifyInstance) {
     return reply.send(createSuccessResponse(result));
   });
 
-  app.post('/nano-banana', async (request, reply) => {
+  app.post('/nano-banana', { preHandler: nanoBananaRateLimit }, async (request, reply) => {
     const queryResult = QueryValidation(nanobananaGenerateSchema, request.body);
     const response = await generateService.run(request.user.userId, queryResult);
     return reply.send(createSuccessResponse(response));
