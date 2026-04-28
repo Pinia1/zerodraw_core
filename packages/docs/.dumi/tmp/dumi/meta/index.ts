@@ -7,16 +7,20 @@ import { frontmatter as fm1, toc as t1 } from 'D:/workSpace/frontend-monorepo/pa
 import { demoIndex as dmi1 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/export.md?type=demo-index';
 import { frontmatter as fm2, toc as t2 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/layers.md?type=frontmatter';
 import { demoIndex as dmi2 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/layers.md?type=demo-index';
-import { frontmatter as fm3, toc as t3 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=frontmatter';
-import { demoIndex as dmi3 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=demo-index';
-import { frontmatter as fm4, toc as t4 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=frontmatter';
-import { demoIndex as dmi4 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=demo-index';
-import { frontmatter as fm5, toc as t5 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=frontmatter';
-import { demoIndex as dmi5 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=demo-index';
-import { frontmatter as fm6, toc as t6 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=frontmatter';
-import { demoIndex as dmi6 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=demo-index';
-import { frontmatter as fm7, toc as t7 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md?type=frontmatter';
-import { demoIndex as dmi7 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md?type=demo-index';
+import { frontmatter as fm3, toc as t3 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/vizcom.md?type=frontmatter';
+import { demoIndex as dmi3 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/vizcom.md?type=demo-index';
+import { frontmatter as fm4, toc as t4 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=frontmatter';
+import { demoIndex as dmi4 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=demo-index';
+import { frontmatter as fm5, toc as t5 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=frontmatter';
+import { demoIndex as dmi5 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=demo-index';
+import { frontmatter as fm6, toc as t6 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=frontmatter';
+import { demoIndex as dmi6 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=demo-index';
+import { frontmatter as fm7, toc as t7 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=frontmatter';
+import { demoIndex as dmi7 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=demo-index';
+import { frontmatter as fm8, toc as t8 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/vizcom.md?type=frontmatter';
+import { demoIndex as dmi8 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/vizcom.md?type=demo-index';
+import { frontmatter as fm9, toc as t9 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md?type=frontmatter';
+import { demoIndex as dmi9 } from 'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md?type=demo-index';
 
 export const filesMeta = {
   'docs/guide/shortcuts': {
@@ -37,34 +41,46 @@ export const filesMeta = {
     demoIndex: dmi2,
     textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/layers.md?type=text'),
   },
-  'docs/guide/index': {
+  'docs/guide/vizcom': {
     frontmatter: fm3,
     toc: t3,
     demoIndex: dmi3,
-    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=text'),
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/vizcom.md?type=text'),
   },
-  'docs/guide/tools': {
+  'docs/guide/index': {
     frontmatter: fm4,
     toc: t4,
     demoIndex: dmi4,
-    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=text'),
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md?type=text'),
   },
-  'docs/guide/faq': {
+  'docs/guide/tools': {
     frontmatter: fm5,
     toc: t5,
     demoIndex: dmi5,
-    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=text'),
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md?type=text'),
   },
-  'docs/guide/ai': {
+  'docs/guide/faq': {
     frontmatter: fm6,
     toc: t6,
     demoIndex: dmi6,
-    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=text'),
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md?type=text'),
   },
-  'docs/index': {
+  'docs/guide/ai': {
     frontmatter: fm7,
     toc: t7,
     demoIndex: dmi7,
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md?type=text'),
+  },
+  'docs/vizcom': {
+    frontmatter: fm8,
+    toc: t8,
+    demoIndex: dmi8,
+    textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/vizcom.md?type=text'),
+  },
+  'docs/index': {
+    frontmatter: fm9,
+    toc: t9,
+    demoIndex: dmi9,
     textGetter: () => import(/* webpackChunkName: "meta__docs" */'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md?type=text'),
   },
 }

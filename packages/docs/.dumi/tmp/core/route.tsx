@@ -4,7 +4,7 @@
 import React from 'react';
 
 export async function getRoutes() {
-  const routes = {"404":{"id":"404","path":"*","parentId":"DocLayout"},"dumi-context-layout":{"id":"dumi-context-layout","path":"/","isLayout":true},"DocLayout":{"id":"DocLayout","path":"/","parentId":"dumi-context-layout","isLayout":true},"docs/guide/shortcuts":{"path":"guide/shortcuts","id":"docs/guide/shortcuts","parentId":"DocLayout"},"docs/guide/export":{"path":"guide/export","id":"docs/guide/export","parentId":"DocLayout"},"docs/guide/layers":{"path":"guide/layers","id":"docs/guide/layers","parentId":"DocLayout"},"docs/guide/index":{"path":"guide","id":"docs/guide/index","parentId":"DocLayout"},"docs/guide/tools":{"path":"guide/tools","id":"docs/guide/tools","parentId":"DocLayout"},"docs/guide/faq":{"path":"guide/faq","id":"docs/guide/faq","parentId":"DocLayout"},"docs/guide/ai":{"path":"guide/ai","id":"docs/guide/ai","parentId":"DocLayout"},"docs/index":{"path":"","id":"docs/index","parentId":"DocLayout"},"demo-render":{"id":"demo-render","path":"~demos/:id","parentId":"dumi-context-layout"}} as const;
+  const routes = {"404":{"id":"404","path":"*","parentId":"DocLayout"},"dumi-context-layout":{"id":"dumi-context-layout","path":"/","isLayout":true},"DocLayout":{"id":"DocLayout","path":"/","parentId":"dumi-context-layout","isLayout":true},"docs/guide/shortcuts":{"path":"guide/shortcuts","id":"docs/guide/shortcuts","parentId":"DocLayout"},"docs/guide/export":{"path":"guide/export","id":"docs/guide/export","parentId":"DocLayout"},"docs/guide/layers":{"path":"guide/layers","id":"docs/guide/layers","parentId":"DocLayout"},"docs/guide/vizcom":{"path":"guide/vizcom","id":"docs/guide/vizcom","parentId":"DocLayout"},"docs/guide/index":{"path":"guide","id":"docs/guide/index","parentId":"DocLayout"},"docs/guide/tools":{"path":"guide/tools","id":"docs/guide/tools","parentId":"DocLayout"},"docs/guide/faq":{"path":"guide/faq","id":"docs/guide/faq","parentId":"DocLayout"},"docs/guide/ai":{"path":"guide/ai","id":"docs/guide/ai","parentId":"DocLayout"},"docs/vizcom":{"path":"vizcom","id":"docs/vizcom","parentId":"DocLayout"},"docs/index":{"path":"","id":"docs/index","parentId":"DocLayout"},"demo-render":{"id":"demo-render","path":"~demos/:id","parentId":"dumi-context-layout"}} as const;
   return {
     routes,
     routeComponents: {
@@ -14,10 +14,12 @@ export async function getRoutes() {
 'docs/guide/shortcuts': React.lazy(() => import(/* webpackChunkName: "docs__guide__shortcuts.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/shortcuts.md')),
 'docs/guide/export': React.lazy(() => import(/* webpackChunkName: "docs__guide__export.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/export.md')),
 'docs/guide/layers': React.lazy(() => import(/* webpackChunkName: "docs__guide__layers.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/layers.md')),
+'docs/guide/vizcom': React.lazy(() => import(/* webpackChunkName: "docs__guide__vizcom.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/vizcom.md')),
 'docs/guide/index': React.lazy(() => import(/* webpackChunkName: "docs__guide__index.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/index.md')),
 'docs/guide/tools': React.lazy(() => import(/* webpackChunkName: "docs__guide__tools.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/tools.md')),
 'docs/guide/faq': React.lazy(() => import(/* webpackChunkName: "docs__guide__faq.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/faq.md')),
 'docs/guide/ai': React.lazy(() => import(/* webpackChunkName: "docs__guide__ai.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/guide/ai.md')),
+'docs/vizcom': React.lazy(() => import(/* webpackChunkName: "docs__vizcom.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/vizcom.md')),
 'docs/index': React.lazy(() => import(/* webpackChunkName: "docs__index.md" */'D:/workSpace/frontend-monorepo/packages/docs/docs/index.md')),
 'demo-render': React.lazy(() => import(/* webpackChunkName: "nm__dumi__dist__client__pages__Demo__index" */'D:/workSpace/frontend-monorepo/node_modules/.pnpm/dumi@2.4.23_@babel+core@7.29.0_@swc+helpers@0.5.15_@types+node@22.19.10_@types+react@18.3.28__htimx7wjsd6gpoalopyyfox4l4/node_modules/dumi/dist/client/pages/Demo/index.js')),
 },

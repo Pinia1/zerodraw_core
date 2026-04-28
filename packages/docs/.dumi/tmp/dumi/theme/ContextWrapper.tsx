@@ -17,7 +17,7 @@ const entryExports = {
 const pkg = {"name":"@zeroDraw/docs"};
 const historyType = "browser";
 const hostname = undefined;
-const themeConfig = {"logo":false,"footer":"zeroDraw — 矢量 & 位图绘画引擎","prefersColor":{"default":"light","switch":true},"nprogress":true,"lastUpdated":true,"name":"zeroDraw","nav":[{"title":"使用指南","link":"/docs/guide"}]};
+const themeConfig = {"logo":false,"footer":"zeroDraw","prefersColor":{"default":"light","switch":true},"nprogress":true,"lastUpdated":true,"name":"zeroDraw","nav":[{"title":"使用指南","link":"/docs/guide"}]};
 const _2_level_nav_available = true;
 
 export default function DumiContextWrapper() {
