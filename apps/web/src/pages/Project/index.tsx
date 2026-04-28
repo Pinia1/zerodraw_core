@@ -1,22 +1,14 @@
-import {
-  DownOutlined,
-  EllipsisOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import { EllipsisOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import type { ProjectItem } from '@zeroDraw/api-contract';
 import { useRequest } from '@zeroDraw/common';
 import type { InputRef, MenuProps } from 'antd';
 import { Button, Dropdown, Input, Modal, Pagination, Skeleton, message } from 'antd';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   httpCreateProject,
-  httpDeleteProject,
   httpListProjects,
   httpPermanentDeleteProject,
-  httpRestoreProject,
   httpUpdateProject,
 } from '../../services/project';
 import { formatRatio, formatRelativeTime } from '../../utils/project';
@@ -28,7 +20,6 @@ import {
   CardName,
   CardThumbnail,
   FilterBar,
-  FilterButton,
   FilterLeft,
   MainHeader,
   MoreBtn,
@@ -43,42 +34,56 @@ import CoverImage from './components/CoverImage';
 
 const List: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isTrash = searchParams.get('view') === 'trash';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const page = Number(searchParams.get('page') ?? 1);
 
+  const [inputValue, setInputValue] = useState('');
   const [searchValue, setSearchValue] = useState('');
-  const [page, setPage] = useState(1);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const renameInputRef = useRef<InputRef>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
-  useEffect(() => {
-    setPage(1);
-  }, [isTrash, searchValue]);
+  const setPage = (p: number) => {
+    setSearchParams(
+      (prev) => {
+        prev.set('page', String(p));
+        return prev;
+      },
+      { replace: true }
+    );
+  };
+
+  const triggerSearch = (value: string) => {
+    setSearchValue(value);
+    setSearchParams(
+      (prev) => {
+        prev.delete('page');
+        return prev;
+      },
+      { replace: true }
+    );
+  };
 
   const {
     data: listData,
     loading,
-    refresh,
+    mutate,
   } = useRequest(
-    () =>
-      httpListProjects({
-        page,
-        pageSize: 16,
-        keyword: searchValue || undefined,
-        ...(isTrash ? { deleted: true } : {}),
-      }),
-    { refreshDeps: [isTrash, searchValue, page] }
+    () => httpListProjects({ page, pageSize: 16, keyword: searchValue || undefined }),
+    {
+      refreshDeps: [searchValue, page],
+      cacheKey: `projects-list-${searchValue}-${page}`,
+    }
   );
 
   const projects: ProjectItem[] = listData?.list ?? [];
 
   const pendingImageRef = useRef<File | undefined>();
   const { loading: creating, run: createProject } = useRequest(
-    (canvasWidth: number, canvasHeight: number) =>
+    (canvasWidth: number, canvasHeight: number, name: string) =>
       httpCreateProject({
-        name: 'Untitled',
+        name,
         canvasWidth,
         canvasHeight,
         backgroundColor: '#ffffff',
@@ -98,142 +103,114 @@ const List: React.FC = () => {
 
   const handleCreateConfirm = (option: RatioOption) => {
     pendingImageRef.current = option.imageFile;
-    createProject(option.width, option.height);
+    createProject(option.width, option.height, option.name!);
   };
-
-  const { run: renameProject } = useRequest(
-    (id: string, name: string) => httpUpdateProject(id, { name }),
-    {
-      manual: true,
-      onSuccess: () => refresh(),
-      onError: () => message.error('Failed to rename'),
-    }
-  );
 
   const handleRenameSubmit = () => {
     if (!renamingId) return;
     const trimmed = renameValue.trim();
-    if (trimmed) renameProject(renamingId, trimmed);
     setRenamingId(null);
+    if (!trimmed) return;
+
+    const prev = listData;
+    mutate(
+      prev
+        ? {
+            ...prev,
+            list: prev.list.map((p) => (p.id === renamingId ? { ...p, name: trimmed } : p)),
+          }
+        : prev
+    );
+    httpUpdateProject(renamingId, { name: trimmed }).catch(() => {
+      message.error('Failed to rename');
+      mutate(prev);
+    });
   };
 
-  const { run: deleteProject } = useRequest((id: string) => httpDeleteProject(id), {
-    manual: true,
-    onSuccess: () => refresh(),
-    onError: () => message.error('Failed to delete'),
-  });
-
-  const { run: restoreProject } = useRequest((id: string) => httpRestoreProject(id), {
-    manual: true,
-    onSuccess: () => refresh(),
-    onError: () => message.error('Failed to restore'),
-  });
-
-  const { run: permanentDelete } = useRequest((id: string) => httpPermanentDeleteProject(id), {
-    manual: true,
-    onSuccess: () => refresh(),
-    onError: () => message.error('Failed to delete permanently'),
-  });
-
-  const handlePermanentDelete = (id: string) => {
+  const handleDelete = (id: string) => {
     Modal.confirm({
-      title: 'Delete permanently',
+      title: 'Delete project',
       content: 'This action cannot be undone. Are you sure?',
       okText: 'Delete',
       okButtonProps: { danger: true },
       cancelText: 'Cancel',
-      onOk: () => permanentDelete(id),
+      onOk: () => {
+        const prev = listData;
+        mutate(
+          prev
+            ? { ...prev, list: prev.list.filter((p) => p.id !== id), total: prev.total - 1 }
+            : prev
+        );
+        httpPermanentDeleteProject(id).catch(() => {
+          message.error('Failed to delete');
+          mutate(prev);
+        });
+      },
     });
   };
 
-  const sortItems: MenuProps['items'] = [
-    { key: 'last_viewed', label: 'Last viewed' },
-    { key: 'last_modified', label: 'Last modified' },
-    { key: 'alphabetical', label: 'Alphabetical' },
+  const cardMenu = (item: ProjectItem): MenuProps['items'] => [
+    {
+      key: 'open',
+      label: 'Open',
+      onClick: () => navigate(`/drawing?projectId=${item.id}`),
+    },
+    {
+      key: 'rename',
+      label: 'Rename',
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        setRenamingId(item.id);
+        setRenameValue(item.name);
+        setTimeout(() => renameInputRef.current?.focus(), 50);
+      },
+    },
+    { type: 'divider' },
+    {
+      key: 'delete',
+      label: 'Delete',
+      danger: true,
+      onClick: () => handleDelete(item.id),
+    },
   ];
-
-  const cardMenu = (item: ProjectItem): MenuProps['items'] =>
-    isTrash
-      ? [
-          {
-            key: 'restore',
-            icon: <ReloadOutlined />,
-            label: 'Restore',
-            onClick: () => restoreProject(item.id),
-          },
-          { type: 'divider' },
-          {
-            key: 'permanent',
-            label: 'Delete permanently',
-            danger: true,
-            onClick: () => handlePermanentDelete(item.id),
-          },
-        ]
-      : [
-          {
-            key: 'open',
-            label: 'Open',
-            onClick: () => navigate(`/drawing?projectId=${item.id}`),
-          },
-          {
-            key: 'rename',
-            label: 'Rename',
-            onClick: (e) => {
-              e.domEvent.stopPropagation();
-              setRenamingId(item.id);
-              setRenameValue(item.name);
-              setTimeout(() => renameInputRef.current?.focus(), 50);
-            },
-          },
-          { type: 'divider' },
-          {
-            key: 'delete',
-            label: 'Delete',
-            danger: true,
-            onClick: () => deleteProject(item.id),
-          },
-        ];
-
-  const navTitle = isTrash ? 'Trash' : 'Projects';
 
   return (
     <>
       <MainHeader>
-        <PageTitle>{navTitle}</PageTitle>
-        {!isTrash && (
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            loading={creating}
-            onClick={() => setCreateModalOpen(true)}
-            style={{ background: '#6254e8', borderColor: '#6254e8', borderRadius: 8 }}
-          >
-            Create new file
-          </Button>
-        )}
+        <PageTitle>Projects</PageTitle>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          loading={creating}
+          onClick={() => setCreateModalOpen(true)}
+          style={{ background: '#6254e8', borderColor: '#6254e8', borderRadius: 8 }}
+        >
+          Create new file
+        </Button>
       </MainHeader>
 
       <FilterBar>
         <FilterLeft>
           <SearchWrapper style={{ margin: 0 }}>
             <Input
-              prefix={<SearchOutlined style={{ color: '#555', fontSize: 12 }} />}
+              prefix={
+                <SearchOutlined
+                  style={{ color: '#555', fontSize: 12, cursor: 'pointer' }}
+                  onClick={() => triggerSearch(inputValue)}
+                />
+              }
               placeholder="Search files"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onPressEnter={() => triggerSearch(inputValue)}
               variant="borderless"
             />
           </SearchWrapper>
-          <Dropdown menu={{ items: sortItems }} trigger={['click']}>
-            <FilterButton>
-              Last viewed <DownOutlined style={{ fontSize: 9 }} />
-            </FilterButton>
-          </Dropdown>
         </FilterLeft>
       </FilterBar>
 
       <ScrollArea>
-        {loading ? (
+        {loading && !listData ? (
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : (
           <CardGrid $list={false}>
@@ -241,9 +218,7 @@ const List: React.FC = () => {
               <ProjectCard
                 key={item.id}
                 $list={false}
-                onClick={() =>
-                  !isTrash && renamingId !== item.id && navigate(`/drawing?projectId=${item.id}`)
-                }
+                onClick={() => renamingId !== item.id && navigate(`/drawing?projectId=${item.id}`)}
               >
                 <CardThumbnail $list={false}>
                   <CoverImage item={item} />
@@ -272,7 +247,7 @@ const List: React.FC = () => {
                       <CardName>{item.name}</CardName>
                     )}
                     <CardMeta>
-                      {isTrash ? 'Deleted' : `Edited · ${formatRelativeTime(item.updatedAt)}`}
+                      {`Edited · ${formatRelativeTime(item.updatedAt)}`}
                       {item.canvasWidth && item.canvasHeight
                         ? ` · ${formatRatio(item.canvasWidth, item.canvasHeight)}`
                         : null}
@@ -295,7 +270,7 @@ const List: React.FC = () => {
             ))}
           </CardGrid>
         )}
-        {!loading && (listData?.total ?? 0) > 16 && (
+        {(listData?.total ?? 0) > 16 && (
           <PaginationBar>
             <Pagination
               current={page}

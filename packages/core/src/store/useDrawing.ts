@@ -96,7 +96,7 @@ export const useDrawingStore = create<DrawingState>()(
 
       //line config
       lineConfig: {
-        strokeWidth: 5,
+        strokeWidth: 1,
         stroke: '#000000',
         opacity: 1,
         tension: 0,

@@ -1,9 +1,8 @@
-import { DeleteOutlined, FileOutlined } from '@ant-design/icons';
+import { FileOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { ConfigProvider, Menu } from 'antd';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  SidebarBottom,
   SidebarTop,
   StyledSider,
   WorkspaceAvatar,
@@ -42,9 +41,6 @@ const Aside = () => {
 
   const topMenuItems: MenuProps['items'] = [
     { key: 'projects', icon: <FileOutlined />, label: 'Projects' },
-  ];
-  const bottomMenuItems: MenuProps['items'] = [
-    { key: 'trash', icon: <DeleteOutlined />, label: 'Trash' },
   ];
 
   const handleMenuSelect = ({ key }: { key: string }) => {
@@ -87,18 +83,6 @@ const Aside = () => {
             inlineIndent={12}
           />
         </SidebarTop>
-
-        <SidebarBottom>
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={[activeNav]}
-            onSelect={handleMenuSelect}
-            items={bottomMenuItems}
-            style={{ background: 'transparent', border: 'none', marginBottom: 80 }}
-            inlineIndent={12}
-          />
-        </SidebarBottom>
       </StyledSider>
     </ConfigProvider>
   );
