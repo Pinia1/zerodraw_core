@@ -4,7 +4,7 @@
     "name": "@zeroDraw/docs",
     "private": true,
     "scripts": {
-      "dev": "dumi dev",
+      "dev": "dumi dev --port 8001",
       "build": "dumi build",
       "preview": "dumi preview"
     },
@@ -166,6 +166,7 @@
             0
           ]
         },
+        "register": 1
         "register": 1
       },
       "enableBy": "register"
@@ -1062,7 +1063,7 @@
       "time": {
         "hooks": {
           "onStart": [
-            0
+            1
           ]
         },
         "register": 1
@@ -1118,6 +1119,7 @@
       "time": {
         "hooks": {
           "onCheck": [
+            0
             0
           ]
         },
@@ -1218,7 +1220,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1299,7 +1301,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 0
+        "register": 1
       },
       "enableBy": "config"
     },
@@ -1517,7 +1519,7 @@
       "time": {
         "hooks": {
           "addOnDemandDeps": [
-            0
+            1
           ]
         },
         "register": 0
@@ -2068,10 +2070,10 @@
       "time": {
         "hooks": {
           "modifyConfig": [
-            0
+            1
           ],
           "modifyDefaultConfig": [
-            0
+            1
           ],
           "onCheck": [
             1
@@ -2197,6 +2199,7 @@
             0
           ],
           "modifyRoutes": [
+            0
             0
           ]
         },
@@ -2346,7 +2349,7 @@
           "link": "/docs/guide"
         }
       ],
-      "footer": "zeroDraw — 矢量 & 位图绘画引擎"
+      "footer": "zeroDraw"
     },
     "logo": false,
     "favicons": []
@@ -2382,7 +2385,7 @@
       "dumi/theme-default": "D:\\code\\zeroDraw\\node_modules\\.pnpm\\dumi@2.4.23_@babel+core@7.29.0_@types+node@20.19.33_@types+react@18.3.28_eslint@8.57.1_pretti_sj7djr26raghmyozw4fqcgwskq\\node_modules\\dumi\\theme-default"
     },
     "themeConfig": {
-      "footer": "zeroDraw — 矢量 & 位图绘画引擎",
+      "footer": "zeroDraw",
       "prefersColor": {
         "default": "light",
         "switch": true

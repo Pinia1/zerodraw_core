@@ -23,7 +23,6 @@ const useLayerToBitmap = () => {
       return new Promise(async (resolve) => {
         if (layer && !layer.diagrams?.length) {
           resolve(layer);
-          console.log('return 1');
 
           return;
         }
@@ -31,7 +30,6 @@ const useLayerToBitmap = () => {
         // If there is no change.
         if (layer.diagrams.length === 1 && layer.diagrams[0].type === 'image' && layer.image) {
           resolve(layer);
-          console.log('return 2');
           return;
         }
 

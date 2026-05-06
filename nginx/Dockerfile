@@ -44,10 +44,14 @@ ENV VITE_R2_THUMBNAIL_URL=$VITE_R2_THUMBNAIL_URL
 WORKDIR /app/apps/web
 RUN pnpm exec vite build
 
+WORKDIR /app/packages/docs
+RUN pnpm exec dumi build
+
 # ---- 最终镜像 ----
 FROM nginx:1.25-alpine
 
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+COPY --from=builder /app/packages/docs/docs-dist /usr/share/nginx/html/docs
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 3000

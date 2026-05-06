@@ -1,9 +1,20 @@
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import { Modal, message } from 'antd';
+import { Input, Modal, message } from 'antd';
 import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 
 const LONG_SIDE = 1920;
+
+const ANIMALS = [
+  'Cat', 'Dog', 'Fox', 'Bear', 'Wolf', 'Deer', 'Owl', 'Duck', 'Frog', 'Swan',
+  'Crow', 'Hawk', 'Lynx', 'Mink', 'Mole', 'Newt', 'Puma', 'Toad', 'Wren', 'Bison',
+  'Crane', 'Eagle', 'Finch', 'Goose', 'Heron', 'Horse', 'Hyena', 'Llama', 'Moose', 'Otter',
+  'Panda', 'Quail', 'Raven', 'Robin', 'Shark', 'Sloth', 'Snail', 'Tiger', 'Viper', 'Zebra',
+  'Chimp', 'Dingo', 'Gecko', 'Koala', 'Lemur', 'Okapi', 'Tapir', 'Trout', 'Bison', 'Skunk',
+  'Stoat', 'Squid', 'Prawn', 'Bream', 'Roach', 'Perch', 'Voles', 'Shrew', 'Booby', 'Ibis',
+];
+
+const randomAnimalName = () => ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
 
 export interface RatioOption {
   label: string;
@@ -11,6 +22,7 @@ export interface RatioOption {
   h: number;
   width: number;
   height: number;
+  name?: string;
   imageFile?: File;
 }
 
@@ -34,11 +46,27 @@ export const RATIO_OPTIONS: RatioOption[] = [
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const FieldLabel = styled.span`
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+  letter-spacing: 0.3px;
+`;
+
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  padding: 8px 0 4px;
 `;
 
 const Card = styled.div<{ $active: boolean }>`
@@ -102,7 +130,6 @@ const Dimension = styled.span`
 `;
 
 const UploadZone = styled.div<{ $active: boolean; $hasImage: boolean }>`
-  margin-top: 12px;
   border: 1.5px dashed ${({ $active }) => ($active ? '#6254e8' : 'rgba(255,255,255,0.15)')};
   border-radius: 10px;
   background: ${({ $active }) => ($active ? 'rgba(98,84,232,0.08)' : 'rgba(255,255,255,0.02)')};
@@ -160,6 +187,8 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
   const [selected, setSelected] = useState<RatioOption>(RATIO_OPTIONS[0]);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState('');
+  const [placeholder, setPlaceholder] = useState(() => randomAnimalName());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUploadClick = () => {
@@ -203,9 +232,18 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
     setImagePreview(null);
   };
 
+  const handleConfirm = () => {
+    const name = nameValue.trim() || placeholder;
+    onConfirm({ ...selected, name });
+    setNameValue('');
+    setPlaceholder(randomAnimalName());
+  };
+
   const handleCancel = () => {
     setImagePreview(null);
     setSelected(RATIO_OPTIONS[0]);
+    setNameValue('');
+    setPlaceholder(randomAnimalName());
     onCancel();
   };
 
@@ -225,7 +263,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
         title="New File"
         okText="Create"
         cancelText="Cancel"
-        onOk={() => onConfirm(selected)}
+        onOk={handleConfirm}
         onCancel={handleCancel}
         confirmLoading={loading}
         width={480}
@@ -240,7 +278,26 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
         }}
         cancelButtonProps={{ style: { borderRadius: 7 } }}
       >
-        <Grid>
+        <Field>
+          <FieldLabel>Name</FieldLabel>
+          <Input
+            placeholder="Project name (optional)"
+            value={nameValue}
+            onChange={(e) => setNameValue(e.target.value)}
+            onPressEnter={handleConfirm}
+            maxLength={50}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              color: '#e0e0e0',
+              fontSize: 14,
+            }}
+          />
+        </Field>
+        <Field>
+          <FieldLabel>Canvas ratio</FieldLabel>
+          <Grid>
           {RATIO_OPTIONS.map((opt) => (
             <Card
               key={opt.label}
@@ -263,8 +320,10 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
             </Card>
           ))}
         </Grid>
-
-        <UploadZone
+        </Field>
+        <Field>
+          <FieldLabel>Import image</FieldLabel>
+          <UploadZone
           $active={isImageSelected}
           $hasImage={!!imagePreview}
           onClick={handleUploadClick}
@@ -292,6 +351,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
             </UploadPlaceholder>
           )}
         </UploadZone>
+        </Field>
       </Modal>
     </>
   );

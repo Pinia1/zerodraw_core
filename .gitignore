@@ -2,7 +2,7 @@
 node_modules
 .pnpm-store
 build.md
-packages/docs
+# packages/docs
 
 
 # Build outputs

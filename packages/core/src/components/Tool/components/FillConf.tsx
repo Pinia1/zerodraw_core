@@ -46,7 +46,7 @@ const CardTitle = styled.div`
 const TinyButton = styled.button`
   appearance: none;
   border: 1px solid var(--container-border-color);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
   color: inherit;
   font-size: 12px;
   padding: 6px 8px;
@@ -61,7 +61,7 @@ const TinyButton = styled.button`
 
   &:hover {
     border-color: var(--color-primary-active);
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.1);
   }
   &:active {
     transform: translateY(1px);
@@ -79,7 +79,7 @@ const Preview = styled.div`
     linear-gradient(-45deg, rgba(0, 0, 0, 0.06) 25%, transparent 25%) 0 0 / 12px 12px,
     linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%) 0 0 / 12px 12px,
     linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%) 0 0 / 12px 12px;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.04);
 `;
 
 const PreviewFill = styled.div`
@@ -100,7 +100,7 @@ const AngleDial = styled.div`
   aspect-ratio: 1 / 1;
   border-radius: 999px;
   border: 1px solid var(--container-border-color);
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
   overflow: hidden;
   margin: 0 auto;
 `;
@@ -170,13 +170,13 @@ const AngleChip = styled.div`
   padding: 6px 8px;
   border-radius: 10px;
   border: 1px solid var(--container-border-color);
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
 `;
 
 const Stops = styled.div`
   border: 1px solid var(--container-border-color);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.04);
   padding: 10px;
 `;
 
@@ -191,7 +191,7 @@ const StopsBar = styled.div`
     linear-gradient(-45deg, rgba(0, 0, 0, 0.06) 25%, transparent 25%) 0 0 / 10px 10px,
     linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%) 0 0 / 10px 10px,
     linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.06) 75%) 0 0 / 10px 10px;
-  background-color: rgba(255, 255, 255, 0.55);
+  background-color: rgba(255, 255, 255, 0.04);
 `;
 
 const StopsBarHit = styled.div`
@@ -242,7 +242,7 @@ const Pill = styled.div`
   padding: 6px 8px;
   border-radius: 999px;
   border: 1px solid var(--container-border-color);
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
   line-height: 1;
   opacity: 0.9;
 `;
@@ -253,7 +253,7 @@ const ColorInput = styled.input`
   padding: 0;
   border: 1px solid var(--container-border-color);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
   cursor: pointer;
 `;
@@ -352,6 +352,21 @@ const FillConf = () => {
     { wait: 16 }
   );
 
+  const { run: handleDialMove } = useThrottleFn(
+    (clientX: number, clientY: number) => {
+      setAngle(calcAngleFromPointer(clientX, clientY));
+    },
+    { wait: 16 }
+  );
+
+  const { run: handleStopMove } = useThrottleFn(
+    (stopId: string, clientX: number) => {
+      if (draggingStopIdRef.current !== stopId) return;
+      setStopOffset(stopId, calcOffsetFromPointer(clientX));
+    },
+    { wait: 16 }
+  );
+
   return (
     <Wrapper>
       <Panel>
@@ -397,8 +412,7 @@ const FillConf = () => {
                   }}
                   onPointerMove={(e) => {
                     if (!dialDraggingRef.current) return;
-                    const next = calcAngleFromPointer(e.clientX, e.clientY);
-                    setAngle(next);
+                    handleDialMove(e.clientX, e.clientY);
                   }}
                   onPointerUp={() => {
                     dialDraggingRef.current = false;
@@ -447,9 +461,7 @@ const FillConf = () => {
                         (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
                       }}
                       onPointerMove={(e) => {
-                        if (draggingStopIdRef.current !== s.id) return;
-                        const nextOffset = calcOffsetFromPointer(e.clientX);
-                        setStopOffset(s.id, nextOffset);
+                        handleStopMove(s.id, e.clientX);
                       }}
                       onPointerUp={() => {
                         draggingStopIdRef.current = null;

@@ -1,4 +1,5 @@
 import { axios, AxiosError, InternalAxiosRequestConfig } from '@zeroDraw/common';
+import { message } from 'antd';
 
 const request = axios.create({
   //@ts-ignore
@@ -25,15 +26,24 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   (response) => {
-    const { data, code, message } = response.data;
+    const { data, code, message: msg } = response.data;
     if (code !== 1000) {
-      message.error(message);
+      message.error(msg);
     }
     return data;
   },
   (error: AxiosError) => {
     if (error.response) {
-      const { status } = error.response;
+      const { status, data } = error.response;
+
+      switch (status) {
+        case 429:
+          message.error((data as { message: string }).message);
+          break;
+        case 401:
+          message.error('登录失败');
+          break;
+      }
     }
     return Promise.reject(error);
   }
