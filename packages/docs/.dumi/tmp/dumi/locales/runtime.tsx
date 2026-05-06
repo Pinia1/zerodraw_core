@@ -3,8 +3,8 @@
 // DO NOT CHANGE IT MANUALLY!
 import { history } from 'dumi';
 import React, { useState, useLayoutEffect, useCallback, type ReactNode } from 'react';
-import { RawIntlProvider, createIntl, createIntlCache } from 'D:/workSpace/frontend-monorepo/node_modules/.pnpm/react-intl@7.1.14_react@18.3.1_typescript@5.9.3/node_modules/react-intl';
-import { useIsomorphicLayoutEffect } from 'D:/workSpace/frontend-monorepo/node_modules/.pnpm/dumi@2.4.23_@babel+core@7.29.0_@swc+helpers@0.5.15_@types+node@22.19.10_@types+react@18.3.28__htimx7wjsd6gpoalopyyfox4l4/node_modules/dumi/dist/client/theme-api/utils.js'
+import { RawIntlProvider, createIntl, createIntlCache } from 'D:/code/zeroDraw/node_modules/.pnpm/react-intl@7.1.14_react@18.3.1_typescript@5.9.3/node_modules/react-intl';
+import { useIsomorphicLayoutEffect } from 'D:/code/zeroDraw/node_modules/.pnpm/dumi@2.4.23_@babel+core@7.29.0_@types+node@20.19.33_@types+react@18.3.28_eslint@8.57.1_pretti_sj7djr26raghmyozw4fqcgwskq/node_modules/dumi/dist/client/theme-api/utils.js'
 import { locales, messages } from './config';
 
 const cache = createIntlCache();
