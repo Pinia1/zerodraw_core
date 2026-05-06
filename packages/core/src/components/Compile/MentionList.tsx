@@ -9,6 +9,7 @@ export interface MentionItem {
   label: string;
   url?: string;
   s3Key?: string;
+  type?: 'layer' | 'stage' | 'upload' | 'generated';
 }
 
 interface MentionListProps {

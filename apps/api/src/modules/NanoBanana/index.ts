@@ -24,7 +24,7 @@ export const getRequestParmas = (model: ModelType, args: NanobananaGenerateParam
       };
     case 'gpt-image-2':
       return {
-        model: model,
+        model: 'gpt-image-2-vip',
         prompt: args.prompt,
         size: args.aspectRatio,
       };

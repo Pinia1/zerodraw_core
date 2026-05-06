@@ -7,19 +7,7 @@ export const nanobananaGenerateSchema = z.object({
     .object({
       model: z.enum(['nano-banana-2', 'gpt-image-2', 'nano-banana-pro']),
       prompt: z.string(),
-      aspectRatio: z.enum([
-        'auto',
-        '1:1',
-        '16:9',
-        '9:16',
-        '4:3',
-        '3:4',
-        '3:2',
-        '2:3',
-        '5:4',
-        '4:5',
-        '21:9',
-      ]),
+      aspectRatio: z.string(),
       imageSize: z.enum(['512px', '1K', '2K', '4K']),
     })
     .passthrough(),

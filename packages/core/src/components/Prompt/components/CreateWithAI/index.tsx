@@ -10,11 +10,13 @@ import Fetch from '../../../../fetch';
 import { useDrawingStore } from '../../../../store/useDrawing';
 import useLayerStore from '../../../../store/useLayer';
 import useThumbnailStore from '../../../../store/useThumbnail';
+import { exportStageWithBlendModes } from '../../../../utils/BlendMode';
+import { WIDTH } from '../../../../utils/drawing';
 import PromptEditor, { type PromptEditorRef } from '../../../Compile';
 import { MentionItem } from '../../../Compile/MentionList';
 import type { LibRef as LibRefType } from '../../../Lib';
 import History from '../../../Lib';
-import { getArOptions, getSizeOptions, sizeMap } from './config';
+import { getArOptions, getImageAspectRatio, getSizeOptions, sizeMap } from './config';
 
 const nanobananaGenerate = Fetch.nanobananaGenerate;
 type ModelType = NanobananaGenerateParams['args']['model'];
@@ -29,10 +31,11 @@ const CreateWithAI = () => {
     }))
   );
 
-  const { stageRef, layerConfig } = useDrawingStore(
+  const { stageRef, layerConfig, stageConfig } = useDrawingStore(
     useShallow((state) => ({
       stageRef: state.stageRef,
       layerConfig: state.layerConfig,
+      stageConfig: state.stageConfig,
     }))
   );
 
@@ -74,13 +77,20 @@ const CreateWithAI = () => {
       );
     if (!konvaLayer) return Promise.resolve(null);
 
+    const scale = stageConfig.scale;
+    const screenX = layerConfig.x * scale + stageConfig.x;
+    const screenY = layerConfig.y * scale + stageConfig.y;
+    const screenW = layerConfig.width * scale;
+    const screenH = layerConfig.height * scale;
+    const pixelRatio = WIDTH / layerConfig.width / scale;
+
     return konvaLayer.toBlob({
-      x: layerConfig.x,
-      y: layerConfig.y,
-      width: layerConfig.width,
-      height: layerConfig.height,
-      pixelRatio: 1920 / layerConfig.width,
-      mimeType: 'image/webp',
+      x: screenX,
+      y: screenY,
+      width: screenW,
+      height: screenH,
+      pixelRatio,
+      mimeType: 'image/png',
     }) as Promise<Blob | null>;
   });
 
@@ -95,23 +105,61 @@ const CreateWithAI = () => {
         mentions.map(async (mention) => {
           if (mention.s3Key) return mention;
           try {
-            const blob = await captureLayerBlob(mention.id);
-            if (blob) {
-              const file = new File([blob], `layer-${mention.id}.webp`, { type: 'image/webp' });
-              const formData = new FormData();
-              formData.append('file', file);
-              const s3Key = await Fetch.httpUploadImage(formData);
-              return { ...mention, s3Key };
+            if (mention.type === 'layer') {
+              const blob = await captureLayerBlob(mention.id);
+              if (blob) {
+                const file = new File([blob], `layer-${mention.id}.png`, { type: 'image/png' });
+                const formData = new FormData();
+                formData.append('file', file);
+                const s3Key = await Fetch.httpUploadImage(formData);
+                return { ...mention, s3Key };
+              }
+              const originalSrc = layers.find((l) => l.id === mention.id)?.image?.src;
+              const fallbackUrl = originalSrc || mention.url;
+              if (fallbackUrl) {
+                const res = await fetch(fallbackUrl);
+                const srcBlob = await res.blob();
+                const bitmap = await createImageBitmap(srcBlob);
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                canvas.getContext('2d')!.drawImage(bitmap, 0, 0);
+                const pngBlob = await new Promise<Blob>((resolve) =>
+                  canvas.toBlob((b) => resolve(b!), 'image/png')
+                );
+                const file = new File([pngBlob], `layer-${mention.id}.png`, { type: 'image/png' });
+                const formData = new FormData();
+                formData.append('file', file);
+                const s3Key = await Fetch.httpUploadImage(formData);
+                return { ...mention, s3Key };
+              }
             }
-            if (mention.url) {
-              const res = await fetch(mention.url);
-              const urlBlob = await res.blob();
-              const file = new File([urlBlob], `layer-${mention.id}.webp`, { type: 'image/webp' });
-              const formData = new FormData();
-              formData.append('file', file);
-              const s3Key = await Fetch.httpUploadImage(formData);
-              return { ...mention, s3Key };
+
+            if (mention.type === 'stage' && mention.url) {
+              const stage = stageRef?.current;
+              if (stage && layerConfig.width && layerConfig.height) {
+                const dataUrl = await exportStageWithBlendModes(stage, layers, {
+                  applyStageTransform: false,
+                  cropX: layerConfig.x,
+                  cropY: layerConfig.y,
+                  cropWidth: layerConfig.width,
+                  cropHeight: layerConfig.height,
+                  targetWidth: WIDTH,
+                  backgroundColor: layerConfig.backgroundVisible
+                    ? layerConfig.backgroundColor
+                    : 'transparent',
+                  mimeType: 'image/png',
+                });
+                const res = await fetch(dataUrl);
+                const blob = await res.blob();
+                const file = new File([blob], 'stage.png', { type: 'image/png' });
+                const formData = new FormData();
+                formData.append('file', file);
+                const s3Key = await Fetch.httpUploadImage(formData);
+                return { ...mention, s3Key };
+              }
             }
+
             return mention;
           } catch {
             return mention;
@@ -120,18 +168,20 @@ const CreateWithAI = () => {
       );
 
       const s3Keys = resolvedMentions.map((i) => i.s3Key).filter((i) => i !== undefined);
+      const aspectRatio = getImageAspectRatio(model, values.imageSize, values.aspectRatio);
+
       generate({
         action: 'GRAAI_NANO_BANANA',
         s3Key: s3Keys,
         args: {
           model: values.model,
           prompt: values.prompt.text,
-          aspectRatio: values.aspectRatio,
+          aspectRatio: aspectRatio,
           imageSize: values.imageSize,
           projectId: projectId,
         },
       });
-    } catch {
+    } catch (e) {
       setLoading(false);
     }
   });
@@ -154,13 +204,20 @@ const CreateWithAI = () => {
       id: layer.id,
       label: layer.name,
       url: thumbnails[layer.id],
+      type: 'layer' as const,
     })) as MentionItem[];
   }, [layers, thumbnails]);
 
   const handleQuote = useMemoizedFn((e: LibOutput) => {
     editorRef.current?.setMentionedList((pre) => [
       ...pre,
-      { id: e.id, label: e.args?.prompt ?? '', url: '', s3Key: e.s3Key },
+      {
+        id: e.id,
+        label: e.args?.prompt ?? '',
+        url: '',
+        s3Key: e.s3Key,
+        type: 'generated' as const,
+      },
     ]);
   });
 
@@ -196,11 +253,7 @@ const CreateWithAI = () => {
         <FormItem label={<FormLabel>Aspect Ratio</FormLabel>} name="aspectRatio">
           <Select options={arOptiong} />
         </FormItem>
-        <FormItem
-          hidden={!model?.includes('banana')}
-          label={<FormLabel>Image Size</FormLabel>}
-          name="imageSize"
-        >
+        <FormItem label={<FormLabel>Image Size</FormLabel>} name="imageSize">
           <Select options={sizeOptions} />
         </FormItem>
       </Form>

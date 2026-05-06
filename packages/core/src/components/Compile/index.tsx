@@ -82,7 +82,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       onSuccess: (result) => {
         setMentionedList((pre) => [
           ...pre,
-          { id: generateUUID(), label: result.url, s3Key: result.id },
+          { id: generateUUID(), label: result.url, s3Key: result.id, type: 'upload' as const },
         ]);
       },
     });
@@ -171,7 +171,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         cropWidth: layerConfig.width,
         cropHeight: layerConfig.height,
         targetWidth: layerConfig.width,
-        backgroundColor: layerConfig.backgroundVisible ? undefined : 'transparent',
+        backgroundColor: layerConfig.backgroundVisible ? layerConfig.backgroundColor : 'transparent',
         mimeType: 'image/webp',
         quality: 1,
       });
@@ -180,7 +180,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      setMentionedList((prev) => [...prev, { id: generateUUID(), label: 'Stage Snapshot', url }]);
+      setMentionedList((prev) => [...prev, { id: generateUUID(), label: 'Stage Snapshot', url, type: 'stage' as const }]);
     });
 
     const handleSubmit = () => {
