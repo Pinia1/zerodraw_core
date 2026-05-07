@@ -24,6 +24,21 @@ const Dot = () => {
       menu={{
         items: [
           {
+            label: 'home page',
+            key: 'home',
+            onClick: () => {
+              navigate('/projects');
+            },
+          },
+          {
+            label: 'help',
+            key: 'help',
+            onClick: () => {
+              //@ts-ignore
+              window.open(import.meta.env.VITE_DOCS_URL);
+            },
+          },
+          {
             label: 'Logout',
             key: 'logout',
             onClick: () => {

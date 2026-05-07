@@ -135,10 +135,12 @@ export const ActionButton = ({
   children,
   onClick,
   tooltip,
+  style,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   tooltip?: string;
+  style?: React.CSSProperties;
 }) => {
   return (
     <Tooltip title={tooltip}>
@@ -147,6 +149,7 @@ export const ActionButton = ({
           e.stopPropagation();
           onClick?.();
         }}
+        style={style}
       >
         {children}
       </ActionButtonWrapper>

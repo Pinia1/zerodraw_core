@@ -104,7 +104,7 @@ const Aside = () => {
       </StyledSider>
 
       <Drawer
-        title="使用指南"
+        title="help"
         placement="right"
         width="80vw"
         open={helpOpen}
