@@ -5,6 +5,7 @@ services:
       dockerfile: nginx/Dockerfile
       args:
         GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+        VITE_DOCS_URL: ${VITE_DOCS_URL:-https://zerodraw.cn}
     ports:
       - "80:3000"
     depends_on:
