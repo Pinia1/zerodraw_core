@@ -106,6 +106,7 @@ export const IconColor = React.memo(() => {
       fillColor: state.fillColor,
     }))
   );
+  const touchedRef = React.useRef(false);
   return (
     <ColorWrapperCo>
       <div
@@ -129,6 +130,11 @@ export const IconColor = React.memo(() => {
             cursor: 'pointer',
           }}
           type="color"
+          onTouchStart={() => { touchedRef.current = true; }}
+          onClick={(e) => {
+            if (!touchedRef.current) { e.preventDefault(); return; }
+            touchedRef.current = false;
+          }}
           onChange={(e) => setFillColor(e.target.value)}
         />
       </div>
