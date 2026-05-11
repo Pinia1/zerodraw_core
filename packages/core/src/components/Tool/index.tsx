@@ -24,6 +24,7 @@ import useToolsStore from '../../store/useTools';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
 import { generateUUID } from '../../utils/drawing';
+import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import { ToolItem } from '../index';
 import BrushDetail from './components/BrushDetail';
@@ -313,6 +314,8 @@ const Tool: React.FC = () => {
           popoverStyles={{
             width: 280,
             padding: 0,
+            transform: isMobile ? 'scale(0.7)' : 'none',
+            transformOrigin: 'top center',
           }}
         />
       </Container>

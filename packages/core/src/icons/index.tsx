@@ -97,6 +97,7 @@ const ColorWrapperCo = styled.div`
   align-items: center;
   -webkit-box-pack: center;
   justify-content: center;
+  position: relative;
 `;
 export const IconColor = React.memo(() => {
   const { setFillColor, fillColor } = useDrawingStore(

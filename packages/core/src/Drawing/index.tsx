@@ -788,7 +788,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lastTwoFinger.current = null;
       isMultiTouchRef.current = false;
 
-      // iPad 手势结束：立即清理 cache，释放内存/显存
       endInteractionCache();
     }
   });
@@ -1510,6 +1509,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.RECT:
       case Actions.ELLIPSE:
       case Actions.LINE:
+        if (discardLastStrokeIfTooShort()) return;
         return pushDrawingHistory();
       case Actions.REMOVE:
         return onRemoveInputUp(input);
