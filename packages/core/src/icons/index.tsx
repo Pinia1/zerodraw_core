@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../store/useDrawing';
@@ -99,14 +99,13 @@ const ColorWrapperCo = styled.div`
   justify-content: center;
   position: relative;
 `;
-export const IconColor = React.memo(() => {
+export const IconColor = memo(() => {
   const { setFillColor, fillColor } = useDrawingStore(
     useShallow((state) => ({
       setFillColor: state.setFillColor,
       fillColor: state.fillColor,
     }))
   );
-  const touchedRef = React.useRef(false);
   return (
     <ColorWrapperCo>
       <div
@@ -130,11 +129,7 @@ export const IconColor = React.memo(() => {
             cursor: 'pointer',
           }}
           type="color"
-          onTouchStart={() => { touchedRef.current = true; }}
-          onClick={(e) => {
-            if (!touchedRef.current) { e.preventDefault(); return; }
-            touchedRef.current = false;
-          }}
+          tabIndex={-1}
           onChange={(e) => setFillColor(e.target.value)}
         />
       </div>

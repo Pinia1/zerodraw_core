@@ -77,6 +77,7 @@ const BackgroundControl: React.FC<BackgroundControlProps> = () => {
             cursor: 'pointer',
           }}
           type="color"
+          tabIndex={-1}
           onChange={(e) => handleSetConfig({ backgroundColor: e.target.value })}
         />
       </Flex>
