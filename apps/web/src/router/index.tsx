@@ -7,7 +7,6 @@ const LoginPage = lazy(() => import('../pages/Login'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 const ProjectPage = lazy(() => import('../pages/Project'));
-const PlanPage = lazy(() => import('../pages/Plan'));
 
 export const router = createBrowserRouter([
   {
@@ -20,14 +19,6 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={null}>
             <ProjectPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'plan',
-        element: (
-          <Suspense fallback={null}>
-            <PlanPage />
           </Suspense>
         ),
       },

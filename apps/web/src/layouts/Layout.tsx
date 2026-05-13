@@ -10,15 +10,19 @@ import Aside from './components/Aside';
 
 export const Root = styled.div<{ $theme: any }>`
   width: 100%;
-  min-height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   background: ${({ $theme }) => ($theme === 'dark' ? '#000' : '#fff')};
 `;
 
 const Main = styled(AntdLayout.Content)`
   && {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     background: #111;
   }
 `;
