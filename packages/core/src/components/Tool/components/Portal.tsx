@@ -20,9 +20,14 @@ const Portal: React.FC<PortalConfProps> = ({
   popoverStyles,
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
-  useClickAway(() => {
-    setVisible(false);
-  }, ref);
+
+  useClickAway(
+    () => {
+      setVisible(false);
+    },
+    ref,
+    ['mousedown', 'touchstart']
+  );
 
   const style: React.CSSProperties = {
     position: 'fixed',

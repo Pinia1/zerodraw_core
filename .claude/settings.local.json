@@ -11,7 +11,8 @@
       "Bash(xargs grep -l \"nanobananaGenerate\\\\|Fetch.*nanobananaGenerate\")",
       "Bash(xargs ls -la)",
       "mcp__ide__executeCode",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "WebFetch(domain:ahooks.js.org)"
     ]
   }
 }
