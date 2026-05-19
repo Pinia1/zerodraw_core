@@ -41,7 +41,7 @@ request.interceptors.response.use(
           message.error('请求过于频繁，请稍后再试');
           break;
         case 401:
-          message.error('登录失败');
+          // message.error('登录失败');
           setTimeout(() => {
             useUserStore.getState().setUser(null);
             window.location.href = '/login';

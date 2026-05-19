@@ -19,3 +19,7 @@ export const githubLogin = (params: { code: string }): Promise<{ token: string; 
     params,
   });
 };
+
+export const guestLogin = (fingerprint: string): Promise<{ token: string; user: User }> => {
+  return request.post('/api/auth/guest', { fingerprint });
+};

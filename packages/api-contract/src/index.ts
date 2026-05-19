@@ -1,5 +1,6 @@
 export * from './generate';
 export * from './github';
+export * from './guest';
 export * from './lib';
 export * from './nanobanana';
 

@@ -51,7 +51,7 @@ const Dot = () => {
       }}
     >
       <DotContainer>
-        <Avatar src={user?.avatar} />
+        <Avatar src={user?.avatar || '/cat.jpg'} />
         <span>{user?.username}</span>
       </DotContainer>
     </Dropdown>

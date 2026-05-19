@@ -41,7 +41,7 @@ request.interceptors.response.use(
           message.error((data as { message: string }).message);
           break;
         case 401:
-          message.error('登录失败');
+          // message.error('登录失败');
           break;
       }
     }
