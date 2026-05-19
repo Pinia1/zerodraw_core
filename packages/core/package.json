@@ -51,7 +51,8 @@
     "@zeroDraw/api-contract": "workspace:^",
     "@zeroDraw/common": "workspace:*",
     "file-saver": "^2.0.5",
-    "tippy.js": "^6.3.7"
+    "tippy.js": "^6.3.7",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@ant-design/icons": "^6.1.0",

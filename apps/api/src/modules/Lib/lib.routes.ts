@@ -1,55 +1,61 @@
 import {
-  deleteOutputResponseSchema,
+  PaginationQuery,
   paginationQuerySchema,
+  RunningQuery,
   runningQuerySchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
-import { createSuccessResponse } from '../../types/response';
-import { QueryValidation } from '../../utils/schame';
+import { z } from 'zod';
 import { authenticate } from '../Auth/auth.middleware';
 import { libService } from './lib.services';
 
 export async function libRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authenticate);
 
-  app.get('/outputs', async (request, reply) => {
-    const queryResult = QueryValidation(paginationQuerySchema, request.query);
+  app.get<{ Querystring: PaginationQuery }>(
+    '/outputs',
+    { schema: { querystring: paginationQuerySchema } },
+    async (request, reply) => {
+      const { page, pageSize, keyword, projectId, startDate, endDate } = request.query;
+      const userId = request.user.userId;
 
-    const { page, pageSize, keyword, projectId, startDate, endDate } = queryResult;
-    const userId = request.user.userId;
+      const data = await libService.getOutputs({
+        userId,
+        page,
+        pageSize,
+        keyword,
+        projectId,
+        startDate,
+        endDate,
+      });
 
-    const data = await libService.getOutputs({
-      userId,
-      page,
-      pageSize,
-      keyword,
-      projectId,
-      startDate,
-      endDate,
-    });
+      return reply.success(data);
+    }
+  );
 
-    return reply.send(createSuccessResponse(data));
-  });
+  app.get<{ Querystring: RunningQuery }>(
+    '/running',
+    { schema: { querystring: runningQuerySchema } },
+    async (request, reply) => {
+      const { action, projectId, startDate, endDate } = request.query;
+      const userId = request.user.userId;
 
-  app.get('/running', async (request, reply) => {
-    const queryResult = QueryValidation(runningQuerySchema, request.query);
+      const data = await libService.getRunning({ userId, action, projectId, startDate, endDate });
 
-    const { action, projectId, startDate, endDate } = queryResult;
-    const userId = request.user.userId;
+      return reply.success(data);
+    }
+  );
 
-    const data = await libService.getRunning({ userId, action, projectId, startDate, endDate });
+  app.delete<{ Params: { id: string } }>(
+    '/outputs/:id',
+    { schema: { params: z.object({ id: z.string() }) } },
+    async (request, reply) => {
+      const { id } = request.params;
+      const userId = request.user.userId;
 
-    return reply.send(createSuccessResponse(data));
-  });
+      await libService.deleteOutput({ id, userId });
 
-  app.delete('/outputs/:id', async (request, reply) => {
-    const paramsResult = QueryValidation(deleteOutputResponseSchema, request.params);
-
-    const { id } = paramsResult;
-    const userId = request.user.userId;
-
-    await libService.deleteOutput({ id, userId });
-
-    return reply.send(createSuccessResponse(id));
-  });
+      return reply.success(id);
+    }
+  );
 }

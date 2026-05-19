@@ -2,9 +2,10 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
+import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod';
 import fastify from 'fastify';
 import { generateQueue } from './modules/AIGenerate/generate.queue';
-import { errorHandler } from './plugins/errorHandler';
+import responseWrapper from './plugins/response-wrapper';
 import { registerRoutes } from './routes';
 
 export async function createApp() {
@@ -12,6 +13,9 @@ export async function createApp() {
     logger: false,
     trustProxy: true,
   });
+
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
 
   generateQueue.start();
 
@@ -36,8 +40,7 @@ export async function createApp() {
     secret: process.env.JWT_SECRET!,
   });
 
-  await errorHandler(app);
-
+  await app.register(responseWrapper);
   await registerRoutes(app);
 
   app.addHook('onRequest', async (request, reply) => {

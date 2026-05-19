@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { env } from '../../config/env';
-import { createSuccessResponse } from '../../types/response';
 import { BadRequestError } from '../../utils/errors';
 import { authenticate } from '../Auth/auth.middleware';
 import { uploadServices } from '../Volc';
@@ -14,45 +14,53 @@ export async function fileRoutes(app: FastifyInstance) {
     }
     const buffer = await file.toBuffer();
     const key = await uploadServices.uploadFile(buffer, file.mimetype);
-    return reply.send(createSuccessResponse(key));
+    return reply.success(key);
   });
 
-  app.get('/s3/:key', async (request, reply) => {
-    const { key } = request.params as { key: string };
-    if (!key) throw new BadRequestError();
-    if (key.startsWith('$')) {
-      return reply.redirect(`${env.R2_PUBLIC_URL}/${key}`);
+  app.get<{ Params: { key: string } }>(
+    '/s3/:key',
+    { schema: { params: z.object({ key: z.string() }) } },
+    async (request, reply) => {
+      const { key } = request.params;
+      if (key.startsWith('$')) {
+        return reply.redirect(`${env.R2_PUBLIC_URL}/${key}`);
+      }
+      const url = volcService.getSignedUrl(key);
+      return reply.redirect(url);
     }
-    const url = volcService.getSignedUrl(key);
-    return reply.redirect(url);
-  });
+  );
 
-  app.get('/thumbnail/:key', async (request, reply) => {
-    const { key } = request.params as { key: string };
-    if (!key) throw new BadRequestError();
-    if (key.startsWith('$')) {
-      return reply.redirect(`${env.R2_PUBLIC_URL}/cdn-cgi/image/width=400/${key}`);
+  app.get<{ Params: { key: string } }>(
+    '/thumbnail/:key',
+    { schema: { params: z.object({ key: z.string() }) } },
+    async (request, reply) => {
+      const { key } = request.params;
+      if (key.startsWith('$')) {
+        return reply.redirect(`${env.R2_PUBLIC_URL}/cdn-cgi/image/width=400/${key}`);
+      }
+      const url = volcService.getSignedUrl(key, { process: 'image/resize,w_400' });
+      return reply.redirect(url);
     }
-    const url = volcService.getSignedUrl(key, { process: 'image/resize,w_400' });
-    return reply.redirect(url);
-  });
+  );
 
-  app.get('/volc/stream/:key', async (request, reply) => {
-    const { key } = request.params as { key: string };
-    if (!key) {
-      throw new BadRequestError();
+  app.get<{ Params: { key: string } }>(
+    '/volc/stream/:key',
+    { schema: { params: z.object({ key: z.string() }) } },
+    async (request, reply) => {
+      const { key } = request.params;
+      const { stream } = await volcService.getFileStream(key, 'image/format,png');
+      reply.header('Content-Type', 'image/png');
+      return reply.send(stream);
     }
-    const { stream } = await volcService.getFileStream(key, 'image/format,png');
-    reply.header('Content-Type', 'image/png');
-    return reply.send(stream);
-  });
+  );
 
-  app.get('/url/:key', async (request, reply) => {
-    const { key } = request.params as { key: string };
-    if (!key) {
-      throw new BadRequestError();
+  app.get<{ Params: { key: string } }>(
+    '/url/:key',
+    { schema: { params: z.object({ key: z.string() }) } },
+    async (request, reply) => {
+      const { key } = request.params;
+      const url = volcService.getSignedUrl(key);
+      return reply.success(url);
     }
-    const url = volcService.getSignedUrl(key);
-    return reply.send(createSuccessResponse(url));
-  });
+  );
 }

@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "ahooks": "^3.9.6",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "zod": "^4.0.0"
   }
 }

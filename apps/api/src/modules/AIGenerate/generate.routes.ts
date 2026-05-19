@@ -1,11 +1,13 @@
 import {
+  NanobananaGenerateParams,
   nanobananaGenerateSchema,
   seedreamGenerateSchema,
+  SeedreamGetTaskResponse,
   seedreamGetTaskResponseSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import { userRateLimit } from '../../plugins/userRateLimit';
-import { createSuccessResponse } from '../../types/response';
 import { QueryValidation } from '../../utils/schame';
 import { authenticate } from '../Auth/auth.middleware';
 import { generateService } from './generate.services';
@@ -19,27 +21,46 @@ export async function generateRoutes(app: FastifyInstance) {
     const queryResult = QueryValidation(seedreamGenerateSchema, request.body);
 
     const response = await generateService.run(request.user.userId, queryResult);
-    return reply.send(createSuccessResponse(response));
+    return reply.success(response);
   });
 
-  app.get('/task/:id', async (request, reply) => {
-    const queryResult = QueryValidation(seedreamGetTaskResponseSchema, request.params);
-    const { id } = queryResult;
-    const result = await generateService.getTask(id, request.user.userId);
-    return reply.send(createSuccessResponse(result));
-  });
+  app.get<{ Params: SeedreamGetTaskResponse }>(
+    '/task/:id',
+    {
+      schema: {
+        params: seedreamGetTaskResponseSchema,
+      },
+    },
+    async (request, reply) => {
+      const { id } = request.params;
+      const result = await generateService.getTask(id, request.user.userId);
+      return reply.success(result);
+    }
+  );
 
-  app.post('/nano-banana', { preHandler: nanoBananaRateLimit }, async (request, reply) => {
-    const queryResult = QueryValidation(nanobananaGenerateSchema, request.body);
-    const response = await generateService.run(request.user.userId, queryResult);
-    return reply.send(createSuccessResponse(response));
-  });
+  app.post<{ Body: NanobananaGenerateParams }>(
+    '/nano-banana',
+    {
+      preHandler: nanoBananaRateLimit,
+      schema: {
+        body: nanobananaGenerateSchema,
+      },
+    },
+    async (request, reply) => {
+      const response = await generateService.run(request.user.userId, request.body);
+      return reply.success(response);
+    }
+  );
 }
 
 export async function generateWebhookRoutes(app: FastifyInstance) {
-  app.post('/webhook/:taskId', async (request, reply) => {
-    const { taskId } = request.params as { taskId: string };
-    await generateService.handleWebhook(taskId, request.body);
-    return reply.send({ code: 0 });
-  });
+  app.post<{ Params: { taskId: string } }>(
+    '/webhook/:taskId',
+    { schema: { params: z.object({ taskId: z.string() }) } },
+    async (request, reply) => {
+      const { taskId } = request.params;
+      await generateService.handleWebhook(taskId, request.body);
+      return reply.success(null);
+    }
+  );
 }
