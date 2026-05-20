@@ -1,6 +1,7 @@
 import { useMemoizedFn } from '@zeroDraw/common';
 import { Form, InputNumber } from 'antd';
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import PromptEditor, { type MentionItem, type PromptEditorRef } from './Editor';
 import { FormLabel } from './index';
 import Size from './Size';
@@ -13,6 +14,7 @@ interface PromptProps {
 }
 
 const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
+  const { t } = useTranslation();
   const editorRef = useRef<PromptEditorRef>(null);
   const [form] = Form.useForm();
 
@@ -27,19 +29,19 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
         <Form.Item
           name="prompt"
           style={{ marginBottom: 12 }}
-          rules={[{ required: true, message: 'Please enter a prompt' }]}
+          rules={[{ required: true, message: t('flow.promptRequired') }]}
         >
           <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={handleSubmit} />
         </Form.Item>
         <Form.Item
           name="size"
           style={{ marginBottom: 12 }}
-          rules={[{ required: true, message: 'Please select a size' }]}
+          rules={[{ required: true, message: t('flow.sizeRequired') }]}
         >
           <Size />
         </Form.Item>
-        <Form.Item name="seed" label={<FormLabel>Seed</FormLabel>} style={{ marginBottom: 0 }}>
-          <InputNumber style={{ width: '100%' }} placeholder="Random number seed" />
+        <Form.Item name="seed" label={<FormLabel>{t('flow.seed')}</FormLabel>} style={{ marginBottom: 0 }}>
+          <InputNumber style={{ width: '100%' }} placeholder={t('flow.seedPlaceholder')} />
         </Form.Item>
       </Form>
     </div>

@@ -1,6 +1,7 @@
 import { useMemoizedFn } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
 import React, { useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import PromptEditor, { type MentionItem, type PromptEditorRef } from './Editor';
 import { FormLabel } from './index';
 
@@ -12,6 +13,7 @@ interface PromptProps {
 }
 
 const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
+  const { t } = useTranslation();
   const editorRef = useRef<PromptEditorRef>(null);
 
   const [form] = Form.useForm();
@@ -66,11 +68,11 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
         <Form.Item
           name="prompt"
           style={{ marginBottom: 12 }}
-          rules={[{ required: true, message: 'Please enter a prompt' }]}
+          rules={[{ required: true, message: t('flow.promptRequired') }]}
         >
           <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={handleSubmit} />
         </Form.Item>
-        <Form.Item label={<FormLabel>Model</FormLabel>} name="model" style={{ marginBottom: 12 }}>
+        <Form.Item label={<FormLabel>{t('flow.model')}</FormLabel>} name="model" style={{ marginBottom: 12 }}>
           <Select
             options={[
               {
@@ -89,7 +91,7 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
           />
         </Form.Item>
         <Form.Item
-          label={<FormLabel>Aspect Ratio</FormLabel>}
+          label={<FormLabel>{t('flow.aspectRatio')}</FormLabel>}
           name="aspectRatio"
           style={{ marginBottom: 12 }}
         >
@@ -143,7 +145,7 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
           />
         </Form.Item>
         <Form.Item
-          label={<FormLabel>Image Size</FormLabel>}
+          label={<FormLabel>{t('flow.imageSize')}</FormLabel>}
           name="imageSize"
           style={{ marginBottom: 12 }}
         >

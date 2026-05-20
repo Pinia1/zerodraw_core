@@ -4,6 +4,7 @@ import { useRequest } from '@zeroDraw/common';
 import type { InputRef, MenuProps } from 'antd';
 import { Button, Dropdown, Input, Modal, Pagination, Skeleton, message } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   httpCreateProject,
@@ -33,6 +34,7 @@ import CreateProjectModal, { type RatioOption } from '../Project/components/Crea
 import CoverImage from './components/CoverImage';
 
 const List: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Number(searchParams.get('page') ?? 1);
@@ -97,7 +99,7 @@ const List: React.FC = () => {
         pendingImageRef.current = undefined;
         navigate(`/drawing?projectId=${data.id}`, imageFile ? { state: { imageFile } } : undefined);
       },
-      onError: () => message.error('Failed to create project'),
+      onError: () => message.error(t('project.failedCreate')),
     }
   );
 
@@ -122,18 +124,18 @@ const List: React.FC = () => {
         : prev
     );
     httpUpdateProject(renamingId, { name: trimmed }).catch(() => {
-      message.error('Failed to rename');
+      message.error(t('project.failedRename'));
       mutate(prev);
     });
   };
 
   const handleDelete = (id: string) => {
     Modal.confirm({
-      title: 'Delete project',
-      content: 'This action cannot be undone. Are you sure?',
-      okText: 'Delete',
+      title: t('project.deleteTitle'),
+      content: t('project.deleteConfirm'),
+      okText: t('project.delete'),
       okButtonProps: { danger: true },
-      cancelText: 'Cancel',
+      cancelText: t('project.cancel'),
       onOk: () => {
         const prev = listData;
         mutate(
@@ -142,7 +144,7 @@ const List: React.FC = () => {
             : prev
         );
         httpPermanentDeleteProject(id).catch(() => {
-          message.error('Failed to delete');
+          message.error(t('project.failedDelete'));
           mutate(prev);
         });
       },
@@ -152,12 +154,12 @@ const List: React.FC = () => {
   const cardMenu = (item: ProjectItem): MenuProps['items'] => [
     {
       key: 'open',
-      label: 'Open',
+      label: t('project.open'),
       onClick: () => navigate(`/drawing?projectId=${item.id}`),
     },
     {
       key: 'rename',
-      label: 'Rename',
+      label: t('project.rename'),
       onClick: (e) => {
         e.domEvent.stopPropagation();
         setRenamingId(item.id);
@@ -168,7 +170,7 @@ const List: React.FC = () => {
     { type: 'divider' },
     {
       key: 'delete',
-      label: 'Delete',
+      label: t('project.delete'),
       danger: true,
       onClick: () => handleDelete(item.id),
     },
@@ -177,7 +179,7 @@ const List: React.FC = () => {
   return (
     <>
       <MainHeader>
-        <PageTitle>Projects</PageTitle>
+        <PageTitle>{t('project.title')}</PageTitle>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -185,7 +187,7 @@ const List: React.FC = () => {
           onClick={() => setCreateModalOpen(true)}
           style={{ background: '#6254e8', borderColor: '#6254e8', borderRadius: 8 }}
         >
-          Create new file
+          {t('project.createNew')}
         </Button>
       </MainHeader>
 
@@ -199,7 +201,7 @@ const List: React.FC = () => {
                   onClick={() => triggerSearch(inputValue)}
                 />
               }
-              placeholder="Search files"
+              placeholder={t('project.search')}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onPressEnter={() => triggerSearch(inputValue)}
@@ -247,7 +249,7 @@ const List: React.FC = () => {
                       <CardName>{item.name}</CardName>
                     )}
                     <CardMeta>
-                      {`Edited · ${formatRelativeTime(item.updatedAt)}`}
+                      {t('project.edited', { time: formatRelativeTime(item.updatedAt) })}
                       {item.canvasWidth && item.canvasHeight
                         ? ` · ${formatRatio(item.canvasWidth, item.canvasHeight)}`
                         : null}

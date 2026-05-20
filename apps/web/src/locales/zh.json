@@ -1,0 +1,110 @@
+{
+  "login": {
+    "subtitle1": "从草图到灵感。",
+    "subtitle2": "登录以继续使用您的创意工作区。",
+    "continueWithGithub": "使用 GitHub 登录",
+    "redirecting": "跳转中...",
+    "or": "或",
+    "continueAsGuest": "以访客身份继续",
+    "loading": "加载中...",
+    "copyright": "© {{year}} ZeroDraw"
+  },
+  "project": {
+    "title": "项目",
+    "createNew": "新建文件",
+    "search": "搜索文件",
+    "open": "打开",
+    "rename": "重命名",
+    "delete": "删除",
+    "deleteTitle": "删除项目",
+    "deleteConfirm": "此操作不可撤销，确认删除？",
+    "cancel": "取消",
+    "failedCreate": "创建项目失败",
+    "failedRename": "重命名失败",
+    "failedDelete": "删除失败",
+    "edited": "编辑于 · {{time}}"
+  },
+  "modal": {
+    "newFile": "新建文件",
+    "create": "创建",
+    "cancel": "取消",
+    "name": "名称",
+    "namePlaceholder": "项目名称（可选）",
+    "canvasRatio": "画布比例",
+    "importImage": "导入图片",
+    "uploading": "上传中…",
+    "custom": "自定义",
+    "clickToReselect": "点击重新选择",
+    "uploadHint": "上传图片 · 自动适配画布比例",
+    "imageUploadFailed": "图片上传失败"
+  },
+  "dot": {
+    "homePage": "主页",
+    "help": "帮助",
+    "logout": "退出登录",
+    "switchLang": "Switch to English"
+  },
+  "aside": {
+    "projects": "项目",
+    "help": "帮助",
+    "helpTitle": "帮助",
+    "workspaceDefault": "我的工作区",
+    "workspaceName": "{{name}} 的工作区"
+  },
+  "layer": {
+    "opacity": "不透明度",
+    "blendMode": "混合模式",
+    "filterPreset": "滤镜预设",
+    "blur": "模糊",
+    "brightness": "亮度",
+    "contrast": "对比度",
+    "saturate": "饱和度",
+    "hueRotate": "色相旋转",
+    "normal": "正常",
+    "multiply": "正片叠底",
+    "screen": "滤色",
+    "overlay": "叠加",
+    "colorDodge": "颜色减淡",
+    "custom": "自定义"
+  },
+  "prompt": {
+    "modify": "生图",
+    "history": "历史"
+  },
+  "flow": {
+    "promptRequired": "请输入提示词",
+    "sizeRequired": "请选择尺寸",
+    "model": "模型",
+    "aspectRatio": "比例",
+    "imageSize": "分辨率",
+    "seed": "种子",
+    "seedPlaceholder": "随机数种子",
+    "promptPlaceholder": "你想创作什么？"
+  },
+  "menus": {
+    "copy": "复制",
+    "duplicate": "复制图层",
+    "mergeUp": "向上合并",
+    "mergeDown": "向下合并",
+    "sendToFront": "移到最前",
+    "sendToBack": "移到最后",
+    "showHideOthers": "显示/隐藏其他",
+    "export": "导出",
+    "imageOriginal": "图片（原始）",
+    "image2x": "图片（2x）",
+    "image4x": "图片（4x）",
+    "image8x": "图片（8x）",
+    "clear": "清空",
+    "delete": "删除"
+  },
+  "lib": {
+    "addToPrompt": "添加到提示词",
+    "addToLayer": "添加到图层",
+    "download": "下载",
+    "delete": "删除",
+    "deleteImage": "删除图片",
+    "removeFromOutput": "从输出中移除",
+    "yes": "确认",
+    "no": "取消"
+  }
+}

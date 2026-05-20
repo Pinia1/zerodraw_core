@@ -1,6 +1,8 @@
 import { Avatar, Dropdown, Flex } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import i18n from '../../i18n';
 import { useUserStore } from '../../store/useUserStore';
 
 const DotContainer = styled(Flex)`
@@ -16,8 +18,15 @@ const DotContainer = styled(Flex)`
 `;
 
 const Dot = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useUserStore();
+
+  const handleSwitchLang = () => {
+    const next = i18n.language === 'zh' ? 'en' : 'zh';
+    i18n.changeLanguage(next);
+    localStorage.setItem('lang', next);
+  };
 
   return (
     <Dropdown
@@ -25,22 +34,19 @@ const Dot = () => {
       menu={{
         items: [
           {
-            label: 'home page',
+            label: t('dot.homePage'),
             key: 'home',
             onClick: () => {
               navigate('/projects');
             },
           },
           {
-            label: 'help',
-            key: 'help',
-            onClick: () => {
-              //@ts-ignore
-              window.open(import.meta.env.VITE_DOCS_URL);
-            },
+            label: t('dot.switchLang'),
+            key: 'switchLang',
+            onClick: handleSwitchLang,
           },
           {
-            label: 'Logout',
+            label: t('dot.logout'),
             key: 'logout',
             onClick: () => {
               logout();

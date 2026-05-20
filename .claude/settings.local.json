@@ -16,7 +16,8 @@
       "Bash(git ls-tree *)",
       "Bash(git archive *)",
       "Bash(tar -x -C /d/code/zeroDraw --strip-components=0)",
-      "Bash(tar -x -C /d/code/Flow_bb599df --strip-components=5)"
+      "Bash(tar -x -C /d/code/Flow_bb599df --strip-components=5)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

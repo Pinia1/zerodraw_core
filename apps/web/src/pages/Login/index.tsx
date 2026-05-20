@@ -4,6 +4,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { useUnmount } from '@zeroDraw/common';
 import { Carousel } from 'antd';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import { guestLogin } from '../../services/login';
@@ -201,6 +202,7 @@ const Footer = styled.div`
 `;
 
 const Login = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
   const { user, setUser } = useUserStore();
@@ -241,19 +243,19 @@ const Login = () => {
       <Left>
         <Logo>ZeroDraw</Logo>
         <FormContent>
-          <Subtitle>From sketch to inspiration.</Subtitle>
-          <Subtitle>Sign in to continue to your creative workspace.</Subtitle>
+          <Subtitle>{t('login.subtitle1')}</Subtitle>
+          <Subtitle>{t('login.subtitle2')}</Subtitle>
           <GithubButton $loading={loading} onClick={handleGithubLogin}>
             {loading ? <LoadingOutlined /> : <GithubOutlined />}
-            {loading ? 'Redirecting...' : 'Continue with GitHub'}
+            {loading ? t('login.redirecting') : t('login.continueWithGithub')}
           </GithubButton>
-          <Divider>or</Divider>
+          <Divider>{t('login.or')}</Divider>
           <GuestButton $loading={guestLoading} onClick={handleGuestLogin}>
             {guestLoading ? <LoadingOutlined /> : <UserOutlined />}
-            {guestLoading ? 'Loading...' : 'Continue as Guest'}
+            {guestLoading ? t('login.loading') : t('login.continueAsGuest')}
           </GuestButton>
         </FormContent>
-        <Footer>&copy; {new Date().getFullYear()} ZeroDraw</Footer>
+        <Footer>{t('login.copyright', { year: new Date().getFullYear() })}</Footer>
       </Left>
 
       <Right>

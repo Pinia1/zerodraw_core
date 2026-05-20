@@ -1,0 +1,110 @@
+{
+  "login": {
+    "subtitle1": "From sketch to inspiration.",
+    "subtitle2": "Sign in to continue to your creative workspace.",
+    "continueWithGithub": "Continue with GitHub",
+    "redirecting": "Redirecting...",
+    "or": "or",
+    "continueAsGuest": "Continue as Guest",
+    "loading": "Loading...",
+    "copyright": "© {{year}} ZeroDraw"
+  },
+  "project": {
+    "title": "Projects",
+    "createNew": "Create new file",
+    "search": "Search files",
+    "open": "Open",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteTitle": "Delete project",
+    "deleteConfirm": "This action cannot be undone. Are you sure?",
+    "cancel": "Cancel",
+    "failedCreate": "Failed to create project",
+    "failedRename": "Failed to rename",
+    "failedDelete": "Failed to delete",
+    "edited": "Edited · {{time}}"
+  },
+  "modal": {
+    "newFile": "New File",
+    "create": "Create",
+    "cancel": "Cancel",
+    "name": "Name",
+    "namePlaceholder": "Project name (optional)",
+    "canvasRatio": "Canvas ratio",
+    "importImage": "Import image",
+    "uploading": "uploading…",
+    "custom": "Custom",
+    "clickToReselect": "Click to reselect",
+    "uploadHint": "Upload image · auto-fit canvas ratio",
+    "imageUploadFailed": "Image upload failed"
+  },
+  "dot": {
+    "homePage": "home page",
+    "help": "help",
+    "logout": "Logout",
+    "switchLang": "切换到中文"
+  },
+  "aside": {
+    "projects": "Projects",
+    "help": "Help",
+    "helpTitle": "help",
+    "workspaceDefault": "My Workspace",
+    "workspaceName": "{{name}}'s Workspace"
+  },
+  "layer": {
+    "opacity": "Opacity",
+    "blendMode": "Blend mode",
+    "filterPreset": "Filter preset",
+    "blur": "Blur",
+    "brightness": "Brightness",
+    "contrast": "Contrast",
+    "saturate": "Saturate",
+    "hueRotate": "Hue rotate",
+    "normal": "Normal",
+    "multiply": "Multiply",
+    "screen": "Screen",
+    "overlay": "Overlay",
+    "colorDodge": "Color Dodge",
+    "custom": "Custom"
+  },
+  "prompt": {
+    "modify": "Modify",
+    "history": "History"
+  },
+  "flow": {
+    "promptRequired": "Please enter a prompt",
+    "sizeRequired": "Please select a size",
+    "model": "Model",
+    "aspectRatio": "Aspect Ratio",
+    "imageSize": "Image Size",
+    "seed": "Seed",
+    "seedPlaceholder": "Random number seed",
+    "promptPlaceholder": "What are you creating?"
+  },
+  "menus": {
+    "copy": "Copy",
+    "duplicate": "Duplicate",
+    "mergeUp": "Merge up",
+    "mergeDown": "Merge down",
+    "sendToFront": "Send to front",
+    "sendToBack": "Send to back",
+    "showHideOthers": "Show/Hide Others",
+    "export": "Export",
+    "imageOriginal": "Image (Original)",
+    "image2x": "Image (2x)",
+    "image4x": "Image (4x)",
+    "image8x": "Image (8x)",
+    "clear": "Clear",
+    "delete": "Delete"
+  },
+  "lib": {
+    "addToPrompt": "Add to prompt",
+    "addToLayer": "Add to layer",
+    "download": "Download",
+    "delete": "Delete",
+    "deleteImage": "Delete the image",
+    "removeFromOutput": "Remove from the output",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

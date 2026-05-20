@@ -1,5 +1,6 @@
 import Icon from '@ant-design/icons';
 import { useMemoizedFn, useThrottleFn } from '@zeroDraw/common';
+import { useTranslation } from 'react-i18next';
 import { Flex, Input, Popover, Select, Slider } from 'antd';
 import Konva from 'konva';
 import React, { isValidElement, useMemo, useRef, useState } from 'react';
@@ -71,6 +72,7 @@ const StopPointerWrapper = ({ children }: { children: React.ReactNode }) => {
 interface LayerItemProps extends Layers {}
 
 const LayerItem: React.FC<LayerItemProps> = (props) => {
+  const { t } = useTranslation();
   const { visible, name, opacity, id, blendMode, filter } = props;
 
   const stageRef = useBindRef();
@@ -252,7 +254,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                 }}
                 vertical
               >
-                <span style={{ marginBottom: -6 }}>Opacity: </span>
+                <span style={{ marginBottom: -6 }}>{t('layer.opacity')}: </span>
                 <Slider
                   style={{
                     width: '120px',
@@ -265,42 +267,27 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                     handlerSetLayer('opacity', value, false);
                   }}
                 />
-                <span style={{ marginBottom: 2 }}>Blend mode: </span>
+                <span style={{ marginBottom: 2 }}>{t('layer.blendMode')}: </span>
                 <Select
                   onChange={(value) => {
                     handlerSetLayer('blendMode', value, true);
                   }}
                   value={blendMode}
                   options={[
-                    {
-                      label: 'Normal',
-                      value: 'normal',
-                    },
-                    {
-                      label: 'Multiply',
-                      value: 'multiply',
-                    },
-                    {
-                      label: 'Screen',
-                      value: 'screen',
-                    },
-                    {
-                      label: 'Overlay',
-                      value: 'overlay',
-                    },
-                    {
-                      label: 'Color Dodge',
-                      value: 'color-dodge',
-                    },
+                    { label: t('layer.normal'), value: 'normal' },
+                    { label: t('layer.multiply'), value: 'multiply' },
+                    { label: t('layer.screen'), value: 'screen' },
+                    { label: t('layer.overlay'), value: 'overlay' },
+                    { label: t('layer.colorDodge'), value: 'color-dodge' },
                   ]}
                 />
 
-                <span style={{ marginBottom: 2, marginTop: 8 }}>Filter preset: </span>
+                <span style={{ marginBottom: 2, marginTop: 8 }}>{t('layer.filterPreset')}: </span>
                 <Select
                   value={selectedPresetKey}
                   options={[
                     ...FILTER_PRESETS.map((p) => ({ label: p.label, value: p.key })),
-                    { label: 'Custom', value: 'custom' },
+                    { label: t('layer.custom'), value: 'custom' },
                   ]}
                   onChange={(key) => {
                     const preset = FILTER_PRESETS.find((p) => p.key === key);
@@ -309,7 +296,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                   }}
                 />
 
-                <span style={{ marginBottom: -6, marginTop: 6 }}>Blur: </span>
+                <span style={{ marginBottom: -6, marginTop: 6 }}>{t('layer.blur')}: </span>
                 <Slider
                   style={{ width: '120px' }}
                   min={0}
@@ -320,7 +307,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                   onAfterChange={(value) => updateFilter({ blur: value as number }, true)}
                 />
 
-                <span style={{ marginBottom: -6 }}>Brightness: </span>
+                <span style={{ marginBottom: -6 }}>{t('layer.brightness')}: </span>
                 <Slider
                   style={{ width: '120px' }}
                   min={0}
@@ -331,7 +318,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                   onAfterChange={(value) => updateFilter({ brightness: value as number }, true)}
                 />
 
-                <span style={{ marginBottom: -6 }}>Contrast: </span>
+                <span style={{ marginBottom: -6 }}>{t('layer.contrast')}: </span>
                 <Slider
                   style={{ width: '120px' }}
                   min={0}
@@ -342,7 +329,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                   onAfterChange={(value) => updateFilter({ contrast: value as number }, true)}
                 />
 
-                <span style={{ marginBottom: -6 }}>Saturate: </span>
+                <span style={{ marginBottom: -6 }}>{t('layer.saturate')}: </span>
                 <Slider
                   style={{ width: '120px' }}
                   min={0}
@@ -353,7 +340,7 @@ const LayerItem: React.FC<LayerItemProps> = (props) => {
                   onAfterChange={(value) => updateFilter({ saturate: value as number }, true)}
                 />
 
-                <span style={{ marginBottom: -6 }}>Hue rotate: </span>
+                <span style={{ marginBottom: -6 }}>{t('layer.hueRotate')}: </span>
                 <Slider
                   style={{ width: '120px' }}
                   min={-180}

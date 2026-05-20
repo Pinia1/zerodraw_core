@@ -1,5 +1,6 @@
 import Icon, { DeleteOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useHover } from '@zeroDraw/common';
+import { useTranslation } from 'react-i18next';
 import { Flex, Popconfirm, Spin } from 'antd';
 import { saveAs } from 'file-saver';
 import { useRef } from 'react';
@@ -18,6 +19,7 @@ interface ImageRenderProps {
   onQuote?: () => void;
 }
 const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQuote }) => {
+  const { t } = useTranslation();
   const [_, loading] = useImage(`${getFileUrl('thumbnail', data.s3Key)}`);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQu
                 height: 22,
               }}
               onClick={onQuote}
-              tooltip="Add to prompt"
+              tooltip={t('lib.addToPrompt')}
             >
               <Icon component={Icons.IconStar} />
             </ActionButton>
@@ -67,7 +69,7 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQu
               height: 22,
             }}
             onClick={pushToLayer}
-            tooltip="Add to layer"
+            tooltip={t('lib.addToLayer')}
           >
             {createLayerLoading ? <LoadingOutlined /> : <Icon component={Icons.IconLayer} />}
           </ActionButton>
@@ -78,7 +80,7 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQu
               height: 22,
             }}
             onClick={onDownload}
-            tooltip="Download"
+            tooltip={t('lib.download')}
           >
             <Icon component={Icons.IconDownload} />
           </ActionButton>
@@ -87,14 +89,14 @@ const ImageRender: React.FC<ImageRenderProps> = ({ data, onClick, onDelete, onQu
               width: 22,
               height: 22,
             }}
-            tooltip="Delete"
+            tooltip={t('lib.delete')}
           >
             <Popconfirm
-              title="Delete the image"
-              description="Remove from the output"
+              title={t('lib.deleteImage')}
+              description={t('lib.removeFromOutput')}
               onConfirm={onDelete}
-              okText="Yes"
-              cancelText="No"
+              okText={t('lib.yes')}
+              cancelText={t('lib.no')}
             >
               <Icon component={DeleteOutlined as any} />
             </Popconfirm>

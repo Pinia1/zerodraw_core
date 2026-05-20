@@ -2,6 +2,7 @@ import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import { useMemoizedFn, useRequest } from '@zeroDraw/common';
 import { Form, Select } from 'antd';
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import { MOSIC_LAYER_ID } from '../../../../Drawing/components/Mosic';
@@ -22,6 +23,7 @@ const nanobananaGenerate = Fetch.nanobananaGenerate;
 type ModelType = NanobananaGenerateParams['args']['model'];
 
 const CreateWithAI = () => {
+  const { t } = useTranslation();
   const paramsSearch = new URLSearchParams(window.location.search);
   const projectId = paramsSearch.get('projectId') ?? '';
   const [loading, setLoading] = useState(false);
@@ -234,9 +236,9 @@ const CreateWithAI = () => {
         layout="vertical"
         colon={false}
       >
-        <FormItem name="prompt" rules={[{ required: true, message: 'Please enter a prompt' }]}>
+        <FormItem name="prompt" rules={[{ required: true, message: t('flow.promptRequired') }]}>
           <PromptEditor
-            placeholder="What are you creating?"
+            placeholder={t('flow.promptPlaceholder')}
             autoFocus={false}
             mentionItems={layersItems}
             onSubmit={handleSubmit}
@@ -244,16 +246,16 @@ const CreateWithAI = () => {
             ref={editorRef}
           />
         </FormItem>
-        <FormItem label={<FormLabel>Model</FormLabel>} name="model">
+        <FormItem label={<FormLabel>{t('flow.model')}</FormLabel>} name="model">
           <Select
             onChange={handleModelChange}
             options={Object.keys(sizeMap).map((i) => ({ label: i, value: i }))}
           />
         </FormItem>
-        <FormItem label={<FormLabel>Aspect Ratio</FormLabel>} name="aspectRatio">
+        <FormItem label={<FormLabel>{t('flow.aspectRatio')}</FormLabel>} name="aspectRatio">
           <Select options={arOptiong} />
         </FormItem>
-        <FormItem label={<FormLabel>Image Size</FormLabel>} name="imageSize">
+        <FormItem label={<FormLabel>{t('flow.imageSize')}</FormLabel>} name="imageSize">
           <Select options={sizeOptions} />
         </FormItem>
       </Form>

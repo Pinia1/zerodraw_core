@@ -2,6 +2,7 @@ import { useMediaQuery } from '@zeroDraw/common';
 import type { GetProp, MenuProps } from 'antd';
 import { Menu } from 'antd';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useCopyLayer from '../../../hooks/useCopyLayer';
@@ -35,6 +36,7 @@ type MenuItem = GetProp<MenuProps, 'items'>[number] & {
 };
 
 const Menus: React.FC<MenusProps> = (props) => {
+  const { t } = useTranslation();
   const { setMenuOpen, id } = props;
 
   const [theme] = useMediaQuery();
@@ -73,7 +75,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     // },
     {
       key: 'Copy',
-      label: 'Copy',
+      label: t('menus.copy'),
       onClick: () => {
         copy();
         setMenuOpen(false);
@@ -81,7 +83,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Duplicate',
-      label: 'Duplicate',
+      label: t('menus.duplicate'),
       onClick: () => {
         copy();
         requestAnimationFrame(() => {
@@ -97,7 +99,7 @@ const Menus: React.FC<MenusProps> = (props) => {
 
     {
       key: 'Merge-up',
-      label: 'Merge up',
+      label: t('menus.mergeUp'),
       disabled: !canMergeUp(),
       onClick: () => {
         mergeUp();
@@ -106,7 +108,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Merge-down',
-      label: 'Merge down',
+      label: t('menus.mergeDown'),
       disabled: !canMergeDown(),
       onClick: () => {
         mergeDown();
@@ -115,7 +117,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Send-to-front',
-      label: 'Send to front',
+      label: t('menus.sendToFront'),
       disabled: isAtFront(),
       onClick: () => {
         sendToFront();
@@ -124,7 +126,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Send-to-back',
-      label: 'Send to back',
+      label: t('menus.sendToBack'),
       disabled: isAtBack(),
       onClick: () => {
         sendToBack();
@@ -133,7 +135,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Show/hide',
-      label: 'Show/Hide Others',
+      label: t('menus.showHideOthers'),
       onClick: () => {
         toggleOthersVisibility();
         setMenuOpen(false);
@@ -142,11 +144,11 @@ const Menus: React.FC<MenusProps> = (props) => {
 
     {
       key: 'Export',
-      label: 'Export',
+      label: t('menus.export'),
       children: [
         {
           key: 'export-original',
-          label: 'Image (Original)',
+          label: t('menus.imageOriginal'),
           onClick: async () => {
             if (!stageRef?.current) return;
 
@@ -177,7 +179,7 @@ const Menus: React.FC<MenusProps> = (props) => {
         },
         {
           key: 'export-2x',
-          label: 'Image (2x)',
+          label: t('menus.image2x'),
           onClick: async () => {
             if (!stageRef?.current) return;
             const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
@@ -204,7 +206,7 @@ const Menus: React.FC<MenusProps> = (props) => {
         },
         {
           key: 'export-4x',
-          label: 'Image (4x)',
+          label: t('menus.image4x'),
           onClick: async () => {
             if (!stageRef?.current) return;
             const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
@@ -231,7 +233,7 @@ const Menus: React.FC<MenusProps> = (props) => {
         },
         {
           key: 'export-8x',
-          label: 'Image (8x)',
+          label: t('menus.image8x'),
           onClick: async () => {
             if (!stageRef?.current) return;
             const dataURL = await exportStageWithBlendModes(stageRef.current, layers, {
@@ -260,7 +262,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Clear',
-      label: <DangerText>Clear</DangerText>,
+      label: <DangerText>{t('menus.clear')}</DangerText>,
       onClick: () => {
         const emptyLayer = emptyDrawingLayer();
         const newLayer = {
@@ -275,7 +277,7 @@ const Menus: React.FC<MenusProps> = (props) => {
     },
     {
       key: 'Delete',
-      label: <DangerText>Delete</DangerText>,
+      label: <DangerText>{t('menus.delete')}</DangerText>,
       onClick: () => {
         deleteLayer();
         setMenuOpen(false);

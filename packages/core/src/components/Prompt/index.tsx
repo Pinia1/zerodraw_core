@@ -1,6 +1,7 @@
 import { useMount } from '@zeroDraw/common';
 import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import { ASIDE_WIDTH, CANVAS_CONTAINER_ID } from '../../utils/drawing';
@@ -11,6 +12,7 @@ import Lib from '../Lib';
 import CreateWithAI from './components/CreateWithAI';
 
 const Prompt: React.FC = () => {
+  const { t } = useTranslation();
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -61,12 +63,12 @@ const Prompt: React.FC = () => {
         items={[
           {
             key: 'Modify',
-            label: 'Modify',
+            label: t('prompt.modify'),
             children: <CreateWithAI />,
           },
           {
             key: 'History',
-            label: 'History',
+            label: t('prompt.history'),
             children: <Lib />,
           },
         ]}

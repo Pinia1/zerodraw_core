@@ -2,6 +2,7 @@ import { FileOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { ConfigProvider, Drawer, Menu } from 'antd';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   SidebarBottom,
@@ -36,6 +37,7 @@ const menuTheme = {
 };
 
 const Aside = () => {
+  const { t } = useTranslation();
   const { user } = useUserStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,10 +45,10 @@ const Aside = () => {
   const [helpOpen, setHelpOpen] = useState(false);
 
   const topMenuItems: MenuProps['items'] = [
-    { key: 'projects', icon: <FileOutlined />, label: 'Projects' },
+    { key: 'projects', icon: <FileOutlined />, label: t('aside.projects') },
   ];
   const bottomMenuItems: MenuProps['items'] = [
-    { key: 'help', icon: <QuestionCircleOutlined />, label: 'Help' },
+    { key: 'help', icon: <QuestionCircleOutlined />, label: t('aside.help') },
   ];
 
   const handleMenuSelect = ({ key }: { key: string }) => {
@@ -63,10 +65,10 @@ const Aside = () => {
       : location.pathname.replace('/', '') || 'projects';
 
   const workspaceName = user?.name
-    ? `${user.name}'s Workspace`
+    ? t('aside.workspaceName', { name: user.name })
     : user?.username
-      ? `${user.username}'s Workspace`
-      : 'My Workspace';
+      ? t('aside.workspaceName', { name: user.username })
+      : t('aside.workspaceDefault');
 
   return (
     <ConfigProvider theme={menuTheme}>
@@ -104,7 +106,7 @@ const Aside = () => {
       </StyledSider>
 
       <Drawer
-        title="help"
+        title={t('aside.helpTitle')}
         placement="right"
         width="80vw"
         open={helpOpen}

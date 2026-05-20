@@ -1,6 +1,7 @@
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import { Input, Modal, message } from 'antd';
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 const LONG_SIDE = 1920;
@@ -184,6 +185,7 @@ interface Props {
 }
 
 const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCancel }) => {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<RatioOption>(RATIO_OPTIONS[0]);
   const [uploading, setUploading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -221,7 +223,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
       setImagePreview(previewUrl);
       setSelected(customOption);
     } catch {
-      message.error('Image upload failed');
+      message.error(t('modal.imageUploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -260,9 +262,9 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
       />
       <Modal
         open={open}
-        title="New File"
-        okText="Create"
-        cancelText="Cancel"
+        title={t('modal.newFile')}
+        okText={t('modal.create')}
+        cancelText={t('modal.cancel')}
         onOk={handleConfirm}
         onCancel={handleCancel}
         confirmLoading={loading}
@@ -279,9 +281,9 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
         cancelButtonProps={{ style: { borderRadius: 7 } }}
       >
         <Field>
-          <FieldLabel>Name</FieldLabel>
+          <FieldLabel>{t('modal.name')}</FieldLabel>
           <Input
-            placeholder="Project name (optional)"
+            placeholder={t('modal.namePlaceholder')}
             value={nameValue}
             onChange={(e) => setNameValue(e.target.value)}
             onPressEnter={handleConfirm}
@@ -296,7 +298,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
           />
         </Field>
         <Field>
-          <FieldLabel>Canvas ratio</FieldLabel>
+          <FieldLabel>{t('modal.canvasRatio')}</FieldLabel>
           <Grid>
           {RATIO_OPTIONS.map((opt) => (
             <Card
@@ -322,7 +324,7 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
         </Grid>
         </Field>
         <Field>
-          <FieldLabel>Import image</FieldLabel>
+          <FieldLabel>{t('modal.importImage')}</FieldLabel>
           <UploadZone
           $active={isImageSelected}
           $hasImage={!!imagePreview}
@@ -331,23 +333,23 @@ const CreateProjectModal: React.FC<Props> = ({ open, loading, onConfirm, onCance
           {uploading ? (
             <UploadPlaceholder>
               <LoadingOutlined style={{ fontSize: 20 }} />
-              <span>uploading…</span>
+              <span>{t('modal.uploading')}</span>
             </UploadPlaceholder>
           ) : imagePreview ? (
             <>
               <UploadThumb src={imagePreview} />
               <UploadInfo>
-                <Label style={{ color: isImageSelected ? '#a89ff5' : '#ddd' }}>Custom</Label>
+                <Label style={{ color: isImageSelected ? '#a89ff5' : '#ddd' }}>{t('modal.custom')}</Label>
                 <Dimension>
                   {selected.width} × {selected.height}
                 </Dimension>
-                <Dimension style={{ color: '#555' }}>Click to reselect</Dimension>
+                <Dimension style={{ color: '#555' }}>{t('modal.clickToReselect')}</Dimension>
               </UploadInfo>
             </>
           ) : (
             <UploadPlaceholder>
               <PlusOutlined style={{ fontSize: 18 }} />
-              <span>Upload image · auto-fit canvas ratio</span>
+              <span>{t('modal.uploadHint')}</span>
             </UploadPlaceholder>
           )}
         </UploadZone>
