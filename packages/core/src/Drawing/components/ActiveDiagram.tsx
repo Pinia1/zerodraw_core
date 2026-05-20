@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import React, { useImperativeHandle, useMemo, useState } from 'react';
+import React, { useCallback, useImperativeHandle, useMemo, useState } from 'react';
 import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -16,7 +16,6 @@ import {
   Rect as RectType,
 } from '../../types/Layers';
 import Ellipse from './Diagram/Ellipse';
-import Eraser from './Diagram/Eraser';
 import EraserLasso from './Diagram/EraserLasso';
 import Fill from './Diagram/Fill';
 import Image from './Diagram/Image';
@@ -37,7 +36,12 @@ export interface ActiveDiagramRef {
   setActiveDiagram: React.Dispatch<React.SetStateAction<ActiveDiagramRef['activeDiagram']>>;
 }
 
-const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) => {
+interface ActiveDiagramProps {
+  onActiveDiagramChange?: (activeDiagram: ActiveDiagramState | null) => void;
+}
+
+const ActiveDiagram = React.forwardRef<ActiveDiagramRef, ActiveDiagramProps>((props, ref) => {
+  const { onActiveDiagramChange } = props;
   const [activeDiagram, setActiveDiagram] = useState<ActiveDiagramState | null>(null);
 
   const { layerConfig } = useDrawingStore(
@@ -57,8 +61,19 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) =
     }))
   );
 
+  const setActiveDiagramAndNotify = useCallback<ActiveDiagramRef['setActiveDiagram']>(
+    (value) => {
+      setActiveDiagram((prev) => {
+        const next = typeof value === 'function' ? value(prev) : value;
+        onActiveDiagramChange?.(next);
+        return next;
+      });
+    },
+    [onActiveDiagramChange]
+  );
+
   useImperativeHandle(ref, () => ({
-    setActiveDiagram,
+    setActiveDiagram: setActiveDiagramAndNotify,
     activeDiagram,
   }));
 
@@ -76,7 +91,7 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, object>((_props, ref) =
         return <Fill {...(activeDiagram.props as FillType)} />;
       }
       case 'eraserLine': {
-        return <Eraser {...(activeDiagram.props as LineType)} />;
+        return null;
       }
       case 'rect': {
         return <Rect {...(activeDiagram.props as RectType)} />;

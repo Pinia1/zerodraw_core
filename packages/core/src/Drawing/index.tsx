@@ -62,7 +62,7 @@ import {
 } from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
-import ActiveDiagram, { ActiveDiagramRef } from './components/ActiveDiagram';
+import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
@@ -79,6 +79,9 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const activeDiagramRef = useRef<ActiveDiagramRef | null>(null);
 
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [activeDrawLayerDiagram, setActiveDrawLayerDiagram] = useState<ActiveDiagramState | null>(
+    null
+  );
 
   const [stageDraggable, setStageDraggable] = useState(false);
 
@@ -942,36 +945,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       };
     }
 
-    if (activeKey === Actions.ERASER) {
-      const drawingLayer = getDrawingLayer();
-      if (!drawingLayer) return;
-
-      const eraserLines = drawingLayer.eraserLines ?? [];
-      const idx = eraserLines.findIndex((l) => l.id === updatedLine.id);
-
-      const nextEraserLines =
-        idx >= 0
-          ? eraserLines.map((l) => (l.id === updatedLine.id ? updatedLine : l))
-          : [...eraserLines, updatedLine];
-
-      const nextDiagrams = drawingLayer.diagrams.some((d) => d.id === updatedLine.id)
-        ? drawingLayer.diagrams
-        : [...drawingLayer.diagrams, { id: updatedLine.id, type: 'eraserLine' }];
-
-      setDrawingLayer({
-        ...drawingLayer,
-        eraserLines: nextEraserLines,
-        diagrams: nextDiagrams as Diagram[],
-      });
-
-      activeDiagramRef.current?.setActiveDiagram({
-        type: diagrams,
-        props: updatedLine,
-      });
-
-      return;
-    }
-
     activeDiagramRef.current?.setActiveDiagram({
       type: diagrams,
       props: updatedLine,
@@ -1629,14 +1602,21 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           if (isDrawingLayer) {
             return (
               <React.Fragment key={`drawing-${layer.id}`}>
-                <DrawLayer key={layer.id + 'drawing'} />
+                <DrawLayer key={layer.id + 'drawing'} activeDiagram={activeDrawLayerDiagram} />
                 {!!layer && <Layer key={layer.id} {...layer} />}
               </React.Fragment>
             );
           }
           return !!layer && <Layer key={layer.id} {...layer} />;
         })}
-        <ActiveDiagram ref={activeDiagramRef} />
+        <ActiveDiagram
+          ref={activeDiagramRef}
+          onActiveDiagramChange={(activeDiagram) => {
+            setActiveDrawLayerDiagram(
+              activeDiagram?.type === 'eraserLine' ? activeDiagram : null
+            );
+          }}
+        />
       </Stage>
       <Cursor visible={cursorVisible} />
       <ReferencePicture />

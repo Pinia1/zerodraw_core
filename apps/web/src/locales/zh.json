@@ -104,10 +104,10 @@
     "addMode": "添加到选区",
     "removeMode": "从选区中减去",
     "invert": "反选",
-    "copyToLayer": "复制到新图层",
+    "copyToLayer": "复制为新图层",
     "clipToLayer": "裁剪为新图层",
     "clearSelection": "清除选区",
-    "copiedSuccess": "已复制到新图层！当前已选中这个新图层",
+    "copiedSuccess": "已复制为新图层！当前已选中这个新图层",
     "clippedSuccess": "已裁剪为新图层！当前已选中这个新图层"
   },
   "lib": {

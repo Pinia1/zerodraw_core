@@ -16,6 +16,7 @@ import {
   Rect as RectType,
 } from '../../types/Layers';
 import { layerFilterToCssFilter } from '../../utils/BlendMode';
+import type { ActiveDiagramState } from './ActiveDiagram';
 import Ellipse from './Diagram/Ellipse';
 import Eraser from './Diagram/Eraser';
 import EraserLasso from './Diagram/EraserLasso';
@@ -28,7 +29,11 @@ import Rect from './Diagram/Rect';
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
-const DrawLayer: React.FC = () => {
+interface DrawLayerProps {
+  activeDiagram?: ActiveDiagramState | null;
+}
+
+const DrawLayer: React.FC<DrawLayerProps> = ({ activeDiagram }) => {
   const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
@@ -181,6 +186,9 @@ const DrawLayer: React.FC = () => {
         drawingLayer?.lassos.map((lasso) => {
           return <Lasso key={lasso.id} {...lasso} />;
         })}
+      {activeKey === Actions.ERASER && activeDiagram?.type === 'eraserLine' && (
+        <Eraser {...(activeDiagram.props as LineType)} />
+      )}
 
       <KonvaRect
         x={0}
