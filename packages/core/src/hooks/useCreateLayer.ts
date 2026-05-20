@@ -42,6 +42,8 @@ const useCreateLayer = () => {
           const img = new window.Image();
           img.crossOrigin = 'Anonymous';
           img.src = fetchUrl;
+          console.log(fetchUrl, 'urllll');
+
           img.onload = async () => {
             const imgWidth = img.naturalWidth || img.width;
             const imgHeight = img.naturalHeight || img.height;

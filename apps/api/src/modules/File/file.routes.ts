@@ -1,3 +1,4 @@
+import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { env } from '../../config/env';
@@ -6,7 +7,8 @@ import { authenticate } from '../Auth/auth.middleware';
 import { uploadServices } from '../Volc';
 import { volcService } from '../Volc/volc.services';
 
-export async function fileRoutes(app: FastifyInstance) {
+export async function fileRoutes(fastify: FastifyInstance) {
+  const app = fastify.withTypeProvider<ZodTypeProvider>();
   app.post('/upload', { preHandler: authenticate }, async (request, reply) => {
     const file = await request.file();
     if (!file) {
@@ -17,7 +19,7 @@ export async function fileRoutes(app: FastifyInstance) {
     return reply.success(key);
   });
 
-  app.get<{ Params: { key: string } }>(
+  app.get(
     '/s3/:key',
     { schema: { params: z.object({ key: z.string() }) } },
     async (request, reply) => {
@@ -30,7 +32,7 @@ export async function fileRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get<{ Params: { key: string } }>(
+  app.get(
     '/thumbnail/:key',
     { schema: { params: z.object({ key: z.string() }) } },
     async (request, reply) => {
@@ -43,7 +45,7 @@ export async function fileRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get<{ Params: { key: string } }>(
+  app.get(
     '/volc/stream/:key',
     { schema: { params: z.object({ key: z.string() }) } },
     async (request, reply) => {
@@ -54,7 +56,7 @@ export async function fileRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get<{ Params: { key: string } }>(
+  app.get(
     '/url/:key',
     { schema: { params: z.object({ key: z.string() }) } },
     async (request, reply) => {

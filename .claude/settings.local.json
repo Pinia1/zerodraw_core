@@ -12,7 +12,11 @@
       "Bash(xargs ls -la)",
       "mcp__ide__executeCode",
       "Bash(python3 *)",
-      "WebFetch(domain:ahooks.js.org)"
+      "WebFetch(domain:ahooks.js.org)",
+      "Bash(git ls-tree *)",
+      "Bash(git archive *)",
+      "Bash(tar -x -C /d/code/zeroDraw --strip-components=0)",
+      "Bash(tar -x -C /d/code/Flow_bb599df --strip-components=5)"
     ]
   }
 }

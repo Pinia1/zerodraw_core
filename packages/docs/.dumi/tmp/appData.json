@@ -9,7 +9,8 @@
       "preview": "dumi preview"
     },
     "dependencies": {
-      "@zeroDraw/core": "workspace:*"
+      "@zeroDraw/core": "workspace:*",
+      "zod": "^4.0.0"
     },
     "devDependencies": {
       "dumi": "^2.4.0"
@@ -39,7 +40,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 52
+        "register": 32
       },
       "enableBy": "register"
     },
@@ -52,7 +53,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 12
+        "register": 13
       },
       "enableBy": "register"
     },
@@ -69,7 +70,7 @@
             1
           ]
         },
-        "register": 11
+        "register": 7
       },
       "enableBy": "register"
     },
@@ -86,7 +87,7 @@
             0
           ]
         },
-        "register": 2
+        "register": 4
       },
       "enableBy": "register"
     },
@@ -113,10 +114,10 @@
       "time": {
         "hooks": {
           "modifyAppData": [
-            10
+            12
           ]
         },
-        "register": 43
+        "register": 46
       },
       "enableBy": "register"
     },
@@ -129,7 +130,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 6
       },
       "enableBy": "register"
     },
@@ -149,7 +150,7 @@
             0
           ]
         },
-        "register": 2
+        "register": 3
       },
       "enableBy": "register"
     },
@@ -196,7 +197,7 @@
             0
           ]
         },
-        "register": 24
+        "register": 16
       },
       "enableBy": "register"
     },
@@ -1048,7 +1049,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 4
+        "register": 1
       },
       "enableBy": "config"
     },
@@ -1062,10 +1063,10 @@
       "time": {
         "hooks": {
           "onStart": [
-            1
+            0
           ]
         },
-        "register": 2
+        "register": 16
       },
       "enableBy": "register"
     },
@@ -1091,7 +1092,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 179
+        "register": 238
       },
       "enableBy": "register"
     },
@@ -1104,7 +1105,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 82
+        "register": 50
       },
       "enableBy": "config"
     },
@@ -1138,7 +1139,7 @@
             0
           ]
         },
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1151,7 +1152,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 2
       },
       "enableBy": "register"
     },
@@ -1164,7 +1165,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 4
+        "register": 3
       },
       "enableBy": "config"
     },
@@ -1178,10 +1179,10 @@
       "time": {
         "hooks": {
           "onStart": [
-            1
+            2
           ]
         },
-        "register": 51
+        "register": 43
       }
     },
     "@umijs/preset-umi/dist/features/mpa/mpa": {
@@ -1231,7 +1232,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       },
       "enableBy": "config"
     },
@@ -1245,10 +1246,10 @@
       "time": {
         "hooks": {
           "modifyConfig": [
-            2
+            1
           ]
         },
-        "register": 5
+        "register": 3
       }
     },
     "@umijs/preset-umi/dist/features/polyfill/publicPathPolyfill": {
@@ -1273,7 +1274,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 4
+        "register": 3
       },
       "enableBy": "register"
     },
@@ -1286,7 +1287,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "config"
     },
@@ -1312,7 +1313,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 2
       },
       "enableBy": "register"
     },
@@ -1325,7 +1326,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 14
+        "register": 6
       },
       "enableBy": "register"
     },
@@ -1338,7 +1339,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 4
+        "register": 2
       },
       "enableBy": "config"
     },
@@ -1351,7 +1352,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       }
     },
     "@umijs/preset-umi/dist/features/ssr/ssr": {
@@ -1363,7 +1364,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 8
+        "register": 4
       },
       "enableBy": "config"
     },
@@ -1376,7 +1377,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 8
+        "register": 7
       },
       "enableBy": "register"
     },
@@ -1389,7 +1390,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 8
+        "register": 5
       },
       "enableBy": "register"
     },
@@ -1415,7 +1416,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "config"
     },
@@ -1428,7 +1429,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 13
+        "register": 9
       }
     },
     "@umijs/preset-umi/dist/features/monorepo/redirect": {
@@ -1440,7 +1441,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 51
+        "register": 40
       },
       "enableBy": "config"
     },
@@ -1453,7 +1454,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 3
+        "register": 4
       }
     },
     "@umijs/preset-umi/dist/features/clickToComponent/clickToComponent": {
@@ -1478,7 +1479,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 6
+        "register": 14
       },
       "enableBy": "config"
     },
@@ -1504,7 +1505,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 19
+        "register": 1
       }
     },
     "@umijs/preset-umi/dist/features/swc/swc": {
@@ -1533,7 +1534,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 10
+        "register": 4
       }
     },
     "@umijs/preset-umi/dist/features/mako/mako": {
@@ -1558,7 +1559,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       }
     },
     "@umijs/preset-umi/dist/features/hmrGuardian/hmrGuardian": {
@@ -1570,7 +1571,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 7
+        "register": 5
       }
     },
     "@umijs/preset-umi/dist/features/routePreloadOnLoad/routePreloadOnLoad": {
@@ -1582,7 +1583,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 61
+        "register": 46
       }
     },
     "@umijs/preset-umi/dist/features/forget/forget": {
@@ -1594,7 +1595,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 6
+        "register": 7
       },
       "enableBy": "config"
     },
@@ -1607,7 +1608,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 5
+        "register": 2
       },
       "enableBy": "register"
     },
@@ -1620,7 +1621,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 10
+        "register": 6
       },
       "enableBy": "register"
     },
@@ -1633,7 +1634,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 54
+        "register": 44
       },
       "enableBy": "register"
     },
@@ -1647,10 +1648,10 @@
       "time": {
         "hooks": {
           "modifyAppData": [
-            16
+            22
           ]
         },
-        "register": 92
+        "register": 40
       }
     },
     "@umijs/preset-umi/dist/commands/help": {
@@ -1701,7 +1702,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 2
       },
       "enableBy": "register"
     },
@@ -1766,7 +1767,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1792,7 +1793,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1831,7 +1832,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       },
       "enableBy": "register"
     },
@@ -1857,7 +1858,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1896,7 +1897,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 4
+        "register": 3
       },
       "enableBy": "register"
     },
@@ -1909,7 +1910,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       },
       "enableBy": "register"
     },
@@ -1935,7 +1936,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -1948,7 +1949,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       },
       "enableBy": "register"
     },
@@ -2052,7 +2053,7 @@
       "time": {
         "hooks": {
           "modifyConfig": [
-            1
+            2
           ]
         },
         "register": 1
@@ -2077,7 +2078,7 @@
             1
           ]
         },
-        "register": 3
+        "register": 2
       },
       "enableBy": "register"
     },
@@ -2104,7 +2105,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 2
+        "register": 1
       },
       "enableBy": "register"
     },
@@ -2137,10 +2138,10 @@
           "modifyConfig": [
             0,
             0,
-            1
+            0
           ]
         },
-        "register": 138
+        "register": 15
       },
       "enableBy": "register"
     },
@@ -2160,10 +2161,10 @@
             0
           ],
           "modifyRoutes": [
-            4
+            3
           ]
         },
-        "register": 5
+        "register": 8
       },
       "enableBy": "register"
     },
@@ -2180,7 +2181,7 @@
             0
           ]
         },
-        "register": 2
+        "register": 3
       },
       "enableBy": "register"
     },
@@ -2197,10 +2198,10 @@
             0
           ],
           "modifyRoutes": [
-            0
+            1
           ]
         },
-        "register": 1
+        "register": 0
       },
       "enableBy": "register"
     },
@@ -2214,14 +2215,14 @@
       "time": {
         "hooks": {
           "modifyConfig": [
-            0
+            1
           ],
           "modifyAppData": [
             0,
-            3
+            4
           ]
         },
-        "register": 37
+        "register": 32
       },
       "enableBy": "register"
     },
@@ -2249,7 +2250,7 @@
             0
           ]
         },
-        "register": 2
+        "register": 1
       },
       "enableBy": "register"
     },
@@ -2262,7 +2263,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 3
+        "register": 2
       },
       "enableBy": "config"
     },
@@ -2299,7 +2300,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 18
+        "register": 13
       }
     },
     "dumi/dist/features/html2sketch": {
@@ -2311,7 +2312,7 @@
       "config": {},
       "time": {
         "hooks": {},
-        "register": 0
+        "register": 1
       },
       "enableBy": "register"
     },

@@ -46,6 +46,11 @@ const responseWrapperPlugin: FastifyPluginCallback = (fastify, opts, done) => {
         return payload;
       }
 
+      const contentType = (reply.getHeader('Content-Type') as string) ?? '';
+      if (contentType && !contentType.includes('application/json')) {
+        return payload;
+      }
+
       let data: unknown = payload;
       if (typeof payload === 'string') {
         try {

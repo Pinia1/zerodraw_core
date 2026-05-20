@@ -1,4 +1,5 @@
-import { GithubCallbackResponse, githubCallbackSchema, GuestLoginBody, guestLoginSchema } from '@zeroDraw/api-contract';
+import { ZodTypeProvider } from '@fastify/type-provider-zod';
+import { githubCallbackSchema, guestLoginSchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { env } from '../../config/env';
 import { githubService } from '../Passport/github.service';
@@ -14,8 +15,9 @@ function fingerprintToInt(fp: string): number {
   return hash >>> 0;
 }
 
-export async function authRoutes(app: FastifyInstance) {
-  app.get<{ Querystring: GithubCallbackResponse }>(
+export async function authRoutes(fastify: FastifyInstance) {
+  const app = fastify.withTypeProvider<ZodTypeProvider>();
+  app.get(
     '/github/callback',
     { schema: { querystring: githubCallbackSchema } },
     async (request, reply) => {
@@ -59,21 +61,17 @@ export async function authRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post<{ Body: GuestLoginBody }>(
-    '/guest',
-    { schema: { body: guestLoginSchema } },
-    async (request, reply) => {
-      const { fingerprint } = request.body;
-      const userId = fingerprintToInt(fingerprint);
-      const user = await authService.findOrCreateUser({
-        userId,
-        username: `guest_${fingerprint.slice(0, 8)}`,
-        platform: 'guest',
-      });
-      const token = app.jwt.sign({ userId: user!.id }, { expiresIn: env.JWT_EXPIRES_IN });
-      return reply.success({ token, user: pickUserBasicInfo(user!) });
-    }
-  );
+  app.post('/guest', { schema: { body: guestLoginSchema } }, async (request, reply) => {
+    const { fingerprint } = request.body;
+    const userId = fingerprintToInt(fingerprint);
+    const user = await authService.findOrCreateUser({
+      userId,
+      username: `guest_${fingerprint.slice(0, 8)}`,
+      platform: 'guest',
+    });
+    const token = app.jwt.sign({ userId: user!.id }, { expiresIn: env.JWT_EXPIRES_IN });
+    return reply.success({ token, user: pickUserBasicInfo(user!) });
+  });
 
   app.get('/me', { preHandler: authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload;

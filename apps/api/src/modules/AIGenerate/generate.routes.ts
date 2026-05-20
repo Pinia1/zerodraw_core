@@ -1,12 +1,10 @@
+import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import {
-  NanobananaGenerateParams,
   nanobananaGenerateSchema,
   seedreamGenerateSchema,
-  SeedreamGetTaskResponse,
   seedreamGetTaskResponseSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 import { userRateLimit } from '../../plugins/userRateLimit';
 import { QueryValidation } from '../../utils/schame';
 import { authenticate } from '../Auth/auth.middleware';
@@ -14,7 +12,8 @@ import { generateService } from './generate.services';
 
 const nanoBananaRateLimit = userRateLimit({ max: 6, windowSec: 60, keyPrefix: 'rl:nano-banana' });
 
-export async function generateRoutes(app: FastifyInstance) {
+export async function generateRoutes(fastify: FastifyInstance) {
+  const app = fastify.withTypeProvider<ZodTypeProvider>();
   app.addHook('onRequest', authenticate);
 
   app.post('/seedream', async (request, reply) => {
@@ -24,7 +23,7 @@ export async function generateRoutes(app: FastifyInstance) {
     return reply.success(response);
   });
 
-  app.get<{ Params: SeedreamGetTaskResponse }>(
+  app.get(
     '/task/:id',
     {
       schema: {
@@ -38,7 +37,7 @@ export async function generateRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post<{ Body: NanobananaGenerateParams }>(
+  app.post(
     '/nano-banana',
     {
       preHandler: nanoBananaRateLimit,
@@ -49,18 +48,6 @@ export async function generateRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const response = await generateService.run(request.user.userId, request.body);
       return reply.success(response);
-    }
-  );
-}
-
-export async function generateWebhookRoutes(app: FastifyInstance) {
-  app.post<{ Params: { taskId: string } }>(
-    '/webhook/:taskId',
-    { schema: { params: z.object({ taskId: z.string() }) } },
-    async (request, reply) => {
-      const { taskId } = request.params;
-      await generateService.handleWebhook(taskId, request.body);
-      return reply.success(null);
     }
   );
 }

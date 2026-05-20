@@ -1,54 +1,41 @@
+import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import {
-  CreateProjectInput,
   createProjectSchema,
-  ListProjectQuery,
   listProjectQuerySchema,
-  SaveLayersInput,
   saveLayersSchema,
-  UpdateProjectInput,
+  updateProjectSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authenticate } from '../Auth/auth.middleware';
 import { projectService } from './project.services';
 
-export async function projectRoutes(app: FastifyInstance) {
+export async function projectRoutes(fastify: FastifyInstance) {
+  const app = fastify.withTypeProvider<ZodTypeProvider>();
   app.addHook('onRequest', authenticate);
 
-  app.get<{ Querystring: ListProjectQuery }>(
-    '/',
-    { schema: { querystring: listProjectQuerySchema } },
-    async (request, reply) => {
-      const userId = request.user.userId;
-      const data = await projectService.listProjects({ userId, ...request.query });
-      return reply.success(data);
-    }
-  );
+  app.get('/', { schema: { querystring: listProjectQuerySchema } }, async (request, reply) => {
+    const userId = request.user.userId;
+    const data = await projectService.listProjects({ userId, ...request.query });
+    return reply.success(data);
+  });
 
-  app.post<{ Body: CreateProjectInput }>(
-    '/',
-    { schema: { body: createProjectSchema } },
-    async (request, reply) => {
-      const userId = request.user.userId;
-      const data = await projectService.createProject({ userId, ...request.body });
-      return reply.success(data);
-    }
-  );
+  app.post('/', { schema: { body: createProjectSchema } }, async (request, reply) => {
+    const userId = request.user.userId;
+    const data = await projectService.createProject({ userId, ...request.body });
+    return reply.success(data);
+  });
 
-  app.get<{ Params: { id: string } }>(
+  app.get('/:id', { schema: { params: z.object({ id: z.string() }) } }, async (request, reply) => {
+    const { id } = request.params;
+    const userId = request.user.userId;
+    const data = await projectService.getProject({ id, userId });
+    return reply.success(data);
+  });
+
+  app.patch(
     '/:id',
-    { schema: { params: z.object({ id: z.string() }) } },
-    async (request, reply) => {
-      const { id } = request.params;
-      const userId = request.user.userId;
-      const data = await projectService.getProject({ id, userId });
-      return reply.success(data);
-    }
-  );
-
-  app.patch<{ Params: { id: string }; Body: UpdateProjectInput }>(
-    '/:id',
-    { schema: { params: z.object({ id: z.string() }) } },
+    { schema: { params: z.object({ id: z.string() }), body: updateProjectSchema } },
     async (request, reply) => {
       const { id } = request.params;
       const userId = request.user.userId;
@@ -59,7 +46,7 @@ export async function projectRoutes(app: FastifyInstance) {
   );
 
   /** 批量保存图层（全量替换） */
-  app.put<{ Params: { id: string }; Body: SaveLayersInput }>(
+  app.put(
     '/:id/layers',
     { schema: { params: z.object({ id: z.string() }), body: saveLayersSchema } },
     async (request, reply) => {
@@ -71,7 +58,7 @@ export async function projectRoutes(app: FastifyInstance) {
     }
   );
 
-  app.delete<{ Params: { id: string } }>(
+  app.delete(
     '/:id',
     { schema: { params: z.object({ id: z.string() }) } },
     async (request, reply) => {
@@ -84,7 +71,7 @@ export async function projectRoutes(app: FastifyInstance) {
   );
 
   /** 从回收站恢复 */
-  app.post<{ Params: { id: string } }>(
+  app.post(
     '/:id/restore',
     { schema: { params: z.object({ id: z.string() }) } },
     async (request, reply) => {
@@ -97,7 +84,7 @@ export async function projectRoutes(app: FastifyInstance) {
   );
 
   /** 永久删除 */
-  app.delete<{ Params: { id: string } }>(
+  app.delete(
     '/:id/permanent',
     { schema: { params: z.object({ id: z.string() }) } },
     async (request, reply) => {
