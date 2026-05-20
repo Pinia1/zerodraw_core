@@ -3,6 +3,7 @@ import { cropTransparentBorder, useMemoizedFn } from '@zeroDraw/common';
 import { Divider, message, Tooltip } from 'antd';
 import Konva from 'konva';
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { findMissingorder } from '../../../hooks/useCreateLayer';
 import useLayerToBitmap from '../../../hooks/useLayerToBitmap';
@@ -35,6 +36,7 @@ import { ToolItem } from '../../index';
 import { ContainerStyle, ToolItemStyle } from './PenConf';
 
 const LassoConf = () => {
+  const { t } = useTranslation();
   const { lassoConfig, setLassoConfig, layerConfig, stageConfig, fillColor, stageRef } =
     useDrawingStore(
       useShallow((state) => ({
@@ -278,7 +280,7 @@ const LassoConf = () => {
       newLayer,
     ]);
     setActiveKey(Actions.ROPE);
-    message.success('It has been copied to a new layer!');
+    message.success(t('lasso.copiedSuccess'));
   });
 
   const handleClipLasso = useMemoizedFn(async () => {
@@ -314,7 +316,7 @@ const LassoConf = () => {
     ]);
     setActiveKey(Actions.ROPE);
 
-    message.success('It has been trimmed into a new layer!');
+    message.success(t('lasso.clippedSuccess'));
   });
 
   const menus = useMemo(() => {
@@ -326,7 +328,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.shape === 'default';
         },
-        tip: 'Default selection',
+        tip: t('lasso.defaultSelection'),
       },
       {
         key: 'rect',
@@ -335,7 +337,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.shape === 'rect';
         },
-        tip: 'Rectangular selection',
+        tip: t('lasso.rectSelection'),
       },
       {
         key: 'ellipse',
@@ -344,7 +346,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.shape === 'ellipse';
         },
-        tip: 'Elliptical selection',
+        tip: t('lasso.ellipseSelection'),
       },
       {
         key: 'Divider',
@@ -356,7 +358,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return lassoConfig.type === LassoMode.ADD;
         },
-        tip: 'The overlapping and merging areas',
+        tip: t('lasso.addMode'),
       },
       {
         key: LassoMode.REMOVE,
@@ -368,7 +370,7 @@ const LassoConf = () => {
         get disabled(): boolean {
           return drawingLayer?.lassos?.length === 0;
         },
-        tip: 'Subtract the overlapping parts',
+        tip: t('lasso.removeMode'),
       },
       {
         key: 'invert',
@@ -377,7 +379,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return false;
         },
-        tip: 'inversion',
+        tip: t('lasso.invert'),
       },
       {
         key: 'Divider',
@@ -389,7 +391,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return false;
         },
-        tip: 'Copy to new layer',
+        tip: t('lasso.copyToLayer'),
       },
       {
         key: 'clip',
@@ -398,7 +400,7 @@ const LassoConf = () => {
         get isActive(): boolean {
           return false;
         },
-        tip: 'Clip as a new layer',
+        tip: t('lasso.clipToLayer'),
       },
       {
         key: 'clear',
@@ -407,10 +409,10 @@ const LassoConf = () => {
         get isActive(): boolean {
           return false;
         },
-        tip: 'Clear selection area',
+        tip: t('lasso.clearSelection'),
       },
     ];
-  }, [lassoConfig, drawingLayer?.lassos?.length]);
+  }, [lassoConfig, drawingLayer?.lassos?.length, t]);
 
   return (
     <Container style={ContainerStyle}>

@@ -17,7 +17,11 @@
       "Bash(git archive *)",
       "Bash(tar -x -C /d/code/zeroDraw --strip-components=0)",
       "Bash(tar -x -C /d/code/Flow_bb599df --strip-components=5)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(xargs grep -l \"useEffect\")",
+      "Bash(xargs grep -l \"useEffect\\\\|useLayoutEffect\")",
+      "Bash(xargs grep -l \"useDebounceEffect\\\\|useThrottleEffect\")",
+      "Bash(xargs grep -l \"Drawing\\\\|<Drawing\")"
     ]
   }
 }

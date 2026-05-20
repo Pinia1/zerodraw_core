@@ -97,6 +97,19 @@
     "clear": "Clear",
     "delete": "Delete"
   },
+  "lasso": {
+    "defaultSelection": "Default selection",
+    "rectSelection": "Rectangular selection",
+    "ellipseSelection": "Elliptical selection",
+    "addMode": "Add to selection",
+    "removeMode": "Subtract from selection",
+    "invert": "Invert selection",
+    "copyToLayer": "Copy to new layer",
+    "clipToLayer": "Clip as new layer",
+    "clearSelection": "Clear selection",
+    "copiedSuccess": "Copied to a new layer!",
+    "clippedSuccess": "Clipped into a new layer!"
+  },
   "lib": {
     "addToPrompt": "Add to prompt",
     "addToLayer": "Add to layer",

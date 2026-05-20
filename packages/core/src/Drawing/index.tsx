@@ -81,7 +81,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const [cursorVisible, setCursorVisible] = useState(true);
 
   const [stageDraggable, setStageDraggable] = useState(false);
-  
+
   const isMultiTouchRef = useRef(false);
 
   // ===== iPad/触屏：双指平移 + 捏合缩放 =====
@@ -1240,7 +1240,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       mode: lassoConfig.type,
     };
 
-    // 新方式：套索绘制期只写入 overlay（ActiveDiagram），mouseUp 再合并/提交到 drawLayer
     activeDiagramRef.current?.setActiveDiagram({
       type: 'lasso',
       props: line,
@@ -1444,6 +1443,29 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const discardLastStrokeIfTooShort = useMemoizedFn(() => {
     const current = activeDiagramRef.current?.activeDiagram;
+
+    if (activeKey === Actions.RECT || activeKey === Actions.ELLIPSE) {
+      const props = current?.props as { width?: number; height?: number } | null;
+      const shouldDiscard = Math.abs(props?.width ?? 0) < 2 && Math.abs(props?.height ?? 0) < 2;
+      if (shouldDiscard) {
+        activeDiagramRef.current?.setActiveDiagram(null);
+        setDrawingId(null);
+      }
+      return shouldDiscard;
+    }
+
+    if (activeKey === Actions.LINE) {
+      const pts = (current?.props as { points?: number[] } | null)?.points ?? [];
+      const dx = (pts[2] ?? 0) - (pts[0] ?? 0);
+      const dy = (pts[3] ?? 0) - (pts[1] ?? 0);
+      const shouldDiscard = Math.sqrt(dx * dx + dy * dy) < 2;
+      if (shouldDiscard) {
+        activeDiagramRef.current?.setActiveDiagram(null);
+        setDrawingId(null);
+      }
+      return shouldDiscard;
+    }
+
     const points = (current?.props as { points?: number[] } | null)?.points ?? [];
 
     if (!points.length) {
