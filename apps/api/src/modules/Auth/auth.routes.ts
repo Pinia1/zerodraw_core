@@ -2,18 +2,11 @@ import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import { githubCallbackSchema, guestLoginSchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { env } from '../../config/env';
+import { fingerprintToInt } from '../../utils';
 import { githubService } from '../Passport/github.service';
 import { authenticate } from './auth.middleware';
 import { authService } from './auth.services';
 import { JwtPayload, pickUserBasicInfo } from './auth.types';
-
-function fingerprintToInt(fp: string): number {
-  let hash = 5381;
-  for (let i = 0; i < fp.length; i++) {
-    hash = ((hash << 5) + hash) ^ fp.charCodeAt(i);
-  }
-  return hash >>> 0;
-}
 
 export async function authRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
