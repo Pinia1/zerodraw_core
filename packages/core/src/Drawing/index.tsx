@@ -15,6 +15,7 @@ import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import useDrawingKeyboard from '../hooks/useKeyboard';
+import { useSymmetryPen } from '../hooks/useSymmetryPen';
 import { useWheelLayerCache } from '../hooks/useWheelLayerCache';
 import {
   isPointInCanvasBounds,
@@ -64,7 +65,7 @@ import {
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
-import DrawLayer from './components/DrawLayer';
+import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Symmetry from './components/Symmetry';
@@ -79,6 +80,16 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   const shiftAnchorRef = useRef<{ idx: number } | null>(null);
   const lassoStartRef = useRef<Point2D | null>(null);
   const activeDiagramRef = useRef<ActiveDiagramRef | null>(null);
+  const drawLayerRef = useRef<DrawLayerRef | null>(null);
+
+  const symmetryPen = useSymmetryPen((state) => {
+    if (state?.type === 'eraserLine') {
+      drawLayerRef.current?.setMirrorActiveDiagram(state);
+    } else {
+      drawLayerRef.current?.setMirrorActiveDiagram(null);
+      activeDiagramRef.current?.setMirrorDiagram(state);
+    }
+  });
 
   const [cursorVisible, setCursorVisible] = useState(true);
   const [activeDrawLayerDiagram, setActiveDrawLayerDiagram] = useState<ActiveDiagramState | null>(
@@ -319,7 +330,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const drawingLayer = getDrawingLayer();
     if (!drawingLayer) return;
 
-    const nextDrawingLayer = commitActiveDiagramToLayer(drawingLayer as unknown as Layers);
+    let nextDrawingLayer = commitActiveDiagramToLayer(drawingLayer as unknown as Layers);
+
+    symmetryPen.onUp();
+    nextDrawingLayer = symmetryPen.commitToLayer(nextDrawingLayer);
 
     const drawingIndex = layers.findIndex((l) => l.id === nextDrawingLayer.id);
     if (drawingIndex === -1) return;
@@ -902,7 +916,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       eraser: isEraser,
       id,
       pressure: [input.pressure || 0],
-      suppress: lineConfig.suppress, //是否开启压感
+      suppress: lineConfig.suppress, //压感
       scale: stageConfig.scale,
       fill: !isEraser ? !!lineConfig.fill : false,
     };
@@ -913,6 +927,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: line,
     });
+
+    symmetryPen.onDown(line);
   });
 
   const onPenInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -956,6 +972,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: updatedLine,
     });
+
+    symmetryPen.onMove(input.canvasPoint.x, input.canvasPoint.y, input.pressure || 0);
   });
 
   const onRectInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -984,6 +1002,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: rect,
     });
+    symmetryPen.onRectDown(rect);
   });
 
   const onRectInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1002,6 +1021,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: rect,
     });
+    symmetryPen.onRectMove(input.canvasPoint.x, input.canvasPoint.y);
   });
 
   const onEllipseInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1032,6 +1052,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: ellipse,
     });
+    symmetryPen.onEllipseDown(ellipse);
   });
 
   const onEllipseInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1058,6 +1079,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: ellipse,
     });
+    symmetryPen.onEllipseMove(input.canvasPoint.x, input.canvasPoint.y);
   });
 
   const onLineInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1103,6 +1125,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: diagrams,
       props: line,
     });
+    symmetryPen.onLineDown(line);
   });
 
   const onLineInputMove = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1121,6 +1144,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       type: 'line',
       props: next,
     });
+    symmetryPen.onLineMove(input.canvasPoint.x, input.canvasPoint.y);
   });
 
   const onFillMouseDown = useMemoizedFn(async (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -1355,10 +1379,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingId(null);
   });
 
-  /**
-   * 输入兼容层入口：把 Konva 事件标准化成 NormalizedPointerEvent。
-   * “设备差异/坐标换算/pressure/buttons”都收口到这里，业务绘制逻辑只消费标准事件。
-   */
   const toInputEvent = useMemoizedFn(
     (e: Konva.KonvaEventObject<MouseEvent>, phase: NormalizedPointerEvent['phase']) => {
       return normalizeKonvaPointerEvent(e, phase, layerConfig, stageConfig);
@@ -1609,7 +1629,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           if (isDrawingLayer) {
             return (
               <React.Fragment key={`drawing-${layer.id}`}>
-                <DrawLayer key={layer.id + 'drawing'} activeDiagram={activeDrawLayerDiagram} />
+                <DrawLayer
+                  key={layer.id + 'drawing'}
+                  ref={drawLayerRef}
+                  activeDiagram={activeDrawLayerDiagram}
+                />
                 {!!layer && <Layer key={layer.id} {...layer} />}
               </React.Fragment>
             );

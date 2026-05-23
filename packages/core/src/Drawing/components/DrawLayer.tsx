@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import React, { useLayoutEffect, useRef } from 'react';
+import React, { useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
 import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
@@ -27,13 +27,20 @@ import Line from './Diagram/Lines';
 import Paths from './Diagram/Paths';
 import Rect from './Diagram/Rect';
 
+export interface DrawLayerRef {
+  setMirrorActiveDiagram: React.Dispatch<React.SetStateAction<ActiveDiagramState | null>>;
+}
+
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 interface DrawLayerProps {
   activeDiagram?: ActiveDiagramState | null;
 }
 
-const DrawLayer: React.FC<DrawLayerProps> = ({ activeDiagram }) => {
+const DrawLayer = React.forwardRef<DrawLayerRef, DrawLayerProps>(({ activeDiagram }, ref) => {
+  const [mirrorActiveDiagram, setMirrorActiveDiagram] = useState<ActiveDiagramState | null>(null);
+
+  useImperativeHandle(ref, () => ({ setMirrorActiveDiagram }), []);
   const layerRef = useRef<Konva.Layer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
@@ -189,6 +196,9 @@ const DrawLayer: React.FC<DrawLayerProps> = ({ activeDiagram }) => {
       {activeKey === Actions.ERASER && activeDiagram?.type === 'eraserLine' && (
         <Eraser {...(activeDiagram.props as LineType)} />
       )}
+      {activeKey === Actions.ERASER && mirrorActiveDiagram?.type === 'eraserLine' && (
+        <Eraser {...(mirrorActiveDiagram.props as LineType)} />
+      )}
 
       <KonvaRect
         x={0}
@@ -203,6 +213,6 @@ const DrawLayer: React.FC<DrawLayerProps> = ({ activeDiagram }) => {
       />
     </KonvaLayer>
   );
-};
+});
 
 export default React.memo(DrawLayer);

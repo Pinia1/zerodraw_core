@@ -16,6 +16,7 @@ import {
   Rect as RectType,
 } from '../../types/Layers';
 import Ellipse from './Diagram/Ellipse';
+import Eraser from './Diagram/Eraser';
 import EraserLasso from './Diagram/EraserLasso';
 import Fill from './Diagram/Fill';
 import Image from './Diagram/Image';
@@ -34,6 +35,7 @@ export interface ActiveDiagramState {
 export interface ActiveDiagramRef {
   activeDiagram: ActiveDiagramState | null;
   setActiveDiagram: React.Dispatch<React.SetStateAction<ActiveDiagramRef['activeDiagram']>>;
+  setMirrorDiagram: React.Dispatch<React.SetStateAction<ActiveDiagramState | null>>;
 }
 
 interface ActiveDiagramProps {
@@ -43,6 +45,7 @@ interface ActiveDiagramProps {
 const ActiveDiagram = React.forwardRef<ActiveDiagramRef, ActiveDiagramProps>((props, ref) => {
   const { onActiveDiagramChange } = props;
   const [activeDiagram, setActiveDiagram] = useState<ActiveDiagramState | null>(null);
+  const [mirrorDiagram, setMirrorDiagram] = useState<ActiveDiagramState | null>(null);
 
   const { layerConfig } = useDrawingStore(
     useShallow((state) => ({
@@ -74,8 +77,9 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, ActiveDiagramProps>((pr
 
   useImperativeHandle(ref, () => ({
     setActiveDiagram: setActiveDiagramAndNotify,
+    setMirrorDiagram,
     activeDiagram,
-  }));
+  }), [setActiveDiagramAndNotify, setMirrorDiagram, activeDiagram]);
 
   const RenderDiagram = useMemo(() => {
     switch (activeDiagram?.type) {
@@ -121,6 +125,21 @@ const ActiveDiagram = React.forwardRef<ActiveDiagramRef, ActiveDiagramProps>((pr
     >
       <Group clipWidth={layerConfig.width} clipHeight={layerConfig.height}>
         {RenderDiagram}
+        {mirrorDiagram?.type === 'path' && (
+          <Paths {...(mirrorDiagram.props as LineType)} removeTag={false} />
+        )}
+        {mirrorDiagram?.type === 'eraserLine' && (
+          <Eraser {...(mirrorDiagram.props as LineType)} />
+        )}
+        {mirrorDiagram?.type === 'rect' && (
+          <Rect {...(mirrorDiagram.props as RectType)} />
+        )}
+        {mirrorDiagram?.type === 'ellipse' && (
+          <Ellipse {...(mirrorDiagram.props as EllipseType)} />
+        )}
+        {mirrorDiagram?.type === 'line' && (
+          <Line {...(mirrorDiagram.props as Konva.LineConfig)} />
+        )}
       </Group>
       {activeKey === Actions.LASSO && activeDiagram?.type === 'lasso' && (
         <Lasso {...(activeDiagram?.props as LassoType)} />
