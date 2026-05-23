@@ -14,6 +14,9 @@ export default defineConfig((options) => ({
   minify: false,
   clean: options.watch ? false : true,
   sourcemap: options.watch ? false : true,
+  alias: {
+    '@core': path.resolve(__dirname, 'src'),
+  },
   define: {
     'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || ''),
     'process.env.VITE_IMAGE_THUMBNAIL': JSON.stringify(process.env.VITE_IMAGE_THUMBNAIL || ''),

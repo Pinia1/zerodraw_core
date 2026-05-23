@@ -16,7 +16,7 @@ import {
   IconLassoInvert,
   IconLassoRemove,
   IconRect,
-} from '../../../icons';
+} from '@core/icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useLayerStore, { initialDrawingLayer } from '../../../store/useLayer';
 import useToolsStore from '../../../store/useTools';

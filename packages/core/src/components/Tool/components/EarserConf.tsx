@@ -2,7 +2,7 @@ import Icon from '@ant-design/icons';
 import { Divider, Input, Slider, Tooltip } from 'antd';
 import React from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { IconConf, IconEraser, IconRemove } from '../../../icons';
+import { IconConf, IconEraser, IconRemove } from '@core/icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';

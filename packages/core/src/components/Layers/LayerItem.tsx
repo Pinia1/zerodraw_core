@@ -8,7 +8,7 @@ import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useBindRef from '../../hooks/useBindRef';
 import useLayerToBitmap from '../../hooks/useLayerToBitmap';
-import { IconEyeClose, IconEyeOpen, IconMore } from '../../icons';
+import { IconEyeClose, IconEyeOpen, IconMore } from '@core/icons';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
 import { Actions } from '../../types/Drawing';

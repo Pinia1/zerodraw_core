@@ -3,7 +3,7 @@ import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
-import { IconConf, IconFill, IconPen } from '../../../icons';
+import { IconConf, IconFill, IconPen } from '@core/icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';

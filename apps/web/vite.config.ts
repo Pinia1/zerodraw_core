@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@core': path.resolve(__dirname, '../../packages/core/src'),
         '@zeroDraw/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
         '@zeroDraw/common': path.resolve(__dirname, '../../packages/common/src/index.ts'),
       },

@@ -2,7 +2,7 @@ import Icon from '@ant-design/icons';
 import { Divider, Input, Slider } from 'antd';
 import React, { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { IconElli, IconLine, IconRect } from '../../../icons';
+import { IconElli, IconLine, IconRect } from '@core/icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, GraphConfigTypes } from '../../../types/Drawing';

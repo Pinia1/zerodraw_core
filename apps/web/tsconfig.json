@@ -12,7 +12,8 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@core/*": ["../../packages/core/src/*"]
     }
   },
   "include": ["src"],

@@ -4,7 +4,7 @@ import { Flex } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
-import { IconEyeClose, IconEyeOpen } from '../../icons';
+import { IconEyeClose, IconEyeOpen } from '@core/icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import { LayerConfigTypes } from '../../types/Drawing';
 import Container from '../Container';

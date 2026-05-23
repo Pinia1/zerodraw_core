@@ -71,6 +71,7 @@ export enum Actions {
   RECT = 'rect',
   ELLIPSE = 'ellipse',
   LINE = 'line',
+  SYMMETRY = 'symmetry',
 }
 
 export enum ToolTypes {

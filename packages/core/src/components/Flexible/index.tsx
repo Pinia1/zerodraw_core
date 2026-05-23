@@ -4,7 +4,7 @@ import { Divider } from 'antd';
 import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useShallow } from 'zustand/react/shallow';
-import { IconAdd, IconFull, IconIncomplete, IconReduce, IconSuitable } from '../../icons';
+import { IconAdd, IconFull, IconIncomplete, IconReduce, IconSuitable } from '@core/icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, WIDTH } from '../../utils/drawing';
 import { isMobile } from '../../utils/platform';

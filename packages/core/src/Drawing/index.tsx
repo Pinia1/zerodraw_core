@@ -1,3 +1,4 @@
+import useSymmetryStore from '@core/store/useSymmetry';
 import { hexToRgba, useMemoizedFn, useMount } from '@zeroDraw/common';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
@@ -66,6 +67,7 @@ import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './component
 import DrawLayer from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
+import Symmetry from './components/Symmetry';
 import Thumbnail from './components/Thumbnail';
 
 type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
@@ -120,6 +122,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       lassoConfig: state.lassoConfig,
       setDrawingId: state.setDrawingId,
       workerRef: state.workerRef,
+    }))
+  );
+
+  const { mode: symmetryMode } = useSymmetryStore(
+    useShallow((state) => ({
+      mode: state.mode,
     }))
   );
 
@@ -1597,6 +1605,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         <Mosic />
         <Thumbnail />
 
+        {symmetryMode !== 'Off' && <Symmetry />}
+
         {renderOrderLayers.map((layer) => {
           const isDrawingLayer = drawingLayerId === layer.id;
           if (isDrawingLayer) {
@@ -1612,9 +1622,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         <ActiveDiagram
           ref={activeDiagramRef}
           onActiveDiagramChange={(activeDiagram) => {
-            setActiveDrawLayerDiagram(
-              activeDiagram?.type === 'eraserLine' ? activeDiagram : null
-            );
+            setActiveDrawLayerDiagram(activeDiagram?.type === 'eraserLine' ? activeDiagram : null);
           }}
         />
       </Stage>

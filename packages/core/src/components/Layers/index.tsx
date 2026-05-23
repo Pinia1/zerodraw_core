@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
 import useUpload from '../../hooks/useUpload';
-import { IconAdd } from '../../icons';
+import { IconAdd } from '@core/icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
 import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';

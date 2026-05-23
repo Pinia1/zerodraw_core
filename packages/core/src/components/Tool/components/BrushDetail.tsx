@@ -1,7 +1,7 @@
 import Icon from '@ant-design/icons';
 import { Flex } from 'antd';
 import { useShallow } from 'zustand/react/shallow';
-import { IconRefer } from '../../../icons';
+import { IconRefer } from '@core/icons';
 import useToolsStore from '../../../store/useTools';
 import { Actions } from '../../../types/Drawing';
 import Container from '../../Container';

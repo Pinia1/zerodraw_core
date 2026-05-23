@@ -1,12 +1,4 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
-import { useLockFn } from '@zeroDraw/common';
-import { Divider, Popover } from 'antd';
-import Konva from 'konva';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import useCreateLayer from '../../hooks/useCreateLayer';
-import useLayerToBitmap from '../../hooks/useLayerToBitmap';
-import useUpload from '../../hooks/useUpload';
 import {
   IconAdd,
   IconColor,
@@ -17,7 +9,15 @@ import {
   IconRect,
   IconRedo,
   IconUndo,
-} from '../../icons';
+} from '@core/icons';
+import { useLockFn } from '@zeroDraw/common';
+import { Divider, Popover } from 'antd';
+import Konva from 'konva';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useShallow } from 'zustand/react/shallow';
+import useCreateLayer from '../../hooks/useCreateLayer';
+import useLayerToBitmap from '../../hooks/useLayerToBitmap';
+import useUpload from '../../hooks/useUpload';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
@@ -33,6 +33,7 @@ import LassoConf from './components/LassoConf';
 import PenConf from './components/PenConf';
 import Portal from './components/Portal';
 import RectConf from './components/RectConf';
+import SymmetryIcon from './components/SymmetryIcon';
 
 const Tool: React.FC = () => {
   const [open, setOpen] = useState(true);
@@ -203,6 +204,12 @@ const Tool: React.FC = () => {
         get isActive() {
           return activeKey === Actions.LASSO;
         },
+      },
+      {
+        key: Actions.SYMMETRY,
+        icon: <SymmetryIcon />,
+        type: ToolTypes.ACTION,
+        dropdownKeys: [Actions.SYMMETRY],
       },
       {
         key: Actions.None,

@@ -8,7 +8,7 @@ import useImage from 'use-image';
 import { ActionButton, ImageCard, ImageCardMask } from '.';
 import Fetch from '../../../fetch';
 import useCreateLayer from '../../../hooks/useCreateLayer';
-import * as Icons from '../../../icons';
+import * as Icons from '@core/icons';
 
 const { getFileUrl } = Fetch;
 
