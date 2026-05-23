@@ -665,7 +665,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     const pointer = stage.getPointerPosition() ?? { x: 0, y: 0 };
     const { dx, dy } = normalizeWheelDelta(e.evt);
 
-    // Windows 下 mouse wheel 往往 deltaMode=0 且 dy 值较大（约 100），触控板 dy 更小且更连续
     const isLikelyMouseWheel =
       e.evt.deltaMode !== 0 ||
       (isWindows && Math.abs(dy) >= 30 && Math.abs(dx) < 1) ||
@@ -1605,8 +1604,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         <Mosic />
         <Thumbnail />
 
-        {symmetryMode !== 'Off' && <Symmetry />}
-
         {renderOrderLayers.map((layer) => {
           const isDrawingLayer = drawingLayerId === layer.id;
           if (isDrawingLayer) {
@@ -1625,6 +1622,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
             setActiveDrawLayerDiagram(activeDiagram?.type === 'eraserLine' ? activeDiagram : null);
           }}
         />
+
+        {symmetryMode !== 'Off' && <Symmetry />}
       </Stage>
       <Cursor visible={cursorVisible} />
       <ReferencePicture />

@@ -1,12 +1,13 @@
-import { IconTran } from '@core/icons';
 import { useMemoizedFn } from '@zeroDraw/common';
 import type Konva from 'konva';
 import React, { useRef } from 'react';
 import { Circle, Group, Image, Layer, Line } from 'react-konva';
 import useImage from 'use-image';
 import { useShallow } from 'zustand/react/shallow';
+import { IconTran } from '../../icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import useSymmetryStore from '../../store/useSymmetry';
+import { getRotationHandlePosition, snapAngle } from '../../utils/symmetry';
 
 export const Symmetry_LAYER_ID = '__interaction_symmetry_layer__';
 
@@ -16,31 +17,8 @@ const ROTATION_HANDLE_RADIUS = 6;
 const ROTATION_HANDLE_HIT_RADIUS = 12;
 const ROTATION_HANDLE_DISTANCE = 80;
 
-const ANGLE_SNAP_STEP = 45;
-const ANGLE_SNAP_THRESHOLD = 4;
-
-function snapAngle(angle: number): number {
-  const normalized = ((angle % 360) + 360) % 360;
-  const nearest = Math.round(normalized / ANGLE_SNAP_STEP) * ANGLE_SNAP_STEP;
-  if (Math.abs(normalized - nearest) < ANGLE_SNAP_THRESHOLD) {
-    return nearest >= 360 ? nearest - 360 : nearest;
-  }
-  return angle;
-}
-
-function getRotationHandlePosition(
-  centerX: number,
-  centerY: number,
-  rotation: number
-): { x: number; y: number } {
-  const rad = (rotation * Math.PI) / 180;
-  return {
-    x: centerX + Math.sin(rad) * ROTATION_HANDLE_DISTANCE,
-    y: centerY - Math.cos(rad) * ROTATION_HANDLE_DISTANCE,
-  };
-}
-
 const Symmetry: React.FC = () => {
+  const [tranImage] = useImage(IconTran);
   const { layerConfig } = useDrawingStore(
     useShallow((state) => ({
       layerConfig: state.layerConfig,
@@ -60,8 +38,6 @@ const Symmetry: React.FC = () => {
   const rotationHandleRef = useRef<Konva.Group>(null);
   const rotationProxyRef = useRef<Konva.Circle>(null);
   const rotationGuideRef = useRef<Konva.Circle>(null);
-
-  const [tranImage] = useImage(IconTran);
 
   const centerX = position.x < 0 ? layerConfig.width / 2 : position.x;
   const centerY = position.y < 0 ? layerConfig.height / 2 : position.y;
@@ -103,6 +79,7 @@ const Symmetry: React.FC = () => {
     const rawAngle = Math.atan2(dx, -dy) * (180 / Math.PI);
     const angle = snapAngle(rawAngle);
     groupRef.current?.rotation(angle);
+    rotationHandleRef.current?.rotation(angle);
     rotationHandleRef.current?.position(getRotationHandlePosition(cx, cy, angle));
   });
 
@@ -166,6 +143,7 @@ const Symmetry: React.FC = () => {
         ref={rotationHandleRef}
         x={rotationHandlePosition.x}
         y={rotationHandlePosition.y}
+        rotation={rotation}
         listening={false}
       >
         <Circle
@@ -174,7 +152,16 @@ const Symmetry: React.FC = () => {
           stroke={'#BFBFBF'}
           strokeWidth={1}
         />
-        {tranImage && <Image image={tranImage} x={-4.5} y={-4.5} width={9} height={9} />}
+        {tranImage && (
+          <Image
+            image={tranImage}
+            width={9}
+            height={9}
+            offsetX={4.5}
+            offsetY={4.5}
+            rotation={-90}
+          />
+        )}
       </Group>
 
       <Circle
@@ -187,6 +174,7 @@ const Symmetry: React.FC = () => {
         onDragStart={handleRotationDragStart}
         onDragMove={handleRotationDragMove}
         onDragEnd={handleRotationDragEnd}
+        onPointerDown={(e) => (e.cancelBubble = true)}
         onMouseEnter={(e) => enterCursor(e, 'grab')}
         onMouseLeave={leaveCursor}
       />
@@ -203,6 +191,7 @@ const Symmetry: React.FC = () => {
         onDragEnd={handleCenterDragEnd}
         onMouseEnter={(e) => enterCursor(e, 'move')}
         onMouseLeave={leaveCursor}
+        onPointerDown={(e) => (e.cancelBubble = true)}
       />
     </Layer>
   );

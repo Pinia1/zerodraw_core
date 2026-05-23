@@ -1,12 +1,17 @@
 import Icon from '@ant-design/icons';
 import { IconSymmetry, IconVertical, IconX } from '@core/icons';
+import { useDrawingStore } from '@core/store/useDrawing';
 import useSymmetryStore, { SymmetryMode } from '@core/store/useSymmetry';
 import { Dropdown } from 'antd';
+import { useShallow } from 'zustand/react/shallow';
 
 const SymmetryIcon = () => {
   const { mode, setMode } = useSymmetryStore();
+  const { layerConfig } = useDrawingStore(
+    useShallow((state) => ({ layerConfig: state.layerConfig }))
+  );
   const handleClick = (key: SymmetryMode) => {
-    setMode(key);
+    setMode(key, { width: layerConfig.width, height: layerConfig.height });
   };
   return (
     <Dropdown

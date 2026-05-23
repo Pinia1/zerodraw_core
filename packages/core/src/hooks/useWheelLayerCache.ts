@@ -12,6 +12,7 @@ import { exportStageWithBlendModes, layerFilterToCssFilter } from '../utils/Blen
 import { WIDTH } from '../utils/drawing';
 import { isMobile } from '../utils/platform';
 
+export const SYMMETRY_LAYER_ID = '__interaction_symmetry_layer__';
 const LAYER_PREVIEW_WIDTH = 620;
 const LAYER_PREVIEW_HEIGHT = 350;
 type StageRef = React.RefObject<Konva.Stage> | null | undefined;
@@ -77,8 +78,8 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
     const records: Array<{ layer: Konva.Layer; visible: boolean }> = [];
     stage.getLayers().forEach((layer) => {
       if (!layer) return;
-      if (layer.attrs?.id === THUMBNAIL_LAYER_ID) return;
-      if (layer.attrs?.id === MOSIC_LAYER_ID) return;
+      if ([THUMBNAIL_LAYER_ID, MOSIC_LAYER_ID, SYMMETRY_LAYER_ID].includes(layer.attrs?.id ?? ''))
+        return;
       records.push({ layer, visible: layer.visible() });
       layer.visible(false);
     });
@@ -135,41 +136,46 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
   });
 
   const getBitmapSync = useMemoizedFn(() => {
-    requestAnimationFrame(() => requestAnimationFrame(async () => {
-      const stage = stageRef?.current;
-      if (!stage || !layerConfig.width || !layerConfig.height) return;
+    requestAnimationFrame(() =>
+      requestAnimationFrame(async () => {
+        const stage = stageRef?.current;
+        if (!stage || !layerConfig.width || !layerConfig.height) return;
 
-      const thumbWidth = Math.round(WIDTH * (isMobile ? 0.2 : 0.4));
+        const thumbWidth = Math.round(WIDTH * (isMobile ? 0.2 : 0.4));
 
-      try {
-        const dataUrl = await exportStageWithBlendModes(stage, layers, {
-          applyStageTransform: false,
-          cropX: layerConfig.x,
-          cropY: layerConfig.y,
-          cropWidth: layerConfig.width,
-          cropHeight: layerConfig.height,
-          targetWidth: thumbWidth,
-          backgroundColor: layerConfig.backgroundVisible
-            ? layerConfig.backgroundColor
-            : 'transparent',
-          mimeType: 'image/webp',
-          quality: 0.8,
-        });
+        try {
+          const dataUrl = await exportStageWithBlendModes(stage, layers, {
+            applyStageTransform: false,
+            cropX: layerConfig.x,
+            cropY: layerConfig.y,
+            cropWidth: layerConfig.width,
+            cropHeight: layerConfig.height,
+            targetWidth: thumbWidth,
+            backgroundColor: layerConfig.backgroundVisible
+              ? layerConfig.backgroundColor
+              : 'transparent',
+            mimeType: 'image/webp',
+            quality: 0.8,
+          });
 
-        if (!dataUrl) return;
+          if (!dataUrl) return;
 
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        blob.arrayBuffer().then((buf) => saveStageCover(buf, 'image/webp')).catch(() => {});
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          blob
+            .arrayBuffer()
+            .then((buf) => saveStageCover(buf, 'image/webp'))
+            .catch(() => {});
 
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => setThumbnail(img);
-        img.src = dataUrl;
-      } catch {
-        // tainted canvas
-      }
-    }));
+          const img = new Image();
+          img.crossOrigin = 'Anonymous';
+          img.onload = () => setThumbnail(img);
+          img.src = dataUrl;
+        } catch {
+          // tainted canvas
+        }
+      })
+    );
   });
 
   const captureLayerThumbnails = useMemoizedFn((targetId?: string) => {
@@ -203,7 +209,9 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
           offStage.add(cloned);
           offStage.draw();
 
-          const clonedCanvas = (cloned.getCanvas() as any)?._canvas as HTMLCanvasElement | undefined;
+          const clonedCanvas = (cloned.getCanvas() as any)?._canvas as
+            | HTMLCanvasElement
+            | undefined;
           if (!clonedCanvas?.width || !clonedCanvas?.height) {
             offStage.destroy();
             continue;
@@ -219,7 +227,10 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
           tmp.width = LAYER_PREVIEW_WIDTH;
           tmp.height = LAYER_PREVIEW_HEIGHT;
           const ctx = tmp.getContext('2d');
-          if (!ctx) { offStage.destroy(); continue; }
+          if (!ctx) {
+            offStage.destroy();
+            continue;
+          }
 
           const scale = Math.min(LAYER_PREVIEW_WIDTH / sw, LAYER_PREVIEW_HEIGHT / sh);
           const drawW = sw * scale;
