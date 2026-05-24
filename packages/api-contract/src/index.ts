@@ -1,3 +1,4 @@
+export * from './aiRender';
 export * from './generate';
 export * from './github';
 export * from './guest';

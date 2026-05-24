@@ -1,0 +1,22 @@
+# PyTorch（CUDA 版本由 setup 脚本通过 --extra-index-url 注入，不在此硬编码）
+torch>=2.7.0
+torchvision>=0.22.0
+
+# Z-Image-Turbo（需 diffusers >= 0.33，含 ZImageImg2ImgPipeline）
+diffusers>=0.33.0
+transformers>=4.48.0
+accelerate>=0.34.0
+safetensors>=0.4.0
+huggingface_hub>=0.27.0
+sentencepiece>=0.2.0
+
+# Image processing
+Pillow>=10.4.0
+
+# Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+websockets>=13.0
+
+# Utilities
+numpy>=1.26.0

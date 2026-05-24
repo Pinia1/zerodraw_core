@@ -21,6 +21,7 @@ import useUpload from '../../hooks/useUpload';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
 import useToolsStore from '../../store/useTools';
+import useAIRenderStore from '../../store/useAIRenderStore';
 import { Actions, ToolTypes } from '../../types/Drawing';
 import { Layers } from '../../types/Layers';
 import { generateUUID } from '../../utils/drawing';
@@ -34,6 +35,7 @@ import PenConf from './components/PenConf';
 import Portal from './components/Portal';
 import RectConf from './components/RectConf';
 import SymmetryIcon from './components/SymmetryIcon';
+import AIRenderIcon from './components/AIRenderIcon';
 
 const Tool: React.FC = () => {
   const [open, setOpen] = useState(true);
@@ -91,6 +93,13 @@ const Tool: React.FC = () => {
         setActiveKey: state.setActiveKey,
       };
     })
+  );
+
+  const { aiRenderVisible, setAiRenderVisible } = useAIRenderStore(
+    useShallow((state) => ({
+      aiRenderVisible: state.visible,
+      setAiRenderVisible: state.setVisible,
+    }))
   );
 
   const { brushDetailConfPosition, setBrushDetailConfPosition, bindWorkerRef, workerRef } =
@@ -213,6 +222,15 @@ const Tool: React.FC = () => {
       },
       {
         key: Actions.None,
+        icon: <AIRenderIcon active={aiRenderVisible} />,
+        type: ToolTypes.ACTION,
+        onClick: () => setAiRenderVisible(!aiRenderVisible),
+        get isActive() {
+          return aiRenderVisible;
+        },
+      },
+      {
+        key: Actions.None,
         icon: <Icon component={IconAdd} />,
         type: ToolTypes.DIVIDER,
       },
@@ -235,7 +253,7 @@ const Tool: React.FC = () => {
         disabled: !canRedo,
       },
     ];
-  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer]);
+  }, [activeKey, canUndo, canRedo, loading, createLayerLoading, drawingLayer, aiRenderVisible]);
 
   const handleSetActiveKey = async (item: (typeof toolMenus)[0]) => {
     if (item.disabled) return;

@@ -21,7 +21,8 @@
       "Bash(xargs grep -l \"useEffect\")",
       "Bash(xargs grep -l \"useEffect\\\\|useLayoutEffect\")",
       "Bash(xargs grep -l \"useDebounceEffect\\\\|useThrottleEffect\")",
-      "Bash(xargs grep -l \"Drawing\\\\|<Drawing\")"
+      "Bash(xargs grep -l \"Drawing\\\\|<Drawing\")",
+      "Bash(git status *)"
     ]
   }
 }

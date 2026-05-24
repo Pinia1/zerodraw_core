@@ -7,6 +7,7 @@ import { Stage } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import type { DrawingProps } from '..';
 import { Tools } from '..';
+import AIRender from '../components/AIRender';
 import Cursor from '../components/Cursor';
 import Flexible from '../components/Flexible';
 import LayersControl from '../components/Layers';
@@ -15,6 +16,7 @@ import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
 import useDrawingKeyboard from '../hooks/useKeyboard';
+import { submitAIRenderSnapshot } from '../hooks/useAIRender';
 import { useSymmetryPen } from '../hooks/useSymmetryPen';
 import { useWheelLayerCache } from '../hooks/useWheelLayerCache';
 import {
@@ -27,6 +29,7 @@ import { useDrawingStore } from '../store/useDrawing';
 import { useFillStore } from '../store/useFill';
 import useHitStore from '../store/useHit';
 import useLayerStore from '../store/useLayer';
+import useAIRenderStore from '../store/useAIRenderStore';
 import useToolsStore from '../store/useTools';
 import type { Point2D } from '../types/Drawing';
 import { Actions, EraserConfigTypes, GroupPos, LassoMode, LineConfigTypes } from '../types/Drawing';
@@ -665,6 +668,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
   } = useWheelLayerCache(stageRef, {
     endWait: 220,
     topLayerId: topLayer?.id,
+    onSnapshot: (dataUrl) => {
+      if (useAIRenderStore.getState().visible) {
+        submitAIRenderSnapshot(dataUrl);
+      }
+    },
   });
 
   const onStageWheel = useMemoizedFn((e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -1651,6 +1659,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       </Stage>
       <Cursor visible={cursorVisible} />
       <ReferencePicture />
+      <AIRender />
       {tools?.includes(Tools.TOOL) && <Tool />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <LayersControl />}
       {tools?.includes(Tools.LAYERS_CONTROL) && <Prompt />}

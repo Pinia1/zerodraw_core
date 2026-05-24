@@ -7,6 +7,7 @@ import { THUMBNAIL_LAYER_ID } from '../Drawing/components/Thumbnail';
 import { saveStageCover } from '../local/indexDb';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
+import useAIRenderStore from '../store/useAIRenderStore';
 import useThumbnailStore from '../store/useThumbnail';
 import { exportStageWithBlendModes, layerFilterToCssFilter } from '../utils/BlendMode';
 import { WIDTH } from '../utils/drawing';
@@ -20,10 +21,12 @@ type StageRef = React.RefObject<Konva.Stage> | null | undefined;
 export type UseWheelLayerCacheOptions = {
   endWait?: number;
   topLayerId?: string;
+  /** 画布内容导出完成后回调（与缩略图同一时机，512 PNG） */
+  onSnapshot?: (dataUrl: string) => void;
 };
 
 export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCacheOptions = {}) {
-  const { endWait = 220 } = options;
+  const { endWait = 220, onSnapshot } = options;
   const isInteractingRef = useRef(false);
   const prevLayerVisibilityRef = useRef<Array<{ layer: Konva.Layer; visible: boolean }>>([]);
   const prevLayersLengthRef = useRef(0);
@@ -142,23 +145,36 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
         if (!stage || !layerConfig.width || !layerConfig.height) return;
 
         const thumbWidth = Math.round(WIDTH * (isMobile ? 0.2 : 0.4));
+        const exportBase = {
+          applyStageTransform: false,
+          cropX: layerConfig.x,
+          cropY: layerConfig.y,
+          cropWidth: layerConfig.width,
+          cropHeight: layerConfig.height,
+          backgroundColor: layerConfig.backgroundVisible
+            ? layerConfig.backgroundColor
+            : 'transparent',
+        };
 
         try {
           const dataUrl = await exportStageWithBlendModes(stage, layers, {
-            applyStageTransform: false,
-            cropX: layerConfig.x,
-            cropY: layerConfig.y,
-            cropWidth: layerConfig.width,
-            cropHeight: layerConfig.height,
+            ...exportBase,
             targetWidth: thumbWidth,
-            backgroundColor: layerConfig.backgroundVisible
-              ? layerConfig.backgroundColor
-              : 'transparent',
             mimeType: 'image/webp',
             quality: 0.8,
           });
 
           if (!dataUrl) return;
+
+          if (onSnapshot && useAIRenderStore.getState().visible) {
+            const aiSnapshot = await exportStageWithBlendModes(stage, layers, {
+              ...exportBase,
+              targetWidth: 512,
+              mimeType: 'image/png',
+              quality: 1,
+            });
+            if (aiSnapshot) onSnapshot(aiSnapshot);
+          }
 
           const res = await fetch(dataUrl);
           const blob = await res.blob();
