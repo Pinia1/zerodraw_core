@@ -1,8 +1,6 @@
 """
-Z-Image-Turbo 草图渲染引擎
-
-SD-Turbo img2img 画质上限低，草图场景改用 Tongyi-MAI/Z-Image-Turbo（ZImageImg2ImgPipeline）。
-8GB 显存默认 512² + CPU offload。
+SDXL + ControlNet Scribble 草图渲染引擎
+高质量草图转插画，4090 约 3-8s/张
 """
 from __future__ import annotations
 
@@ -16,15 +14,18 @@ os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 
 import numpy as np
 import torch
-from diffusers import ZImageImg2ImgPipeline
-from PIL import Image, ImageEnhance
+from diffusers import ControlNetModel, StableDiffusionXLControlNetPipeline
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-MODEL_ID = "Tongyi-MAI/Z-Image-Turbo"
-RENDER_SIZE = int(os.environ.get("AI_RENDER_SIZE", "512"))
-NUM_INFERENCE_STEPS = 9
-GUIDANCE_SCALE = 0.0
+BASE_MODEL_ID = "stabilityai/stable-diffusion-xl-base-1.0"
+CONTROLNET_ID = "xinsir/controlnet-scribble-sdxl-1.0"
+MODEL_ID = "SDXL + ControlNet Scribble"
+
+RENDER_SIZE = int(os.environ.get("AI_RENDER_SIZE", "1024"))
+NUM_INFERENCE_STEPS = int(os.environ.get("AI_RENDER_STEPS", "20"))
+GUIDANCE_SCALE = float(os.environ.get("AI_RENDER_GUIDANCE", "7.5"))
 
 torch.set_grad_enabled(False)
 if torch.cuda.is_available():
@@ -35,86 +36,76 @@ if torch.cuda.is_available():
 def _pick_dtype(device: str) -> torch.dtype:
     if device != "cuda":
         return torch.float32
-    if torch.cuda.is_bf16_supported():
-        return torch.bfloat16
     return torch.float16
 
 
 def preprocess_sketch(image: Image.Image) -> Image.Image:
-    """增强线稿对比，便于 img2img 保留结构。"""
+    """草图预处理：深色线条白底 → 白色线条黑底（ControlNet Scribble 格式）"""
     img = image.convert("RGB").resize((RENDER_SIZE, RENDER_SIZE), Image.Resampling.LANCZOS)
-    arr = np.asarray(img, dtype=np.float32)
-    lum = arr.mean(axis=-1)
-    stroke = lum < 245
-    arr[stroke] = np.clip(arr[stroke] * 0.15, 0, 255)
-    bg = ~stroke
-    arr[bg] = np.clip(arr[bg] * 0.92 + 16, 232, 255)
-    out = Image.fromarray(arr.astype(np.uint8))
-    return ImageEnhance.Contrast(out).enhance(1.4)
+    gray = np.array(img.convert("L"), dtype=np.float32)
+    inverted = 255.0 - gray
+    enhanced = np.clip(inverted * 1.8, 0, 255)
+    return Image.fromarray(enhanced.astype(np.uint8)).convert("RGB")
 
 
 def normalize_inference_params(strength: float, steps: int) -> tuple[float, int]:
-    """Z-Image-Turbo img2img：strength 控制改动幅度，steps 固定 9（8 NFE）。"""
-    strength = max(0.35, min(0.75, float(strength)))
-    steps = NUM_INFERENCE_STEPS
-    return strength, steps
+    """strength 映射为 ControlNet conditioning scale（0.3–1.0），steps 固定。"""
+    cn_scale = max(0.3, min(1.0, float(strength)))
+    return cn_scale, NUM_INFERENCE_STEPS
 
 
 class SketchRenderEngine:
-    def __init__(self, device: str, dtype: torch.dtype, use_cpu_offload: bool = True) -> None:
+    def __init__(self, device: str, dtype: torch.dtype, use_cpu_offload: bool = False) -> None:
         self.device = device
         self.dtype = dtype
         self.use_cpu_offload = use_cpu_offload and device == "cuda"
         self._lock = threading.Lock()
-        self._pipe: Optional[ZImageImg2ImgPipeline] = None
+        self._pipe: Optional[StableDiffusionXLControlNetPipeline] = None
 
-    def _ensure_pipe(self) -> ZImageImg2ImgPipeline:
+    def _ensure_pipe(self) -> StableDiffusionXLControlNetPipeline:
         if self._pipe is not None:
             return self._pipe
 
-        logger.info("加载 Z-Image-Turbo %s，设备: %s，尺寸: %s", MODEL_ID, self.device, RENDER_SIZE)
+        logger.info("加载 ControlNet: %s", CONTROLNET_ID)
         start = time.time()
+        controlnet = ControlNetModel.from_pretrained(CONTROLNET_ID, torch_dtype=self.dtype)
 
-        pipe = ZImageImg2ImgPipeline.from_pretrained(
-            MODEL_ID,
+        logger.info("加载 SDXL base: %s", BASE_MODEL_ID)
+        pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
+            BASE_MODEL_ID,
+            controlnet=controlnet,
             torch_dtype=self.dtype,
             low_cpu_mem_usage=True,
         )
 
         if self.use_cpu_offload:
             pipe.enable_model_cpu_offload()
-            logger.info("已启用 model CPU offload（适配 8GB 显存）")
+            logger.info("已启用 CPU offload")
         else:
             pipe.to(self.device)
 
         pipe.set_progress_bar_config(disable=True)
         self._pipe = pipe
-        logger.info("Z-Image 加载完成，耗时 %.1fs", time.time() - start)
+        logger.info("模型加载完成，耗时 %.1fs", time.time() - start)
         return pipe
 
-    def render(
-        self,
-        image: Image.Image,
-        prompt: str,
-        strength: float,
-        steps: int,
-    ) -> Image.Image:
-        strength, steps = normalize_inference_params(strength, steps)
-        image = preprocess_sketch(image)
+    def render(self, image: Image.Image, prompt: str, strength: float, steps: int) -> Image.Image:
+        cn_scale, steps = normalize_inference_params(strength, steps)
+        control_image = preprocess_sketch(image)
 
         with self._lock:
             pipe = self._ensure_pipe()
-            gen_device = "cuda" if self.device == "cuda" else "cpu"
-            generator = torch.Generator(device=gen_device).manual_seed(int(time.time() * 1000) % 2_147_483_647)
+            generator = torch.Generator(device="cuda" if self.device == "cuda" else "cpu")
+            generator.manual_seed(int(time.time() * 1000) % 2_147_483_647)
 
             result = pipe(
                 prompt=prompt,
-                image=image,
-                strength=strength,
-                height=RENDER_SIZE,
-                width=RENDER_SIZE,
+                image=control_image,
                 num_inference_steps=steps,
                 guidance_scale=GUIDANCE_SCALE,
+                controlnet_conditioning_scale=cn_scale,
+                height=RENDER_SIZE,
+                width=RENDER_SIZE,
                 generator=generator,
             )
         return result.images[0]
@@ -123,7 +114,7 @@ class SketchRenderEngine:
 def create_engine() -> SketchRenderEngine:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     dtype = _pick_dtype(device)
-    use_cpu_offload = os.environ.get("AI_RENDER_CPU_OFFLOAD", "1") != "0"
+    use_cpu_offload = os.environ.get("AI_RENDER_CPU_OFFLOAD", "0") != "0"
     return SketchRenderEngine(device=device, dtype=dtype, use_cpu_offload=use_cpu_offload)
 
 

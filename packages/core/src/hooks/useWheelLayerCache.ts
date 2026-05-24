@@ -5,9 +5,9 @@ import { useShallow } from 'zustand/react/shallow';
 import { MOSIC_LAYER_ID } from '../Drawing/components/Mosic';
 import { THUMBNAIL_LAYER_ID } from '../Drawing/components/Thumbnail';
 import { saveStageCover } from '../local/indexDb';
+import useAIRenderStore from '../store/useAIRenderStore';
 import { useDrawingStore } from '../store/useDrawing';
 import useLayerStore from '../store/useLayer';
-import useAIRenderStore from '../store/useAIRenderStore';
 import useThumbnailStore from '../store/useThumbnail';
 import { exportStageWithBlendModes, layerFilterToCssFilter } from '../utils/BlendMode';
 import { WIDTH } from '../utils/drawing';
@@ -169,9 +169,10 @@ export function useWheelLayerCache(stageRef: StageRef, options: UseWheelLayerCac
           if (onSnapshot && useAIRenderStore.getState().visible) {
             const aiSnapshot = await exportStageWithBlendModes(stage, layers, {
               ...exportBase,
-              targetWidth: 512,
-              mimeType: 'image/png',
-              quality: 1,
+              targetWidth: thumbWidth,
+              mimeType: 'image/webp',
+              quality: 0.8,
+              backgroundColor: layerConfig.backgroundColor || '#ffffff',
             });
             if (aiSnapshot) onSnapshot(aiSnapshot);
           }

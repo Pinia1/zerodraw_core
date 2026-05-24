@@ -48,8 +48,8 @@ async def lifespan(app: FastAPI):
     engine.render(
         Image.new("RGB", (RENDER_SIZE, RENDER_SIZE), (255, 255, 255)),
         prompt="detailed illustration, digital art",
-        strength=0.65,
-        steps=4,
+        strength=0.7,
+        steps=20,
     )
     logger.info("预加载完成")
     yield
