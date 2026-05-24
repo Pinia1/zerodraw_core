@@ -13,12 +13,15 @@ echo ""
 
 .venv/bin/python - <<'EOF'
 from huggingface_hub import snapshot_download
+import os
 
-print("下载 ControlNet Scribble SDXL（约 2.5GB）...")
-snapshot_download("xinsir/controlnet-scribble-sdxl-1.0")
+token = os.environ.get("HF_TOKEN")
 
-print("\n下载 SDXL base（约 6.5GB）...")
-snapshot_download("stabilityai/stable-diffusion-xl-base-1.0")
+print("下载 ControlNet Lineart（约 1.5GB）...")
+snapshot_download("Xlabs-AI/flux-controlnet-lineart-v3", token=token)
+
+print("\n下载 FLUX.1-dev（约 24GB，需要较长时间）...")
+snapshot_download("black-forest-labs/FLUX.1-dev", token=token)
 
 print("\n模型下载完成！可以启动服务了：bash start.sh")
 EOF
