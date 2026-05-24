@@ -27,10 +27,9 @@ snapshot_download(
 )
 
 # FLUX.1-dev 用 hf-mirror 加速（国内快）
-print("\n下载 FLUX.1-dev（约 24GB，需要较长时间）...")
+print("\n下载 FLUX.1-schnell（约 24GB）...")
 snapshot_download(
-    "black-forest-labs/FLUX.1-dev",
-    token=token,
+    "black-forest-labs/FLUX.1-schnell",
     endpoint="https://hf-mirror.com",
 )
 

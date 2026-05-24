@@ -20,13 +20,13 @@ from PIL import Image
 
 logger = logging.getLogger(__name__)
 
-BASE_MODEL_ID = "black-forest-labs/FLUX.1-dev"
+BASE_MODEL_ID = "black-forest-labs/FLUX.1-schnell"
 CONTROLNET_ID = "XLabs-AI/flux-controlnet-canny-v3"
-MODEL_ID = "FLUX.1-dev + ControlNet Lineart"
+MODEL_ID = "FLUX.1-schnell + ControlNet Canny"
 
 RENDER_SIZE = int(os.environ.get("AI_RENDER_SIZE", "1024"))
-NUM_INFERENCE_STEPS = int(os.environ.get("AI_RENDER_STEPS", "28"))
-GUIDANCE_SCALE = float(os.environ.get("AI_RENDER_GUIDANCE", "3.5"))
+NUM_INFERENCE_STEPS = int(os.environ.get("AI_RENDER_STEPS", "4"))
+GUIDANCE_SCALE = float(os.environ.get("AI_RENDER_GUIDANCE", "0.0"))
 
 torch.set_grad_enabled(False)
 if torch.cuda.is_available():
