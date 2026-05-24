@@ -20,7 +20,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 BASE_MODEL_ID = "black-forest-labs/FLUX.1-dev"
-CONTROLNET_ID = "Xlabs-AI/flux-controlnet-lineart-v3"
+CONTROLNET_ID = "XLabs-AI/flux-controlnet-lineart-v3"
 MODEL_ID = "FLUX.1-dev + ControlNet Lineart"
 
 RENDER_SIZE = int(os.environ.get("AI_RENDER_SIZE", "1024"))
