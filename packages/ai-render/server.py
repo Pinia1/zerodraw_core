@@ -133,7 +133,7 @@ async def handle_render(websocket: WebSocket, data: dict[str, Any]) -> None:
     request_id = str(data.get("requestId", ""))
     image_b64 = str(data.get("image", ""))
     prompt = str(data.get("prompt", "detailed digital illustration"))
-    strength = float(data.get("strength", 0.65))
+    strength = float(data.get("strength", 0.55))
     steps = int(data.get("steps", 4))
     strength, steps = normalize_render_params(strength, steps)
     prompt = enhance_prompt(prompt)
@@ -145,6 +145,7 @@ async def handle_render(websocket: WebSocket, data: dict[str, Any]) -> None:
         await send_error(websocket, ERR_MISSING_IMAGE, "missing image", request_id)
         return
 
+    logger.info("渲染开始 requestId=%s strength=%.2f prompt=%r", request_id[:8], strength, prompt[:60])
     t0 = time.perf_counter()
     loop = asyncio.get_event_loop()
 
@@ -155,11 +156,12 @@ async def handle_render(websocket: WebSocket, data: dict[str, Any]) -> None:
             lambda: render_image(input_image, prompt, strength, steps),
         )
     except Exception as e:
-        logger.error("推理错误 requestId=%s: %s", request_id, e, exc_info=True)
+        logger.error("推理错误 requestId=%s: %s", request_id[:8], e, exc_info=True)
         await send_error(websocket, ERR_RENDER_FAILED, str(e), request_id)
         return
 
     elapsed_ms = round((time.perf_counter() - t0) * 1000)
+    logger.info("渲染完成 requestId=%s elapsed=%dms", request_id[:8], elapsed_ms)
     await websocket.send_json(
         {
             "type": MSG_RENDER_RESULT,

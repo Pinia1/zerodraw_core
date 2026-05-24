@@ -24,21 +24,31 @@ function clamp(n: number, min: number, max: number) {
 
 function statusColor(s: AIRenderStatus): string {
   switch (s) {
-    case 'ready': return '#52c41a';
-    case 'rendering': return '#1677ff';
-    case 'connecting': return '#faad14';
-    case 'error': return '#ff4d4f';
-    default: return '#8c8c8c';
+    case 'ready':
+      return '#52c41a';
+    case 'rendering':
+      return '#1677ff';
+    case 'connecting':
+      return '#faad14';
+    case 'error':
+      return '#ff4d4f';
+    default:
+      return '#8c8c8c';
   }
 }
 
 function statusText(s: AIRenderStatus): string {
   switch (s) {
-    case 'ready': return '就绪';
-    case 'rendering': return '渲染中';
-    case 'connecting': return '连接中';
-    case 'error': return '连接失败';
-    default: return '未连接';
+    case 'ready':
+      return '就绪';
+    case 'rendering':
+      return '渲染中';
+    case 'connecting':
+      return '连接中';
+    case 'error':
+      return '连接失败';
+    default:
+      return '未连接';
   }
 }
 
@@ -50,13 +60,24 @@ const AIRender: React.FC<AIRenderProps> = () => {
   const [size, setSize] = useState({ w: 320, h: 420 });
   const dragRef = useRef<{ startX: number; startY: number; x: number; y: number } | null>(null);
 
-  const { visible, prompt, strength, steps, opacity, setVisible, setPrompt, setStrength, setSteps, setOpacity } =
-    useAIRenderStore(useShallow((s) => s));
+  const {
+    visible,
+    prompt,
+    strength,
+    steps,
+    opacity,
+    setVisible,
+    setPrompt,
+    setStrength,
+    setSteps,
+    setOpacity,
+  } = useAIRenderStore(useShallow((s) => s));
 
   const { status, resultImage, elapsedMs, error } = useAIRender();
 
   useMount(() => {
-    const el = (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
+    const el =
+      (document.getElementById(CANVAS_CONTAINER_ID) as HTMLElement | null) || document.body;
     setPortalEl(el);
   });
 
@@ -106,12 +127,34 @@ const AIRender: React.FC<AIRenderProps> = () => {
       onPointerDown={onMoveStart}
     >
       {/* 标题栏 */}
-      <div style={{ height: 36, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px', borderBottom: '1px solid rgba(128,128,128,0.15)', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500 }}>
+      <div
+        style={{
+          height: 36,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 10px',
+          borderBottom: '1px solid rgba(128,128,128,0.15)',
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 500 }}
+        >
           <ThunderboltOutlined style={{ color: '#faad14' }} />
-          AI 实时渲染
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor(status), display: 'inline-block' }} />
-          <span style={{ fontSize: 11, color: statusColor(status), fontWeight: 400 }}>{statusText(status)}</span>
+          实时渲染
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              background: statusColor(status),
+              display: 'inline-block',
+            }}
+          />
+          <span style={{ fontSize: 11, color: statusColor(status), fontWeight: 400 }}>
+            {statusText(status)}
+          </span>
           {status === 'rendering' && <LoadingOutlined style={{ fontSize: 11 }} />}
           {elapsedMs > 0 && <span style={{ fontSize: 10, color: '#8c8c8c' }}>{elapsedMs}ms</span>}
         </div>
@@ -119,7 +162,16 @@ const AIRender: React.FC<AIRenderProps> = () => {
           data-no-drag
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => setVisible(false)}
-          style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 6, cursor: 'pointer', opacity: 0.6 }}
+          style={{
+            width: 24,
+            height: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 6,
+            cursor: 'pointer',
+            opacity: 0.6,
+          }}
           title="关闭"
         >
           <CloseOutlined style={{ fontSize: 12 }} />
@@ -127,28 +179,70 @@ const AIRender: React.FC<AIRenderProps> = () => {
       </div>
 
       {/* 渲染结果 */}
-      <div style={{ flex: 1, minHeight: 200, background: 'rgba(128,128,128,0.06)', position: 'relative', overflow: 'hidden' }}>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 200,
+          background: 'rgba(128,128,128,0.06)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
         {resultImage ? (
           <img
             draggable={false}
             src={resultImage}
-            style={{ width: '100%', height: '100%', objectFit: 'contain', opacity, pointerEvents: 'none', display: 'block' }}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              opacity,
+              pointerEvents: 'none',
+              display: 'block',
+            }}
           />
         ) : (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8c8c8c', fontSize: 12 }}>
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#8c8c8c',
+              fontSize: 12,
+            }}
+          >
             {status === 'error' ? (
-              <div style={{ padding: '0 16px', textAlign: 'center', color: '#ff4d4f', fontSize: 11 }}>
+              <div
+                style={{ padding: '0 16px', textAlign: 'center', color: '#ff4d4f', fontSize: 11 }}
+              >
                 {error}
                 <br />
                 <span style={{ color: '#8c8c8c' }}>请运行：python server.py</span>
               </div>
-            ) : status === 'connecting' ? '连接中...' : '开始绘制后显示渲染结果'}
+            ) : status === 'connecting' ? (
+              '连接中...'
+            ) : (
+              '开始绘制后显示渲染结果'
+            )}
           </div>
         )}
       </div>
 
       {/* 设置区 */}
-      <div data-no-drag onPointerDown={(e) => e.stopPropagation()} style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0, borderTop: '1px solid rgba(128,128,128,0.15)' }}>
+      <div
+        data-no-drag
+        onPointerDown={(e) => e.stopPropagation()}
+        style={{
+          padding: '8px 10px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          flexShrink: 0,
+          borderTop: '1px solid rgba(128,128,128,0.15)',
+        }}
+      >
         <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>Prompt</div>
         <Input.TextArea
           value={prompt}
@@ -177,22 +271,50 @@ const AIRender: React.FC<AIRenderProps> = () => {
             </button>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', marginTop: 2 }}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', marginTop: 2 }}
+        >
           <div>
             <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>
-              <Tooltip title="越高 AI 改动越大、越不像线稿；越低越保留草图结构">AI 强度 {strength.toFixed(2)}</Tooltip>
+              <Tooltip title="越高 AI 改动越大、越不像线稿；越低越保留草图结构">
+                AI 强度 {strength.toFixed(2)}
+              </Tooltip>
             </div>
-            <Slider min={0.45} max={0.85} step={0.05} value={strength} onChange={setStrength} style={{ margin: '4px 0' }} />
+            <Slider
+              min={0.45}
+              max={0.85}
+              step={0.05}
+              value={strength}
+              onChange={setStrength}
+              style={{ margin: '4px 0' }}
+            />
           </div>
           <div>
-            <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>透明度 {Math.round(opacity * 100)}%</div>
-            <Slider min={0.1} max={1} step={0.05} value={opacity} onChange={setOpacity} style={{ margin: '4px 0' }} />
+            <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>
+              透明度 {Math.round(opacity * 100)}%
+            </div>
+            <Slider
+              min={0.1}
+              max={1}
+              step={0.05}
+              value={opacity}
+              onChange={setOpacity}
+              style={{ margin: '4px 0' }}
+            />
           </div>
           <div>
             <div style={{ fontSize: 11, color: '#8c8c8c', marginBottom: 2 }}>
               <Tooltip title="Z-Image 固定 9 步推理，此滑块暂不影响后端">步数 {steps}</Tooltip>
             </div>
-            <Slider min={1} max={4} step={1} value={steps} onChange={setSteps} disabled style={{ margin: '4px 0' }} />
+            <Slider
+              min={1}
+              max={4}
+              step={1}
+              value={steps}
+              onChange={setSteps}
+              disabled
+              style={{ margin: '4px 0' }}
+            />
           </div>
         </div>
       </div>

@@ -20,9 +20,9 @@ CUDA_MAJOR=$(echo "$CUDA_VER" | cut -d. -f1)
 CUDA_MINOR=$(echo "$CUDA_VER" | cut -d. -f2)
 echo "检测到 CUDA: $CUDA_VER"
 
-if   [ "$CUDA_MAJOR" -ge 12 ] && [ "$CUDA_MINOR" -ge 8 ]; then CU_TAG="cu128"
+if   [ "$CUDA_MAJOR" -ge 13 ];                             then CU_TAG="cu128"
+elif [ "$CUDA_MAJOR" -ge 12 ] && [ "$CUDA_MINOR" -ge 8 ]; then CU_TAG="cu128"
 elif [ "$CUDA_MAJOR" -ge 12 ] && [ "$CUDA_MINOR" -ge 4 ]; then CU_TAG="cu124"
-elif [ "$CUDA_MAJOR" -ge 12 ] && [ "$CUDA_MINOR" -ge 1 ]; then CU_TAG="cu121"
 elif [ "$CUDA_MAJOR" -ge 12 ];                             then CU_TAG="cu121"
 else                                                            CU_TAG="cu118"
 fi

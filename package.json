@@ -1,7 +1,9 @@
 {
   "name": "zeroDraw",
   "scripts": {
-    "dev": "concurrently -n turbo,ai-render -c cyan,magenta \"turbo dev\" \"packages/ai-render/.venv/Scripts/python.exe packages/ai-render/server.py\"",
+    "dev": "turbo dev",
+    "dev:ai": "packages/ai-render/.venv/Scripts/python.exe packages/ai-render/server.py",
+    "dev:full": "concurrently -n turbo,ai-render -c cyan,magenta \"turbo dev\" \"packages/ai-render/.venv/Scripts/python.exe packages/ai-render/server.py\"",
     "dev:web": "turbo dev --filter=@zeroDraw/web",
     "dev:api": "turbo dev --filter=@zeroDraw/api",
     "dev:docs": "turbo dev --filter=@zeroDraw/docs",

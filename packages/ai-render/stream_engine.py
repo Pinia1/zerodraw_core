@@ -55,7 +55,7 @@ def preprocess_sketch(image: Image.Image) -> Image.Image:
 
 def normalize_inference_params(strength: float, steps: int) -> tuple[float, int]:
     """Z-Image-Turbo img2img：strength 控制改动幅度，steps 固定 9（8 NFE）。"""
-    strength = max(0.45, min(0.85, float(strength)))
+    strength = max(0.35, min(0.75, float(strength)))
     steps = NUM_INFERENCE_STEPS
     return strength, steps
 
