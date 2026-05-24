@@ -21,7 +21,7 @@ if not token:
 # XLabs ControlNet 不在 hf-mirror，直连 huggingface.co
 print("下载 ControlNet Lineart（约 1.5GB）...")
 snapshot_download(
-    "XLabs-AI/flux-controlnet-lineart-v3",
+    "XLabs-AI/flux-controlnet-canny-v3",
     token=token,
     endpoint="https://huggingface.co",
 )

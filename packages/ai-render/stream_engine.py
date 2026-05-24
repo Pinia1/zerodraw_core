@@ -12,6 +12,7 @@ from typing import Optional
 
 os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 
+import cv2
 import numpy as np
 import torch
 from diffusers import FluxControlNetModel, FluxControlNetPipeline
@@ -20,7 +21,7 @@ from PIL import Image
 logger = logging.getLogger(__name__)
 
 BASE_MODEL_ID = "black-forest-labs/FLUX.1-dev"
-CONTROLNET_ID = "XLabs-AI/flux-controlnet-lineart-v3"
+CONTROLNET_ID = "XLabs-AI/flux-controlnet-canny-v3"
 MODEL_ID = "FLUX.1-dev + ControlNet Lineart"
 
 RENDER_SIZE = int(os.environ.get("AI_RENDER_SIZE", "1024"))
@@ -45,12 +46,11 @@ def _calc_output_size(w: int, h: int, target: int = 1024) -> tuple[int, int]:
 
 
 def preprocess_sketch(image: Image.Image, width: int, height: int) -> Image.Image:
-    """草图预处理：深色线条白底 → 白色线条黑底（Lineart ControlNet 格式）"""
-    img = image.convert("RGB").resize((width, height), Image.Resampling.LANCZOS)
-    gray = np.array(img.convert("L"), dtype=np.float32)
-    inverted = 255.0 - gray
-    enhanced = np.clip(inverted * 1.8, 0, 255)
-    return Image.fromarray(enhanced.astype(np.uint8)).convert("RGB")
+    """草图 → Canny 边缘图（白线黑底，Canny ControlNet 格式）"""
+    img = image.convert("L").resize((width, height), Image.Resampling.LANCZOS)
+    arr = np.array(img)
+    edges = cv2.Canny(arr, threshold1=50, threshold2=150)
+    return Image.fromarray(edges).convert("RGB")
 
 
 def normalize_inference_params(strength: float, steps: int) -> tuple[float, int]:
