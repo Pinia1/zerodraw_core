@@ -3,6 +3,7 @@ set -e
 cd "$(dirname "$0")"
 
 export HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+export HF_HOME=${HF_HOME:-/root/autodl-tmp/hf_cache}
 export HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
 echo "开始下载 Z-Image-Turbo（Tongyi-MAI/Z-Image-Turbo）..."

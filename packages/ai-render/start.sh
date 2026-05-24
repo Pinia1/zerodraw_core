@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 # 若显存 <16GB 请改为 export AI_RENDER_CPU_OFFLOAD=1
 export AI_RENDER_CPU_OFFLOAD=${AI_RENDER_CPU_OFFLOAD:-0}
 export HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+export HF_HOME=${HF_HOME:-/root/autodl-tmp/hf_cache}
 export HF_HUB_DISABLE_SYMLINKS_WARNING=1
 
 echo "AI_RENDER_CPU_OFFLOAD = $AI_RENDER_CPU_OFFLOAD"
