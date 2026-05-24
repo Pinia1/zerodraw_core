@@ -39,9 +39,20 @@ def _pick_dtype(device: str) -> torch.dtype:
     return torch.float16
 
 
-def preprocess_sketch(image: Image.Image) -> Image.Image:
+def _calc_sdxl_size(w: int, h: int, target: int = 1024) -> tuple[int, int]:
+    """保持宽高比，长边对齐 target，结果为 8 的倍数。"""
+    if w >= h:
+        out_w = target
+        out_h = max(64, round(target * h / w / 8) * 8)
+    else:
+        out_h = target
+        out_w = max(64, round(target * w / h / 8) * 8)
+    return out_w, out_h
+
+
+def preprocess_sketch(image: Image.Image, width: int, height: int) -> Image.Image:
     """草图预处理：深色线条白底 → 白色线条黑底（ControlNet Scribble 格式）"""
-    img = image.convert("RGB").resize((RENDER_SIZE, RENDER_SIZE), Image.Resampling.LANCZOS)
+    img = image.convert("RGB").resize((width, height), Image.Resampling.LANCZOS)
     gray = np.array(img.convert("L"), dtype=np.float32)
     inverted = 255.0 - gray
     enhanced = np.clip(inverted * 1.8, 0, 255)
@@ -91,7 +102,8 @@ class SketchRenderEngine:
 
     def render(self, image: Image.Image, prompt: str, strength: float, steps: int) -> Image.Image:
         cn_scale, steps = normalize_inference_params(strength, steps)
-        control_image = preprocess_sketch(image)
+        out_w, out_h = _calc_sdxl_size(image.width, image.height, RENDER_SIZE)
+        control_image = preprocess_sketch(image, out_w, out_h)
 
         with self._lock:
             pipe = self._ensure_pipe()
@@ -104,8 +116,8 @@ class SketchRenderEngine:
                 num_inference_steps=steps,
                 guidance_scale=GUIDANCE_SCALE,
                 controlnet_conditioning_scale=cn_scale,
-                height=RENDER_SIZE,
-                width=RENDER_SIZE,
+                height=out_h,
+                width=out_w,
                 generator=generator,
             )
         return result.images[0]

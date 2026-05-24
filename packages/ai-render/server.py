@@ -85,7 +85,7 @@ def enhance_prompt(prompt: str) -> str:
 def prepare_image(image: Image.Image) -> Image.Image:
     if image.width < 8 or image.height < 8:
         raise ValueError(f"image too small: {image.width}x{image.height}")
-    return image.convert("RGB").resize((RENDER_SIZE, RENDER_SIZE), Image.Resampling.LANCZOS)
+    return image.convert("RGB")
 
 
 def render_image(
