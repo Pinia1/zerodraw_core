@@ -79,9 +79,6 @@ def enhance_prompt(prompt: str) -> str:
     base = "masterpiece, best quality, highly detailed, vivid colors, professional digital illustration"
     if not p:
         return f"beautiful artwork, {base}"
-    # 短 prompt 自动补「草图转插画」语境
-    if len(p.split()) <= 6:
-        return f"{p}, turn sketch into illustration, {base}"
     return f"{p}, {base}"
 
 
