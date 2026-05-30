@@ -72,7 +72,11 @@ const Prompt: React.FC<PromptProps> = ({ mentionItems = [], onSubmit }) => {
         >
           <PromptEditor ref={editorRef} mentionItems={mentionItems} onSubmit={handleSubmit} />
         </Form.Item>
-        <Form.Item label={<FormLabel>{t('flow.model')}</FormLabel>} name="model" style={{ marginBottom: 12 }}>
+        <Form.Item
+          label={<FormLabel>{t('flow.model')}</FormLabel>}
+          name="model"
+          style={{ marginBottom: 12 }}
+        >
           <Select
             options={[
               {

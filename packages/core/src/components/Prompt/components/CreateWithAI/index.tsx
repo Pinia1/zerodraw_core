@@ -107,61 +107,6 @@ const CreateWithAI = () => {
         mentions.map(async (mention) => {
           if (mention.s3Key) return mention;
           try {
-            if (mention.type === 'layer') {
-              const blob = await captureLayerBlob(mention.id);
-              if (blob) {
-                const file = new File([blob], `layer-${mention.id}.png`, { type: 'image/png' });
-                const formData = new FormData();
-                formData.append('file', file);
-                const s3Key = await Fetch.httpUploadImage(formData);
-                return { ...mention, s3Key };
-              }
-              const originalSrc = layers.find((l) => l.id === mention.id)?.image?.src;
-              const fallbackUrl = originalSrc || mention.url;
-              if (fallbackUrl) {
-                const res = await fetch(fallbackUrl);
-                const srcBlob = await res.blob();
-                const bitmap = await createImageBitmap(srcBlob);
-                const canvas = document.createElement('canvas');
-                canvas.width = bitmap.width;
-                canvas.height = bitmap.height;
-                canvas.getContext('2d')!.drawImage(bitmap, 0, 0);
-                const pngBlob = await new Promise<Blob>((resolve) =>
-                  canvas.toBlob((b) => resolve(b!), 'image/png')
-                );
-                const file = new File([pngBlob], `layer-${mention.id}.png`, { type: 'image/png' });
-                const formData = new FormData();
-                formData.append('file', file);
-                const s3Key = await Fetch.httpUploadImage(formData);
-                return { ...mention, s3Key };
-              }
-            }
-
-            if (mention.type === 'stage' && mention.url) {
-              const stage = stageRef?.current;
-              if (stage && layerConfig.width && layerConfig.height) {
-                const dataUrl = await exportStageWithBlendModes(stage, layers, {
-                  applyStageTransform: false,
-                  cropX: layerConfig.x,
-                  cropY: layerConfig.y,
-                  cropWidth: layerConfig.width,
-                  cropHeight: layerConfig.height,
-                  targetWidth: WIDTH,
-                  backgroundColor: layerConfig.backgroundVisible
-                    ? layerConfig.backgroundColor
-                    : 'transparent',
-                  mimeType: 'image/png',
-                });
-                const res = await fetch(dataUrl);
-                const blob = await res.blob();
-                const file = new File([blob], 'stage.png', { type: 'image/png' });
-                const formData = new FormData();
-                formData.append('file', file);
-                const s3Key = await Fetch.httpUploadImage(formData);
-                return { ...mention, s3Key };
-              }
-            }
-
             return mention;
           } catch {
             return mention;
@@ -169,7 +114,10 @@ const CreateWithAI = () => {
         })
       );
 
+      const stageImage = await getStageImage();
       const s3Keys = resolvedMentions.map((i) => i.s3Key).filter((i) => i !== undefined);
+      !!stageImage && s3Keys.unshift(stageImage);
+
       const aspectRatio = getImageAspectRatio(model, values.imageSize, values.aspectRatio);
 
       generate({
@@ -187,6 +135,32 @@ const CreateWithAI = () => {
       setLoading(false);
     }
   });
+
+  const getStageImage = async () => {
+    const stage = stageRef?.current;
+    if (stage && layerConfig.width && layerConfig.height) {
+      const dataUrl = await exportStageWithBlendModes(stage, layers, {
+        applyStageTransform: false,
+        cropX: layerConfig.x,
+        cropY: layerConfig.y,
+        cropWidth: layerConfig.width,
+        cropHeight: layerConfig.height,
+        targetWidth: WIDTH,
+        backgroundColor: layerConfig.backgroundVisible
+          ? layerConfig.backgroundColor
+          : 'transparent',
+        mimeType: 'image/png',
+      });
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'stage.png', { type: 'image/png' });
+      const formData = new FormData();
+      formData.append('file', file);
+      const s3Key = await Fetch.httpUploadImage(formData);
+      return s3Key;
+    }
+    return undefined;
+  };
 
   const handleModelChange = (model: ModelType) => {
     const imageSize = form.getFieldValue('imageSize');

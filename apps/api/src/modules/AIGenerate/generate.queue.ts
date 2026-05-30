@@ -38,12 +38,10 @@ class GenerateQueue {
     });
   }
 
-  /** 添加任务到队列 */
   async add(jobName: string, data: GenerateJobData, jobId: string) {
     return this.queue.add(jobName, data, { jobId });
   }
 
-  /** 启动 Worker */
   start() {
     this.worker = new Worker<GenerateJobData>(this.QUEUE_NAME, (job) => this.process(job), {
       connection: bullRedisConnection,
@@ -75,7 +73,6 @@ class GenerateQueue {
     throw new Error('fetch image error');
   }
 
-  /** 处理单个任务 */
   private async process(job: Job<GenerateJobData>) {
     const { taskId, params } = job.data;
 
@@ -86,20 +83,16 @@ class GenerateQueue {
 
     await generateRepository.updateById(taskId, { status: 'processing' });
 
-    // 使用工厂模式获取对应的生成器
     const generator = generatorFactory.getGenerator(params.action);
 
-    // 调用生成器生成图片
     const generateResult = await generator.generate(params);
 
-    // 下载图片并上传到 S3
     const imageRes = await this.fetchWithRetry(generateResult.imageUrl);
     const contentType =
       imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const imageBuffer = await imageRes.arrayBuffer();
     const s3Key = await uploadServices.uploadFile(Buffer.from(imageBuffer), contentType);
 
-    // 更新任务状态
     await generateRepository.updateById(taskId, {
       status: 'completed',
       output: generateResult.rawResponse,
@@ -111,7 +104,6 @@ class GenerateQueue {
     return generateResult.rawResponse;
   }
 
-  /** 任务失败回调 */
   private async onFailed(job: Job<GenerateJobData> | undefined, err: Error) {
     if (!job) return;
 

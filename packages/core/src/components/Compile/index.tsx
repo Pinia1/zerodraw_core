@@ -1,7 +1,6 @@
 import {
   ArrowRightOutlined,
   CloseOutlined,
-  CompressOutlined,
   LoadingOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
@@ -171,7 +170,9 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         cropWidth: layerConfig.width,
         cropHeight: layerConfig.height,
         targetWidth: layerConfig.width,
-        backgroundColor: layerConfig.backgroundVisible ? layerConfig.backgroundColor : 'transparent',
+        backgroundColor: layerConfig.backgroundVisible
+          ? layerConfig.backgroundColor
+          : 'transparent',
         mimeType: 'image/webp',
         quality: 1,
       });
@@ -180,7 +181,10 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       const res = await fetch(dataUrl);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-      setMentionedList((prev) => [...prev, { id: generateUUID(), label: 'Stage Snapshot', url, type: 'stage' as const }]);
+      setMentionedList((prev) => [
+        ...prev,
+        { id: generateUUID(), label: 'Stage Snapshot', url, type: 'stage' as const },
+      ]);
     });
 
     const handleSubmit = () => {
@@ -228,16 +232,16 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
 
         <Toolbar>
           <ToolGroup>
-            <Tooltip title="Upload Image">
+            <Tooltip title="reference Image">
               <ToolButton onClick={uploadImage}>
                 {uploading ? <LoadingOutlined /> : <PlusOutlined />}
               </ToolButton>
             </Tooltip>
-            <Tooltip title="Capture Stage">
+            {/* <Tooltip title="Capture Stage">
               <ToolButton onClick={captureStage}>
                 <CompressOutlined />
               </ToolButton>
-            </Tooltip>
+            </Tooltip> */}
           </ToolGroup>
           <Tooltip title="Submit">
             <SubmitBtn onClick={handleSubmit}>
