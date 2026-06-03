@@ -1,9 +1,9 @@
 import Icon from '@ant-design/icons';
+import { IconBrush, IconConf, IconFill, IconPen } from '@core/icons';
 import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
-import { IconConf, IconFill, IconPen } from '@core/icons';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
@@ -72,6 +72,13 @@ const PenConf = () => {
         $active={activeKey === Actions.PEN}
       >
         <Icon component={IconPen} />
+      </ToolItem>
+      <ToolItem
+        onClick={() => setActiveKey(Actions.BRUSH)}
+        style={ToolItemStyle}
+        $active={activeKey === Actions.BRUSH}
+      >
+        <Icon component={IconBrush} />
       </ToolItem>
       <ToolItem
         onClick={() => {

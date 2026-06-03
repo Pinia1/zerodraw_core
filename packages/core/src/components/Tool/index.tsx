@@ -159,10 +159,10 @@ const Tool: React.FC = () => {
         icon: <Icon component={IconPen} />,
         type: ToolTypes.STATE,
         dropdown: <PenConf />,
-        dropdownKeys: [Actions.PEN, Actions.FILL],
+        dropdownKeys: [Actions.PEN, Actions.FILL, Actions.BRUSH],
         onClick: () => {},
         get isActive() {
-          return [Actions.PEN, Actions.FILL].includes(activeKey);
+          return [Actions.PEN, Actions.FILL, Actions.BRUSH].includes(activeKey);
         },
       },
       {

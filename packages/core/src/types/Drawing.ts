@@ -61,6 +61,7 @@ export enum Actions {
   ADD = 'add',
   ROPE = 'rope',
   PEN = 'pen',
+  BRUSH = 'brush',
   FILL = 'fill',
   ERASER = 'eraser',
   REMOVE = 'remove',

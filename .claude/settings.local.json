@@ -21,7 +21,24 @@
       "Bash(xargs grep -l \"useEffect\")",
       "Bash(xargs grep -l \"useEffect\\\\|useLayoutEffect\")",
       "Bash(xargs grep -l \"useDebounceEffect\\\\|useThrottleEffect\")",
-      "Bash(xargs grep -l \"Drawing\\\\|<Drawing\")"
+      "Bash(xargs grep -l \"Drawing\\\\|<Drawing\")",
+      "Bash(echo \"exit: $?\")",
+      "Bash(emcc --version)",
+      "Bash(docker --version)",
+      "Bash(docker build *)",
+      "Bash(docker context *)",
+      "Bash(docker info *)",
+      "Bash(docker --context default info)",
+      "Bash(DOCKER_CONTEXT=default docker --context default build -t mypaint-wasm -f packages/wasm/Dockerfile .)",
+      "Bash(git clone *)",
+      "Bash(./emsdk install *)",
+      "Bash(scoop --version)",
+      "Bash(conda --version)",
+      "Bash(./emsdk activate *)",
+      "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3-64bit/python.exe /d/code/zeroDraw/.emsdk/upstream/emscripten/emcc.py --version)",
+      "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3_64bit/python.exe /d/code/zeroDraw/.emsdk/upstream/emscripten/emcc.py --version)",
+      "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3_64bit/python.exe /d/code/zeroDraw/packages/libmypaint/generate.py /d/code/zeroDraw/packages/libmypaint/mypaint-brush-settings-gen.h /d/code/zeroDraw/packages/libmypaint/mypaint-brush-settings-gen-internal.h)",
+      "Bash(pnpm install *)"
     ]
   }
 }

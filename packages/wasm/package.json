@@ -1,0 +1,27 @@
+{
+  "name": "@zeroDraw/wasm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "libmypaint compiled to WebAssembly with TypeScript bindings",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build:wasm": "bash build.sh",
+    "build:wasm:debug": "bash build.sh debug",
+    "build:wasm:docker": "docker build -t mypaint-wasm -f Dockerfile ../.. && docker run --rm -v \"%cd%/dist:/app/dist\" mypaint-wasm",
+    "build:wasm:install": "bash build.sh install"
+  },
+  "files": [
+    "src/",
+    "dist/libmypaint.js",
+    "dist/libmypaint.wasm"
+  ],
+  "keywords": ["wasm", "libmypaint", "canvas", "brush"],
+  "license": "ISC"
+}

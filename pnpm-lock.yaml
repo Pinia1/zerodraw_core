@@ -272,6 +272,9 @@ importers:
       '@zeroDraw/common':
         specifier: workspace:*
         version: link:../common
+      '@zeroDraw/wasm':
+        specifier: workspace:*
+        version: link:../wasm
       file-saver:
         specifier: ^2.0.5
         version: 2.0.5
@@ -422,6 +425,8 @@ importers:
       dumi:
         specifier: ^2.4.0
         version: 2.4.23(@babel/core@7.29.0)(@types/node@20.19.33)(@types/react@18.3.28)(eslint@8.57.1)(prettier@3.8.1)(react-dom@18.3.1)(react@18.3.1)(styled-jsx@5.1.7)(stylelint@14.16.1)(typescript@5.9.3)(webpack@5.106.2)
+
+  packages/wasm: {}
 
 packages:
 

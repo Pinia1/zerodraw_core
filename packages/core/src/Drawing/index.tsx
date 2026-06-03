@@ -1379,6 +1379,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingId(null);
   });
 
+  const onBrushInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {});
+
   const toInputEvent = useMemoizedFn(
     (e: Konva.KonvaEventObject<MouseEvent>, phase: NormalizedPointerEvent['phase']) => {
       return normalizeKonvaPointerEvent(e, phase, layerConfig, stageConfig);
@@ -1409,6 +1411,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         return onLassoInputDown(input);
       case Actions.REMOVE:
         return onRemoveInputDown(input);
+      case Actions.BRUSH:
+        return onBrushInputDown(input);
       default:
         break;
     }
