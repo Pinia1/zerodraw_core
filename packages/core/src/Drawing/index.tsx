@@ -66,8 +66,8 @@ import {
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
-import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
 import { bitmapCache } from './components/Diagram/Fill';
+import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Symmetry from './components/Symmetry';
@@ -494,6 +494,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.PEN:
       case Actions.ELLIPSE:
       case Actions.REMOVE:
+      case Actions.BRUSH:
         return 'crosshair';
       case Actions.FILL:
       case Actions.ERASER:
@@ -1381,13 +1382,20 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingId(null);
   });
 
-  const { canvasRef: brushCanvasRef, onBrushDown, onBrushMove, onBrushUp, commitBrushStroke, clearBrushCanvas } = useBrushTool(
+  const {
+    canvasRef: brushCanvasRef,
+    onBrushDown,
+    onBrushMove,
+    onBrushUp,
+    commitBrushStroke,
+    clearBrushCanvas,
+  } = useBrushTool(
     layerConfig,
     stageConfig,
     fillColor,
     lineConfig.strokeWidth,
     lineConfig.opacity,
-    () => drawLayerRef.current?.draw(),
+    () => drawLayerRef.current?.draw()
   );
 
   const onBrushInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
@@ -1566,7 +1574,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           // 缓存已就绪，此时清空 canvas 不会产生闪烁
           clearBrushCanvas();
 
-          const fill: FillType = { id, x: 0, y: 0, width: layerConfig.width, height: layerConfig.height, visible: true };
+          const fill: FillType = {
+            id,
+            x: 0,
+            y: 0,
+            width: layerConfig.width,
+            height: layerConfig.height,
+            visible: true,
+          };
           const nextLayer: Layers = {
             ...(drawingLayer as unknown as Layers),
             fills: [...(drawingLayer.fills ?? []), fill],
