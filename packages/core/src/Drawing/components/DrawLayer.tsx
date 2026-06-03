@@ -1,6 +1,6 @@
 import Konva from 'konva';
 import React, { useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
-import { Group, Layer as KonvaLayer, Rect as KonvaRect } from 'react-konva';
+import { Group, Layer as KonvaLayer, Rect as KonvaRect, Shape as KonvaShape } from 'react-konva';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../store/useDrawing';
 import useLayerStore from '../../store/useLayer';
@@ -29,19 +29,29 @@ import Rect from './Diagram/Rect';
 
 export interface DrawLayerRef {
   setMirrorActiveDiagram: React.Dispatch<React.SetStateAction<ActiveDiagramState | null>>;
+  draw(): void;
 }
 
 type DiagramProps<T extends Diagram['type']> = DiagramPropsMap[T];
 
 interface DrawLayerProps {
   activeDiagram?: ActiveDiagramState | null;
+  /** useBrushTool 持有的离屏 canvas，sceneFunc 直接读取 */
+  brushCanvasRef?: React.RefObject<HTMLCanvasElement | null>;
 }
 
-const DrawLayer = React.forwardRef<DrawLayerRef, DrawLayerProps>(({ activeDiagram }, ref) => {
+const DrawLayer = React.forwardRef<DrawLayerRef, DrawLayerProps>(
+  ({ activeDiagram, brushCanvasRef }, ref) => {
   const [mirrorActiveDiagram, setMirrorActiveDiagram] = useState<ActiveDiagramState | null>(null);
 
-  useImperativeHandle(ref, () => ({ setMirrorActiveDiagram }), []);
   const layerRef = useRef<Konva.Layer>(null);
+
+  useImperativeHandle(ref, () => ({
+    setMirrorActiveDiagram,
+    draw() {
+      layerRef.current?.draw();
+    },
+  }), [setMirrorActiveDiagram]);
   const groupRef = useRef<Konva.Group>(null);
   const diagramMap = useRef<Map<string, DiagramProps<Diagram['type']>>>(new Map());
 
@@ -199,6 +209,17 @@ const DrawLayer = React.forwardRef<DrawLayerRef, DrawLayerProps>(({ activeDiagra
       {activeKey === Actions.ERASER && mirrorActiveDiagram?.type === 'eraserLine' && (
         <Eraser {...(mirrorActiveDiagram.props as LineType)} />
       )}
+
+      {/* libmypaint 笔刷画面：sceneFunc 直接读 prop brushCanvasRef */}
+      <KonvaShape
+        listening={false}
+        sceneFunc={(ctx) => {
+          const canvas = brushCanvasRef?.current;
+          if (canvas) {
+            (ctx as any)._context.drawImage(canvas, 0, 0);
+          }
+        }}
+      />
 
       <KonvaRect
         x={0}

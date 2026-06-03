@@ -38,7 +38,11 @@
       "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3-64bit/python.exe /d/code/zeroDraw/.emsdk/upstream/emscripten/emcc.py --version)",
       "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3_64bit/python.exe /d/code/zeroDraw/.emsdk/upstream/emscripten/emcc.py --version)",
       "Bash(/d/code/zeroDraw/.emsdk/python/3.13.3_64bit/python.exe /d/code/zeroDraw/packages/libmypaint/generate.py /d/code/zeroDraw/packages/libmypaint/mypaint-brush-settings-gen.h /d/code/zeroDraw/packages/libmypaint/mypaint-brush-settings-gen-internal.h)",
-      "Bash(pnpm install *)"
+      "Bash(pnpm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(node_modules/.bin/vite packages/wasm/src --port 3100)",
+      "Bash(\"/d/code/zeroDraw/apps/web/node_modules/.bin/vite\" \"D:/code/zeroDraw/packages/wasm/src\" --port 3100 --host)"
     ]
   }
 }

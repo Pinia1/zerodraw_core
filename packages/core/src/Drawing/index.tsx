@@ -14,6 +14,7 @@ import Prompt from '../components/Prompt';
 import ReferencePicture from '../components/ReferencePicture';
 import Tool from '../components/Tool';
 import useBindStageRef from '../hooks/useBindRef';
+import { useBrushTool } from '../hooks/useBrushTool';
 import useDrawingKeyboard from '../hooks/useKeyboard';
 import { useSymmetryPen } from '../hooks/useSymmetryPen';
 import { useWheelLayerCache } from '../hooks/useWheelLayerCache';
@@ -66,6 +67,7 @@ import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
 import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
 import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
+import { bitmapCache } from './components/Diagram/Fill';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Symmetry from './components/Symmetry';
@@ -1379,7 +1381,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     setDrawingId(null);
   });
 
-  const onBrushInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {});
+  const { canvasRef: brushCanvasRef, onBrushDown, onBrushMove, onBrushUp, commitBrushStroke, clearBrushCanvas } = useBrushTool(
+    layerConfig,
+    stageConfig,
+    fillColor,
+    lineConfig.strokeWidth,
+    lineConfig.opacity,
+    () => drawLayerRef.current?.draw(),
+  );
+
+  const onBrushInputDown = useMemoizedFn((input: NormalizedPointerEvent) => {
+    isDrawing.current = true;
+    onBrushDown(input);
+  });
 
   const toInputEvent = useMemoizedFn(
     (e: Konva.KonvaEventObject<MouseEvent>, phase: NormalizedPointerEvent['phase']) => {
@@ -1430,6 +1444,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.PEN:
       case Actions.ERASER:
         return onPenInputMove(input);
+      case Actions.BRUSH:
+        return onBrushMove(input);
       case Actions.RECT:
         return onRectInputMove(input);
       case Actions.ELLIPSE:
@@ -1529,6 +1545,41 @@ const Drawing: React.FC<DrawingProps> = (props) => {
         lassoStartRef.current = null;
         if (discardLastStrokeIfTooShort()) return;
         return finishLasso();
+      }
+      case Actions.BRUSH: {
+        onBrushUp();
+        void (async () => {
+          const buffer = await commitBrushStroke();
+          if (!buffer) return;
+          const drawingLayer = getDrawingLayer();
+          if (!drawingLayer) return;
+
+          const id = generateUUID();
+
+          // 预创建 ImageBitmap 并写入缓存，Fill 组件 mount 时直接命中，不再异步加载
+          const bitmap = await createImageBitmap(new Blob([buffer], { type: 'image/png' }));
+          bitmapCache.set(id, bitmap);
+
+          // 持久化到 indexDB
+          await imageManager.saveImage(id, buffer);
+
+          // 缓存已就绪，此时清空 canvas 不会产生闪烁
+          clearBrushCanvas();
+
+          const fill: FillType = { id, x: 0, y: 0, width: layerConfig.width, height: layerConfig.height, visible: true };
+          const nextLayer: Layers = {
+            ...(drawingLayer as unknown as Layers),
+            fills: [...(drawingLayer.fills ?? []), fill],
+            diagrams: [...(drawingLayer.diagrams ?? []), { id, type: 'fill' as const }],
+          };
+          setDrawingLayer(nextLayer);
+          const drawingIndex = layers.findIndex((l) => l.id === (nextLayer as any).id);
+          if (drawingIndex === -1) return;
+          const newLayers = [...layers];
+          newLayers[drawingIndex] = nextLayer as any;
+          pushHistory(newLayers);
+        })();
+        return;
       }
       case Actions.PEN:
       case Actions.ERASER:
@@ -1637,6 +1688,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
                   key={layer.id + 'drawing'}
                   ref={drawLayerRef}
                   activeDiagram={activeDrawLayerDiagram}
+                  brushCanvasRef={brushCanvasRef}
                 />
                 {!!layer && <Layer key={layer.id} {...layer} />}
               </React.Fragment>

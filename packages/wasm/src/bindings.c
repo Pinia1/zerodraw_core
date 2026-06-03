@@ -67,13 +67,19 @@
 /* ================================================================== */
 
 static inline void convert_pixel(const uint16_t *src, uint8_t *dst) {
-    uint32_t a = src[3];
-    dst[3] = (uint8_t)((a * 255u + 16384u) >> 15); /* 0-32768 -> 0-255 */
+    /* MyPaint range is 0-32768; initial memset(0xFF) gives 65535 = "white".
+     * Clamp to 32768 before conversion to avoid uint8 overflow.            */
+    uint32_t r = src[0] > 32768u ? 32768u : src[0];
+    uint32_t g = src[1] > 32768u ? 32768u : src[1];
+    uint32_t b = src[2] > 32768u ? 32768u : src[2];
+    uint32_t a = src[3] > 32768u ? 32768u : src[3];
+
+    dst[3] = (uint8_t)((a * 255u) >> 15); /* 32768*255>>15 = 255 */
     if (a > 0u) {
-        /* un-premultiply: R_straight = R_premul * 32768 / A, then -> 8-bit */
-        dst[0] = (uint8_t)(((uint32_t)src[0] * 255u + a / 2u) / a);
-        dst[1] = (uint8_t)(((uint32_t)src[1] * 255u + a / 2u) / a);
-        dst[2] = (uint8_t)(((uint32_t)src[2] * 255u + a / 2u) / a);
+        /* un-premultiply then scale to 8-bit: R8 = R_premul * 255 / a */
+        dst[0] = (uint8_t)((r * 255u + a / 2u) / a);
+        dst[1] = (uint8_t)((g * 255u + a / 2u) / a);
+        dst[2] = (uint8_t)((b * 255u + a / 2u) / a);
     } else {
         dst[0] = dst[1] = dst[2] = 0;
     }
@@ -124,24 +130,40 @@ void wasm_surface_to_rgba8_roi(MyPaintFixedTiledSurface *surf, uint8_t *dst,
 {
     const int TS = MYPAINT_TILE_SIZE;
     const int W  = surf->width;
+    const int H  = surf->height;
     const int TW = surf->tiles_width;
 
     /* Clamp region to surface bounds */
     if (rx < 0) { rw += rx; rx = 0; }
     if (ry < 0) { rh += ry; ry = 0; }
-    if (rx + rw > W)          rw = W - rx;
-    if (ry + rh > surf->height) rh = surf->height - ry;
+    if (rx + rw > W) rw = W - rx;
+    if (ry + rh > H) rh = H - ry;
     if (rw <= 0 || rh <= 0) return;
 
-    for (int py = ry; py < ry + rh; py++) {
-        int ty = py / TS, ly = py % TS;
-        for (int px = rx; px < rx + rw; px++) {
-            int tx = px / TS, lx = px % TS;
+    /* Iterate tile by tile — avoids per-pixel division/modulo and is cache-friendly */
+    int tx0 = rx / TS, ty0 = ry / TS;
+    int tx1 = (rx + rw - 1) / TS, ty1 = (ry + rh - 1) / TS;
+
+    for (int ty = ty0; ty <= ty1; ty++) {
+        for (int tx = tx0; tx <= tx1; tx++) {
             const uint16_t *tile = surf->tile_buffer +
                                    (size_t)(ty * TW + tx) * TS * TS * 4;
-            const uint16_t *src = tile + (ly * TS + lx) * 4;
-            uint8_t *d = dst + ((py - ry) * rw + (px - rx)) * 4;
-            convert_pixel(src, d);
+
+            /* pixel range within this tile that overlaps the ROI */
+            int lx0 = (tx == tx0) ? (rx - tx * TS) : 0;
+            int ly0 = (ty == ty0) ? (ry - ty * TS) : 0;
+            int lx1 = (tx == tx1) ? (rx + rw - 1 - tx * TS) : (TS - 1);
+            int ly1 = (ty == ty1) ? (ry + rh - 1 - ty * TS) : (TS - 1);
+
+            for (int ly = ly0; ly <= ly1; ly++) {
+                int py = ty * TS + ly;
+                for (int lx = lx0; lx <= lx1; lx++) {
+                    int px = tx * TS + lx;
+                    const uint16_t *src = tile + (ly * TS + lx) * 4;
+                    uint8_t *d = dst + ((py - ry) * rw + (px - rx)) * 4;
+                    convert_pixel(src, d);
+                }
+            }
         }
     }
 }
@@ -153,6 +175,13 @@ void wasm_surface_to_rgba8_roi(MyPaintFixedTiledSurface *surf, uint8_t *dst,
 /* ================================================================== */
 WASM_EXPORT
 void wasm_surface_clear(MyPaintFixedTiledSurface *surf) {
+    /* 0 = fully transparent; contrast with the constructor which inits to 0xFF (white) */
+    size_t total = (size_t)surf->tiles_width * surf->tiles_height * surf->tile_size;
+    memset(surf->tile_buffer, 0, total);
+}
+
+WASM_EXPORT
+void wasm_surface_clear_white(MyPaintFixedTiledSurface *surf) {
     size_t total = (size_t)surf->tiles_width * surf->tiles_height * surf->tile_size;
     memset(surf->tile_buffer, 0xFF, total);
 }

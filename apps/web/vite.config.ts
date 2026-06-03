@@ -26,8 +26,9 @@ export default defineConfig(({ mode }) => {
       },
       proxy: {},
     },
+    assetsInclude: ['**/*.wasm'],
     optimizeDeps: {
-      exclude: ['@zeroDraw/core', '@zeroDraw/common'],
+      exclude: ['@zeroDraw/core', '@zeroDraw/common', '@zeroDraw/wasm'],
     },
     build: {
       outDir: 'dist',

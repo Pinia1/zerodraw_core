@@ -7,7 +7,7 @@ import { useDrawingStore } from '../../../store/useDrawing';
 import { Fill as FillType } from '../../../types/Layers';
 import imageManager from '../../../utils/imageManager';
 
-const bitmapCache = new Map<string, ImageBitmap>();
+export const bitmapCache = new Map<string, ImageBitmap>();
 
 const Fill: React.FC<FillType> = (props) => {
   const [displayBitmap, setDisplayBitmap] = useState<ImageBitmap | null>(

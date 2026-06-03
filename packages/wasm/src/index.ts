@@ -38,9 +38,6 @@ interface EmscriptenModule {
   _free(ptr: number): void;
 }
 
-/** Emscripten 工厂函数 */
-declare function LibMyPaint(opts?: Record<string, any>): Promise<EmscriptenModule>;
-
 /** 参数定义 */
 export interface SettingInfo {
   readonly id: number;
@@ -264,6 +261,7 @@ interface CBindings {
   to_rgba8(surface: number, buf: number): void;
   to_rgba8_roi(surface: number, buf: number, x: number, y: number, w: number, h: number): void;
   clear_surface(ptr: number): void;
+  clear_surface_white(ptr: number): void;
   alloc_string(len: number): number;
   free_string(ptr: number): void;
 }
@@ -854,15 +852,20 @@ export class MyPaintEngine {
         'number',
       ]),
       clear_surface: wasmModule.cwrap('wasm_surface_clear', null, ['number']),
+      clear_surface_white: wasmModule.cwrap('wasm_surface_clear_white', null, ['number']),
       alloc_string: wasmModule.cwrap('wasm_alloc_string', 'number', ['number']),
       free_string: wasmModule.cwrap('wasm_free_string', null, ['number']),
     } as CBindings;
     this._C.init();
   }
 
-  /** 创建画布 */
+  /** 创建画布（默认透明背景） */
   createSurface(width: number, height: number): MyPaintSurface {
-    return new MyPaintSurface(this, width, height);
+    const w = Math.max(1, Math.floor(width));
+    const h = Math.max(1, Math.floor(height));
+    const surface = new MyPaintSurface(this, w, h);
+    surface.clear(); // reset from constructor's 0xFF white to transparent
+    return surface;
   }
 
   /** 创建笔刷 */
@@ -882,10 +885,10 @@ const MyPaint = {
    * 需在加载 libmypaint.js 之后调用
    */
   async create(opts?: CreateOptions): Promise<MyPaintEngine> {
-    if (typeof LibMyPaint === 'undefined') {
-      throw new Error('LibMyPaint WASM module not loaded. Include libmypaint.js before mypaint.js');
-    }
-    const wasmModule = await LibMyPaint(opts?.wasmOpts || {});
+    const { default: factory } = await import('../dist/libmypaint.js');
+    const wasmModule = await (factory as (opts?: Record<string, any>) => Promise<EmscriptenModule>)(
+      opts?.wasmOpts ?? {}
+    );
     return new MyPaintEngine(wasmModule);
   },
 

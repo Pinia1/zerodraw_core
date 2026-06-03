@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>libmypaint WASM</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    display:flex; min-height:100vh; background:#12131a; color:#ccc;
+    font: 12px/1.4 -apple-system,'Segoe UI',monospace;
+  }
+
+  /* ---- Left: Canvas ---- */
+  #left { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px; }
+  #canvas-wrap { position:relative; border:2px solid #333; background:#fff; }
+  canvas { display:block; cursor:crosshair; touch-action:none; }
+  #top-bar {
+    display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;
+  }
+  .brush-btn {
+    padding:3px 8px; background:#1e2030; border:1px solid #333;
+    color:#aaa; cursor:pointer; font-size:11px; border-radius:3px;
+  }
+  .brush-btn:hover { background:#282a40; }
+  .brush-btn.active { background:#e94560; color:#fff; border-color:#e94560; }
+  button {
+    padding:3px 10px; background:#e94560; border:none;
+    color:#fff; cursor:pointer; font-size:11px; border-radius:3px;
+  }
+  button:hover { background:#c73250; }
+  #status { font-size:11px; color:#555; margin-top:6px; }
+  #myb-load { display:none; }
+
+  /* ---- Right: Panel ---- */
+  #panel {
+    width:320px; background:#161825; border-left:1px solid #222;
+    overflow-y:auto; padding:8px; flex-shrink:0;
+  }
+  .section {
+    margin-bottom:10px; background:#1a1d2e; border-radius:4px;
+    border:1px solid #252840; overflow:hidden;
+  }
+  .section-title {
+    padding:5px 8px; background:#1e2138; color:#e94560;
+    font-size:11px; font-weight:bold; cursor:pointer; user-select:none;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .section-title .arrow { transition:transform .2s; }
+  .section-title.collapsed .arrow { transform:rotate(-90deg); }
+  .section-body { padding:6px 8px; }
+  .section-body.hidden { display:none; }
+
+  /* Param row */
+  .param {
+    display:flex; align-items:center; gap:4px; margin-bottom:4px; min-height:22px;
+  }
+  .param label {
+    width:100px; font-size:11px; color:#888; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; flex-shrink:0;
+    cursor:help;
+  }
+  .param input[type=range] { flex:1; height:14px; min-width:0; }
+  .param .val {
+    width:40px; font-size:11px; color:#4ecca3; text-align:right; flex-shrink:0;
+  }
+  .param input[type=color] {
+    width:28px; height:20px; border:1px solid #444; background:none;
+    padding:0; cursor:pointer; flex-shrink:0;
+  }
+
+  /* Curve editor */
+  .curve-section { margin-top:4px; }
+  .curve-header {
+    display:flex; align-items:center; gap:4px; font-size:10px; color:#666;
+    margin-bottom:2px;
+  }
+  .curve-header select {
+    background:#1a1d2e; color:#ccc; border:1px solid #333;
+    font-size:10px; padding:1px 2px;
+  }
+  .curve-canvas {
+    background:#0e1018; border:1px solid #333; border-radius:2px;
+    cursor:crosshair; display:block;
+  }
+  .curve-btns { display:flex; gap:4px; margin-top:2px; }
+  .curve-btns button { font-size:10px; padding:1px 6px; background:#1e2138; }
+  .curve-btns button:hover { background:#333; }
+</style>
+</head>
+<body>
+
+<!-- ===== Left: Canvas ===== -->
+<div id="left">
+  <div id="top-bar">
+    <button class="brush-btn active" data-brush="厚涂">厚涂</button>
+    <button class="brush-btn" data-brush="炭笔">炭笔</button>
+    <button class="brush-btn" data-brush="粗厚涂">粗厚涂</button>
+    <button class="brush-btn" data-brush="印象派">印象派</button>
+    <button id="clear">清空画布</button>
+    <label for="myb-load" style="cursor:pointer;color:#4ecca3;font-size:11px;">加载 .myb</label>
+    <input type="file" id="myb-load" accept=".myb,.json">
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="canvas" width="900" height="580"></canvas>
+  </div>
+  <div id="status">加载中...</div>
+</div>
+
+<!-- ===== Right: Settings Panel ===== -->
+<div id="panel"></div>
+
+<script src="brushes.js"></script>
+<script type="module">
+import MyPaint from '../dist/index.js';
+(async function() {
+  const statusEl = document.getElementById('status');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const panel = document.getElementById('panel');
+  const mybLoad = document.getElementById('myb-load');
+
+  // ===== 通过 mypaint.js 库初始化 =====
+  statusEl.textContent = '正在加载 WASM...';
+  const mp = await MyPaint.create();
+  const surface = mp.createSurface(W, H);
+  const brush = mp.createBrush();
+  brush.fromDefaults();
+
+  // UI 用的参数/输入源定义 (带中文 label, 从库常量扩展)
+  const SETTINGS = [
+    { cname:'opaque',                 label:'不透明度',       min:0, max:2,   step:0.01 },
+    { cname:'opaque_multiply',        label:'不透明度乘数',   min:0, max:2,   step:0.01 },
+    { cname:'opaque_linearize',       label:'不透明度线性化', min:0, max:2,   step:0.01 },
+    { cname:'radius_logarithmic',     label:'半径(对数)',     min:-2, max:6,  step:0.05 },
+    { cname:'hardness',               label:'硬度',           min:0, max:1,   step:0.01 },
+    { cname:'softness',               label:'柔化',           min:0, max:1,   step:0.01 },
+    { cname:'anti_aliasing',          label:'抗锯齿',         min:0, max:5,   step:0.1  },
+    { cname:'dabs_per_basic_radius',  label:'笔触/基础半径',  min:0, max:20,  step:0.1  },
+    { cname:'dabs_per_actual_radius', label:'笔触/实际半径',  min:0, max:20,  step:0.1  },
+    { cname:'dabs_per_second',        label:'笔触/每秒',      min:0, max:100, step:1    },
+    { cname:'radius_by_random',       label:'半径随机',       min:0, max:1.5, step:0.01 },
+    { cname:'speed1_slowness',        label:'细速度平滑',     min:0, max:0.2, step:0.001},
+    { cname:'speed2_slowness',        label:'粗速度平滑',     min:0, max:3,   step:0.01 },
+    { cname:'offset_by_random',       label:'抖动',           min:0, max:25,  step:0.1  },
+    { cname:'offset_by_speed',        label:'速度偏移',       min:-3, max:3,  step:0.1  },
+    { cname:'slow_tracking',          label:'平滑跟踪',       min:0, max:10,  step:0.1  },
+    { cname:'tracking_noise',         label:'轨迹噪声',       min:0, max:12,  step:0.1  },
+    { cname:'color_h',               label:'色相 H',         min:0, max:1,   step:0.001, group:'color' },
+    { cname:'color_s',               label:'饱和度 S',       min:-0.5,max:1.5,step:0.01,  group:'color' },
+    { cname:'color_v',               label:'明度 V',         min:-0.5,max:1.5,step:0.01,  group:'color' },
+    { cname:'change_color_h',        label:'色相漂移',       min:-2, max:2,  step:0.01 },
+    { cname:'change_color_l',        label:'亮度漂移',       min:-2, max:2,  step:0.01 },
+    { cname:'change_color_v',        label:'明度漂移',       min:-2, max:2,  step:0.01 },
+    { cname:'smudge',                label:'涂抹',           min:0, max:1,   step:0.01 },
+    { cname:'paint_mode',            label:'颜料模式',       min:0, max:1,   step:0.01 },
+    { cname:'smudge_length',         label:'涂抹衰减',       min:0, max:1,   step:0.01 },
+    { cname:'smudge_radius_log',     label:'涂抹半径',       min:-1.6,max:1.6,step:0.01 },
+    { cname:'eraser',                label:'橡皮擦',         min:0, max:1,   step:0.01 },
+    { cname:'elliptical_dab_ratio',  label:'椭圆比',         min:1, max:10,  step:0.1  },
+    { cname:'elliptical_dab_angle',  label:'椭圆角度',       min:0, max:180, step:1    },
+    { cname:'direction_filter',      label:'方向过滤',       min:0, max:10,  step:0.1  },
+    { cname:'lock_alpha',            label:'锁定透明度',     min:0, max:1,   step:0.01 },
+    { cname:'colorize',              label:'着色',           min:0, max:1,   step:0.01 },
+    { cname:'posterize',             label:'色调分离',       min:0, max:1,   step:0.01 },
+    { cname:'snap_to_pixel',         label:'像素对齐',       min:0, max:1,   step:0.01 },
+    { cname:'pressure_gain_log',     label:'压感增益',       min:-1.8,max:1.8,step:0.01 },
+  ];
+
+  const INPUTS = [
+    { cname:'pressure',         label:'压感'     },
+    { cname:'speed1',           label:'速度(细)' },
+    { cname:'speed2',           label:'速度(粗)' },
+    { cname:'random',           label:'随机'     },
+    { cname:'stroke',           label:'笔画进度' },
+    { cname:'direction',        label:'方向'     },
+    { cname:'tilt_declination', label:'倾斜角度' },
+    { cname:'tilt_ascension',   label:'倾斜朝向' },
+    { cname:'barrel_rotation',  label:'笔身旋转' },
+  ];
+
+  const SECTIONS = [
+    { title:'基础',   keys:['opaque','opaque_multiply','opaque_linearize','radius_logarithmic','hardness','softness','anti_aliasing','eraser','pressure_gain_log'] },
+    { title:'颜色',   keys:['color_h','color_s','color_v','change_color_h','change_color_l','change_color_v','colorize','lock_alpha'] },
+    { title:'笔触密度', keys:['dabs_per_basic_radius','dabs_per_actual_radius','dabs_per_second'] },
+    { title:'形状',   keys:['elliptical_dab_ratio','elliptical_dab_angle','direction_filter','snap_to_pixel'] },
+    { title:'散布',   keys:['offset_by_random','offset_by_speed','radius_by_random','tracking_noise','slow_tracking'] },
+    { title:'涂抹',   keys:['smudge','smudge_length','smudge_radius_log','paint_mode'] },
+    { title:'速度',   keys:['speed1_slowness','speed2_slowness'] },
+    { title:'特效',   keys:['posterize'] },
+  ];
+
+  const settingMap = {};
+  SETTINGS.forEach(s => settingMap[s.cname] = s);
+
+  // 映射存储 (UI 用)
+  const mappings = {};
+  SETTINGS.forEach(s => { mappings[s.cname] = {}; });
+
+  let colorHex = '#222222';
+
+  function hsvToHex(h,s,v) {
+    let r,g,b;
+    const i=Math.floor(h*6), f=h*6-i, p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+    switch(i%6){ case 0:r=v;g=t;b=p;break; case 1:r=q;g=v;b=p;break;
+      case 2:r=p;g=v;b=t;break; case 3:r=p;g=q;b=v;break;
+      case 4:r=t;g=p;b=v;break; case 5:r=v;g=p;b=q;break; }
+    const toH = c => Math.round(Math.max(0,Math.min(1,c))*255).toString(16).padStart(2,'0');
+    return '#'+toH(r)+toH(g)+toH(b);
+  }
+
+  const sliders = {};
+
+  function buildPanel() {
+    let html = '';
+    html += `<div class="section">
+      <div class="section-title" data-sect="colorpick">颜色选择 <span class="arrow">▼</span></div>
+      <div class="section-body" id="sect-colorpick">
+        <div class="param"><label>颜色</label><input type="color" id="color-picker" value="${colorHex}"><span class="val" id="color-hex">${colorHex}</span></div>
+      </div></div>`;
+
+    for (const sec of SECTIONS) {
+      const collapsed = (sec.title === '特效' || sec.title === '速度') ? ' collapsed' : '';
+      const hidden = collapsed ? ' hidden' : '';
+      html += `<div class="section"><div class="section-title${collapsed}" data-sect="${sec.title}">${sec.title} <span class="arrow">▼</span></div><div class="section-body${hidden}" id="sect-${sec.title}">`;
+      for (const key of sec.keys) {
+        const s = settingMap[key]; if (!s) continue;
+        const val = MyPaint.SETTINGS[s.cname]?.def || 0;
+        html += `<div class="param"><label title="${s.cname}">${s.label}</label><input type="range" id="sl-${s.cname}" min="${s.min}" max="${s.max}" step="${s.step}" value="${val}"><span class="val" id="vl-${s.cname}">${fmtVal(val, s)}</span></div>`;
+      }
+      html += `</div></div>`;
+    }
+
+    html += `<div class="section"><div class="section-title" data-sect="curves">输入映射 (曲线) <span class="arrow">▼</span></div><div class="section-body" id="sect-curves">
+      <div class="curve-header"><label>参数:</label><select id="curve-setting"></select></div>
+      <div class="curve-header"><label>输入源:</label><select id="curve-input"></select></div>
+      <canvas class="curve-canvas" id="curve-canvas" width="280" height="180"></canvas>
+      <div class="curve-btns"><button id="curve-reset">重置</button><button id="curve-linear">线性</button><button id="curve-clear">清除</button></div>
+      <div style="font-size:10px;color:#555;margin-top:2px;" id="curve-info">点击添加/拖动控制点，右键删除。</div>
+    </div></div>`;
+
+    html += `<div class="section"><div class="section-title" data-sect="io">导出 / 导入 <span class="arrow">▼</span></div><div class="section-body" id="sect-io">
+      <button id="export-btn" style="width:100%;margin-bottom:4px;">导出 .myb JSON</button>
+      <textarea id="json-area" style="width:100%;height:80px;background:#0e1018;color:#4ecca3;border:1px solid #333;font-size:10px;font-family:monospace;resize:vertical;" placeholder="在此粘贴 JSON 后点击导入"></textarea>
+      <button id="import-btn" style="width:100%;margin-top:4px;">导入 JSON</button>
+    </div></div>`;
+
+    panel.innerHTML = html;
+
+    panel.querySelectorAll('.section-title').forEach(t => {
+      t.addEventListener('click', () => { t.classList.toggle('collapsed'); t.nextElementSibling.classList.toggle('hidden'); });
+    });
+
+    for (const s of SETTINGS) {
+      const sl = document.getElementById('sl-' + s.cname); if (!sl) continue;
+      sliders[s.cname] = sl;
+      sl.addEventListener('input', () => {
+        const v = parseFloat(sl.value);
+        document.getElementById('vl-' + s.cname).textContent = fmtVal(v, s);
+        brush.set(s.cname, v);
+        if (s.group === 'color') syncColorPickerFromSliders();
+      });
+    }
+
+    document.getElementById('color-picker').addEventListener('input', (e) => {
+      colorHex = e.target.value;
+      document.getElementById('color-hex').textContent = colorHex;
+      brush.setColor(colorHex);
+      syncSlidersFromBrush();
+    });
+
+    const csSetting = document.getElementById('curve-setting');
+    const csInput = document.getElementById('curve-input');
+    for (const s of SETTINGS) csSetting.innerHTML += `<option value="${s.cname}">${s.label}</option>`;
+    for (const inp of INPUTS) csInput.innerHTML += `<option value="${inp.cname}">${inp.label}</option>`;
+    csSetting.addEventListener('change', drawCurve);
+    csInput.addEventListener('change', drawCurve);
+
+    document.getElementById('curve-reset').addEventListener('click', () => { const {sc,ic}=curveIds(); mappings[sc][ic]=null; brush.setMapping(sc,ic,[]); drawCurve(); });
+    document.getElementById('curve-linear').addEventListener('click', () => {
+      const {sc,ic}=curveIds(); const info=MyPaint.INPUTS[ic];
+      mappings[sc][ic]=[[info.xmin,-1],[info.xmax,1]]; brush.setMapping(sc,ic,mappings[sc][ic]); drawCurve();
+    });
+    document.getElementById('curve-clear').addEventListener('click', () => { const {sc,ic}=curveIds(); mappings[sc][ic]=null; brush.setMapping(sc,ic,[]); drawCurve(); });
+
+    setupCurveEditor();
+    document.getElementById('export-btn').addEventListener('click', exportBrush);
+    document.getElementById('import-btn').addEventListener('click', importBrush);
+  }
+
+  function curveIds() { return { sc: document.getElementById('curve-setting').value, ic: document.getElementById('curve-input').value }; }
+
+  function fmtVal(v, s) {
+    if (Math.abs(v)>=100) return v.toFixed(0);
+    if (Math.abs(v)>=10) return v.toFixed(1);
+    if (s&&s.step>=1) return v.toFixed(0);
+    if (s&&s.step>=0.1) return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  function syncColorPickerFromSliders() {
+    const h=parseFloat(sliders['color_h']?.value||0), s=parseFloat(sliders['color_s']?.value||0), v=parseFloat(sliders['color_v']?.value||0);
+    colorHex = hsvToHex(h,s,v);
+    const cp = document.getElementById('color-picker');
+    if (cp) { cp.value = colorHex; document.getElementById('color-hex').textContent = colorHex; }
+  }
+
+  function syncSlidersFromBrush() {
+    for (const s of SETTINGS) {
+      const val = brush.get(s.cname);
+      const sl = sliders[s.cname];
+      if (sl) { sl.value = val; document.getElementById('vl-' + s.cname).textContent = fmtVal(val, s); }
+    }
+    syncColorPickerFromSliders();
+  }
+
+  // ===== 曲线编辑器 =====
+  function getCurveState() {
+    const sc = document.getElementById('curve-setting').value;
+    const ic = document.getElementById('curve-input').value;
+    const info = MyPaint.INPUTS[ic];
+    const points = mappings[sc]?.[ic] || null;
+    return { sc, ic, info, points };
+  }
+
+  function drawCurve() {
+    const cv = document.getElementById('curve-canvas');
+    const cx = cv.getContext('2d'), cw = cv.width, ch = cv.height;
+    const { info, points } = getCurveState();
+    const pad = 20;
+    cx.fillStyle='#0e1018'; cx.fillRect(0,0,cw,ch);
+    const zeroY = pad+(ch-2*pad)/2;
+    cx.strokeStyle='#2a2d3e'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(pad,zeroY); cx.lineTo(cw-pad,zeroY); cx.stroke();
+    cx.strokeStyle='#1a1d2e';
+    for(let i=0;i<=4;i++){const x=pad+i*(cw-2*pad)/4; cx.beginPath();cx.moveTo(x,pad);cx.lineTo(x,ch-pad);cx.stroke();}
+    cx.fillStyle='#555'; cx.font='9px monospace';
+    if(info){cx.fillText(info.xmin.toFixed(0),pad-4,ch-4);cx.fillText(info.xmax.toFixed(0),cw-pad-10,ch-4);}
+    cx.fillText('+',cw-pad+4,pad+4);cx.fillText('0',cw-pad+4,zeroY+3);cx.fillText('-',cw-pad+4,ch-pad);
+    if(!points||points.length===0){cx.fillStyle='#444';cx.fillText('无映射',cw/2-24,ch/2);document.getElementById('curve-info').textContent='在画布上点击添加控制点。';return;}
+    const xRange=info?(info.xmax-info.xmin):1, xMin=info?info.xmin:0;
+    let yMax=1; points.forEach(p=>{yMax=Math.max(yMax,Math.abs(p[1])*1.2);});
+    function toCanvas(px,py){return[pad+((px-xMin)/xRange)*(cw-2*pad), zeroY-(py/yMax)*(ch/2-pad)];}
+    cx.strokeStyle='#e94560';cx.lineWidth=2;cx.beginPath();
+    const sorted=[...points].sort((a,b)=>a[0]-b[0]);
+    const[fx,fy]=toCanvas(xMin,sorted[0][1]);cx.moveTo(fx,fy);
+    for(const p of sorted){const[px2,py2]=toCanvas(p[0],p[1]);cx.lineTo(px2,py2);}
+    const[lx,ly]=toCanvas(xMin+xRange,sorted[sorted.length-1][1]);cx.lineTo(lx,ly);cx.stroke();
+    for(const p of sorted){const[px2,py2]=toCanvas(p[0],p[1]);cx.fillStyle='#e94560';cx.beginPath();cx.arc(px2,py2,5,0,Math.PI*2);cx.fill();cx.fillStyle='#fff';cx.beginPath();cx.arc(px2,py2,2,0,Math.PI*2);cx.fill();}
+    document.getElementById('curve-info').textContent=`${sorted.length} 个控制点。左键添加/拖动，右键删除。`;
+  }
+
+  function setupCurveEditor() {
+    const cv=document.getElementById('curve-canvas'), pad=20;
+    let dragIdx=-1;
+    function canvasToData(cx2,cy2){
+      const{info}=getCurveState(), cw=cv.width, ch=cv.height;
+      const xRange=info?(info.xmax-info.xmin):1, xMin=info?info.xmin:0, zeroY=pad+(ch-2*pad)/2;
+      const pts=getCurveState().points||[]; let yMax=1; pts.forEach(p=>{yMax=Math.max(yMax,Math.abs(p[1])*1.2);});
+      return[xMin+((cx2-pad)/(cw-2*pad))*xRange, (zeroY-cy2)/(ch/2-pad)*yMax];
+    }
+    function findNearest(mx,my){
+      const{points,info}=getCurveState(); if(!points)return-1;
+      const cw=cv.width,ch=cv.height,xRange=info?(info.xmax-info.xmin):1,xMin=info?info.xmin:0,zeroY=pad+(ch-2*pad)/2;
+      let yMax=1; points.forEach(p=>{yMax=Math.max(yMax,Math.abs(p[1])*1.2);});
+      for(let i=0;i<points.length;i++){
+        const px=pad+((points[i][0]-xMin)/xRange)*(cw-2*pad), py=zeroY-(points[i][1]/yMax)*(ch/2-pad);
+        if(Math.hypot(mx-px,my-py)<10)return i;
+      } return-1;
+    }
+    cv.addEventListener('mousedown',(e)=>{
+      const mx=e.offsetX,my=e.offsetY,{sc,ic}=getCurveState();
+      if(e.button===2){const pts=mappings[sc]?.[ic];if(!pts)return;const idx=findNearest(mx,my);if(idx>=0){pts.splice(idx,1);if(pts.length===0)mappings[sc][ic]=null;brush.setMapping(sc,ic,pts||[]);drawCurve();}return;}
+      let pts=mappings[sc]?.[ic]; const idx=findNearest(mx,my);
+      if(idx>=0){dragIdx=idx;}else{const[x,y]=canvasToData(mx,my);if(!pts){pts=[];mappings[sc][ic]=pts;}pts.push([x,y]);dragIdx=pts.length-1;brush.setMapping(sc,ic,pts);drawCurve();}
+    });
+    cv.addEventListener('mousemove',(e)=>{if(dragIdx<0)return;const{sc,ic}=getCurveState();const pts=mappings[sc]?.[ic];if(!pts||dragIdx>=pts.length){dragIdx=-1;return;}const[x,y]=canvasToData(e.offsetX,e.offsetY);pts[dragIdx]=[x,y];brush.setMapping(sc,ic,pts);drawCurve();});
+    cv.addEventListener('mouseup',()=>{dragIdx=-1;});
+    cv.addEventListener('mouseleave',()=>{dragIdx=-1;});
+    cv.addEventListener('contextmenu',e=>e.preventDefault());
+  }
+
+  // ===== 导出/导入 =====
+  function exportBrush() {
+    const out = { version: 3, settings: {} };
+    for (const s of SETTINGS) {
+      const base = brush.get(s.cname);
+      const inputs = {};
+      for (const inp of INPUTS) {
+        const pts = mappings[s.cname]?.[inp.cname];
+        if (pts && pts.length > 0) inputs[inp.cname] = pts.map(p => [+p[0].toFixed(3), +p[1].toFixed(3)]);
+      }
+      out.settings[s.cname] = { base_value: +base.toFixed(4), inputs };
+    }
+    document.getElementById('json-area').value = JSON.stringify(out, null, 2);
+  }
+
+  function importBrush() {
+    const txt = document.getElementById('json-area').value.trim(); if (!txt) return;
+    try {
+      if (brush.fromString(txt)) { parseMappingsFromJSON(JSON.parse(txt)); syncSlidersFromBrush(); drawCurve(); statusEl.textContent = '导入成功！'; }
+    } catch(e) { statusEl.textContent = '导入失败: ' + e.message; }
+  }
+
+  function parseMappingsFromJSON(obj) {
+    for (const s of SETTINGS) mappings[s.cname] = {};
+    if (!obj.settings) return;
+    for (const [cname, setting] of Object.entries(obj.settings)) {
+      if (!settingMap[cname] || !setting.inputs) continue;
+      for (const [inpName, pts] of Object.entries(setting.inputs)) {
+        if (Array.isArray(pts) && pts.length > 0) mappings[cname][inpName] = pts.map(p => [p[0], p[1]]);
+      }
+    }
+  }
+
+  // ===== 笔刷切换 =====
+  function selectBrush(name) {
+    const def = BUILTIN_BRUSHES[name]; if (!def) return;
+    brush.fromJSON(def);
+    parseMappingsFromJSON(def);
+    syncSlidersFromBrush();
+    drawCurve();
+    document.querySelectorAll('.brush-btn').forEach(b => b.classList.toggle('active', b.dataset.brush === name));
+    statusEl.textContent = `画笔: ${name}`;
+  }
+
+  mybLoad.addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (brush.fromString(reader.result)) {
+        try { parseMappingsFromJSON(JSON.parse(reader.result)); } catch(e2) {}
+        syncSlidersFromBrush(); drawCurve();
+        document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+        statusEl.textContent = `已加载: ${file.name}`;
+      }
+    };
+    reader.readAsText(file); mybLoad.value = '';
+  });
+
+  // ===== 绘制 =====
+  let activeStroke = null;
+  let lastPointerTime = 0;
+
+  function getInput(e) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (W / rect.width),
+      y: (e.clientY - rect.top) * (H / rect.height),
+      pressure: (e.pressure > 0 ? e.pressure : 0.5),
+      xtilt: (e.tiltX || 0) / 60,
+      ytilt: (e.tiltY || 0) / 60,
+    };
+  }
+
+  // 同步处理单个事件点并立即渲染（零延迟）
+  function strokePoint(inp, dtime) {
+    if (!activeStroke) return;
+    activeStroke.to(inp.x, inp.y, inp.pressure, {
+      dtime, xtilt: inp.xtilt, ytilt: inp.ytilt,
+    });
+    const roi = activeStroke.flush();
+    if (roi) surface.renderROIToCanvas(ctx, roi);
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    lastPointerTime = performance.now();
+    activeStroke = surface.bindBrush(brush);
+    activeStroke.begin();
+    // 库内部会自动处理位置跳转（pressure=0 + 大 dtime），不会从上一笔拉线
+    strokePoint(getInput(e), 0.001);
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
+    if (!activeStroke) return;
+    e.preventDefault();
+
+    const now = performance.now();
+    const totalDt = Math.max((now - lastPointerTime) / 1000, 0.0005);
+    lastPointerTime = now;
+
+    // 优先使用 coalesced events 获得更平滑的轨迹
+    if (e.getCoalescedEvents) {
+      const coalesced = e.getCoalescedEvents();
+      if (coalesced.length > 1) {
+        const dtPer = totalDt / coalesced.length;
+        for (const ce of coalesced) {
+          strokePoint(getInput(ce), dtPer);
+        }
+        return;
+      }
+    }
+
+    strokePoint(getInput(e), totalDt);
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if (!activeStroke) return;
+    e.preventDefault();
+    const roi = activeStroke.end();
+    if (roi) surface.renderROIToCanvas(ctx, roi);
+    activeStroke = null;
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    if (!activeStroke) return;
+    const roi = activeStroke.end();
+    if (roi) surface.renderROIToCanvas(ctx, roi);
+    activeStroke = null;
+  });
+
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ===== 清空 =====
+  document.getElementById('clear').addEventListener('click', () => {
+    surface.clear();
+    surface.renderToCanvas(ctx);
+  });
+
+  // ===== 笔刷按钮 =====
+  document.querySelectorAll('.brush-btn').forEach(b => {
+    b.addEventListener('click', () => selectBrush(b.dataset.brush));
+  });
+
+  // ===== 启动 =====
+  buildPanel();
+  selectBrush('厚涂');
+  surface.renderToCanvas(ctx);
+  statusEl.textContent = '就绪';
+  statusEl.style.color = '#4ecca3';
+
+})();
+</script>
+</body>
+</html>
