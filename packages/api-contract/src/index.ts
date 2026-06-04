@@ -6,6 +6,7 @@ export * from './nanobanana';
 
 export * from './seedream';
 export * from './project';
+export * from './assets';
 
 export interface ApiResponse<T = unknown> {
   code: number;

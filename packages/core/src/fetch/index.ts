@@ -1,4 +1,10 @@
 import {
+  httpCreateAssetColor,
+  httpDeleteAssetColor,
+  httpGetAssetList,
+  httpUpdateAssetColor,
+} from '../services/assets';
+import {
   httpDeleteLibOutput,
   httpGetFileUrl,
   httpGetLibOutputs,
@@ -33,6 +39,10 @@ class Fetch {
   static httpGetTask = httpGetTask;
   static httpUploadImage = httpUpload;
   static httpGetFileUrl = httpGetFileUrl;
+  static getAssetList = httpGetAssetList;
+  static createAssetColor = httpCreateAssetColor;
+  static updateAssetColor = httpUpdateAssetColor;
+  static deleteAssetColor = httpDeleteAssetColor;
 
   static getFileUrl = (type: 'thumbnail' | 'file', s3: string) => {
     if (type === 'file') {

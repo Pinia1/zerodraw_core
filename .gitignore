@@ -58,3 +58,6 @@ coverage
 .venv
 __pycache__
 *.pyc
+
+.emsdk
+.cursor

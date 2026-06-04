@@ -4,6 +4,7 @@ import { authRoutes } from '../modules/Auth/auth.routes';
 import { fileRoutes } from '../modules/File';
 import { libRoutes } from '../modules/Lib';
 
+import { assetsRoutes } from '../modules/Assets';
 import { projectRoutes } from '../modules/Project';
 import { createSuccessResponse } from '../types/response';
 
@@ -31,5 +32,8 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   await app.register(projectRoutes, {
     prefix: '/api/project',
+  });
+  await app.register(assetsRoutes, {
+    prefix: '/api/assets',
   });
 }

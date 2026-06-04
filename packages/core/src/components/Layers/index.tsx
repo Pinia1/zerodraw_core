@@ -1,4 +1,5 @@
 import Icon from '@ant-design/icons';
+import { IconAdd } from '@core/icons';
 import { useMount } from '@zeroDraw/common';
 import { Button, Dropdown, Flex, Tabs, TabsProps } from 'antd';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -7,12 +8,13 @@ import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
 import useCreateLayer from '../../hooks/useCreateLayer';
 import useUpload from '../../hooks/useUpload';
-import { IconAdd } from '@core/icons';
 import { useDrawingStore } from '../../store/useDrawing';
 import useToolsStore from '../../store/useTools';
+import { readScaleFromTransform } from '../../utils';
 import { ASIDE_WIDTH, CANVAS_CONTAINER_ID, generateUUID } from '../../utils/drawing';
 import { isMobile } from '../../utils/platform';
 import Container from '../Container';
+import Assets from './Assets';
 import DragList from './DragList';
 
 export const StyledTabs = styled(Tabs)`
@@ -20,42 +22,29 @@ export const StyledTabs = styled(Tabs)`
     padding: 3px;
     overflow-y: auto;
     padding-bottom: 20px;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #d9d9d9;
+      border-radius: 3px;
+
+      &:hover {
+        background: #bfbfbf;
+      }
+    }
   }
 
   .ant-tabs-content {
     height: 100%;
   }
 `;
-
-function readScaleFromTransform(transform: string): number {
-  if (!transform || transform === 'none') return 1;
-  // matrix(a, b, c, d, tx, ty)
-  if (transform.startsWith('matrix(')) {
-    const parts = transform
-      .slice('matrix('.length, -1)
-      .split(',')
-      .map((s) => Number.parseFloat(s.trim()));
-    const [a, b] = parts;
-    if (!Number.isFinite(a) || !Number.isFinite(b)) return 1;
-    const scaleX = Math.hypot(a, b);
-    return Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
-  }
-  // matrix3d(...) scaleX=m11, scaleY=m22
-  if (transform.startsWith('matrix3d(')) {
-    const parts = transform
-      .slice('matrix3d('.length, -1)
-      .split(',')
-      .map((s) => Number.parseFloat(s.trim()));
-    const m11 = parts[0];
-    const m22 = parts[5];
-    const scaleX = Number.isFinite(m11) ? Math.abs(m11) : 1;
-    const scaleY = Number.isFinite(m22) ? Math.abs(m22) : 1;
-    // 取一个更稳的值（通常两者相等）
-    const s = (scaleX + scaleY) / 2;
-    return Number.isFinite(s) && s > 0 ? s : 1;
-  }
-  return 1;
-}
 
 const Layers: React.FC = () => {
   const [container, setContainer] = useState<HTMLElement | null>(null);
@@ -100,7 +89,10 @@ const Layers: React.FC = () => {
   }, [container, shrinkTools]);
 
   const tabsItems: TabsProps['items'] = useMemo(() => {
-    return [{ key: '1', label: 'Layers', children: <DragList panelScale={panelScale} /> }];
+    return [
+      { key: 'Layers', label: 'Layers', children: <DragList panelScale={panelScale} /> },
+      { key: 'assets', label: 'Assets', children: <Assets /> },
+    ];
   }, [panelScale]);
 
   const handleCreateLayer = () => {
@@ -131,7 +123,11 @@ const Layers: React.FC = () => {
       }}
     >
       <Flex style={{ position: 'relative', height: '100%' }}>
-        <StyledTabs style={{ height: '100%' }} defaultActiveKey="1" items={tabsItems} />
+        <StyledTabs
+          style={{ height: '100%', width: '100%' }}
+          defaultActiveKey="Layers"
+          items={tabsItems}
+        />
         <Dropdown
           trigger={['click']}
           menu={{
