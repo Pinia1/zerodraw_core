@@ -106,6 +106,7 @@ export const useDrawingStore = create<DrawingState>()(
         suppress: false,
         stabilizer: 2, //0 - 4
         fill: true,
+        amendment: true,
       },
       setLineConfig: (config: LineConfigTypes) => set({ lineConfig: config }),
       //eraser config

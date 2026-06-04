@@ -6,6 +6,7 @@ import type {
   MyPaintStroke,
   MyPaintSurface,
   Rect,
+  ShapePoint,
 } from '@zeroDraw/wasm';
 import MyPaint, { hexToHsv } from '@zeroDraw/wasm';
 import { useEffect, useRef } from 'react';
@@ -170,6 +171,10 @@ export interface UseBrushToolReturn {
   commitBrushStroke: () => Promise<ArrayBuffer | null>;
   /** 清空离屏 canvas 和 WASM surface，为下一笔做准备 */
   clearBrushCanvas: () => void;
+  /** 获取本次笔画在画布坐标系内收集的点序列（用于图形识别） */
+  getStrokePoints: () => ShapePoint[];
+  /** 清空画布并用给定点序列重绘（图形识别矫正后调用） */
+  redrawWithShapePoints: (pts: ShapePoint[]) => void;
 }
 
 export function useBrushTool(
@@ -186,8 +191,10 @@ export function useBrushTool(
   const brushRef = useRef<MyPaintBrush | null>(null);
   const strokeRef = useRef<MyPaintStroke | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const lastTimeRef = useRef<number>(0);
-  const layerCfgRef = useRef(layerConfig);
+  const lastTimeRef  = useRef<number>(0);
+  const moveCountRef = useRef<number>(0);
+  const strokePtsRef = useRef<ShapePoint[]>([]);
+  const layerCfgRef  = useRef(layerConfig);
   const stageCfgRef = useRef(stageConfig);
   layerCfgRef.current = layerConfig;
   stageCfgRef.current = stageConfig;
@@ -246,7 +253,7 @@ export function useBrushTool(
     const hsv = hexToHsv(color);
     // strokeWidth 是直径像素，libmypaint radius_logarithmic = ln(radius) = ln(strokeWidth/2)
     const radiusLog = Math.log(Math.max(1, strokeWidthRef.current / 2));
-    const radius    = Math.exp(radiusLog);
+    const radius = Math.exp(radiusLog);
     // 保证短轴 ≥ 1px：elliptical_dab_ratio = min(7.1, radius / 1px)
     const ellipRatio = Math.min(7.1, Math.max(1, radius));
     // opacity 0-1 → opaque 0-2（印象派 base 为 1.0，这里直接用用户值覆盖）
@@ -291,6 +298,8 @@ export function useBrushTool(
     const xtilt = (raw.tiltX || 0) / 60;
     const ytilt = (raw.tiltY || 0) / 60;
 
+    moveCountRef.current = 0;
+    strokePtsRef.current = [{ x: input.canvasPoint.x, y: input.canvasPoint.y }];
     strokeRef.current = surfaceRef.current!.bindBrush(brushRef.current!);
     strokeRef.current.begin();
     strokeRef.current.to(input.canvasPoint.x, input.canvasPoint.y, input.pressure || 0.5, {
@@ -314,6 +323,8 @@ export function useBrushTool(
     const raw = input.konvaEvent.evt as PointerEvent;
     const stage = input.konvaEvent.target.getStage();
 
+    moveCountRef.current += 1;
+
     // 优先使用 coalesced events 获得更平滑的轨迹
     const coalesced = raw.getCoalescedEvents ? raw.getCoalescedEvents() : [];
     if (coalesced.length > 1 && stage) {
@@ -321,6 +332,7 @@ export function useBrushTool(
       const dtPer = totalDt / coalesced.length;
       for (const ce of coalesced) {
         const pt = clientToCanvas(ce.clientX, ce.clientY, stageEl);
+        strokePtsRef.current.push(pt);
         const xtilt = (ce.tiltX || 0) / 60;
         const ytilt = (ce.tiltY || 0) / 60;
         strokeRef.current.to(pt.x, pt.y, ce.pressure || input.pressure || 0.5, {
@@ -332,6 +344,7 @@ export function useBrushTool(
       }
     } else {
       if (!input.canvasPoint) return;
+      strokePtsRef.current.push({ x: input.canvasPoint.x, y: input.canvasPoint.y });
       const xtilt = (raw.tiltX || 0) / 60;
       const ytilt = (raw.tiltY || 0) / 60;
       strokeRef.current.to(input.canvasPoint.x, input.canvasPoint.y, input.pressure || 0.5, {
@@ -354,6 +367,13 @@ export function useBrushTool(
   const commitBrushStroke = useMemoizedFn(async (): Promise<ArrayBuffer | null> => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
+    // 移动次数不足时视为误触，清空画布但不写入历史
+    if (moveCountRef.current < 2) {
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      surfaceRef.current?.clear();
+      return null;
+    }
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     if (!blob) return null;
     return blob.arrayBuffer();
@@ -368,5 +388,43 @@ export function useBrushTool(
     surfaceRef.current?.clear();
   });
 
-  return { canvasRef, onBrushDown, onBrushMove, onBrushUp, commitBrushStroke, clearBrushCanvas };
+  const getStrokePoints = useMemoizedFn((): ShapePoint[] => strokePtsRef.current);
+
+  /** 清空画布，用标准图形点序列重绘（图形识别矫正后调用） */
+  const redrawWithShapePoints = useMemoizedFn((pts: ShapePoint[]): void => {
+    if (!surfaceRef.current || !brushRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+    surfaceRef.current.clear();
+
+    const stroke = surfaceRef.current.bindBrush(brushRef.current);
+    stroke.begin();
+
+    // 用匀速（200px/s）模拟 dtime，让笔刷动态保持一致
+    const SPEED = 200;
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const dtime =
+        i === 0
+          ? 0.001
+          : Math.max(0.001, Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) / SPEED);
+      stroke.to(p.x, p.y, 0.5, { dtime });
+      renderROI(stroke.flush());
+    }
+    renderROI(stroke.end());
+    onRedraw();
+  });
+
+  return {
+    canvasRef,
+    onBrushDown,
+    onBrushMove,
+    onBrushUp,
+    commitBrushStroke,
+    clearBrushCanvas,
+    getStrokePoints,
+    redrawWithShapePoints,
+  };
 }

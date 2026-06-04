@@ -21,13 +21,9 @@ const Portal: React.FC<PortalConfProps> = ({
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  useClickAway(
-    () => {
-      setVisible(false);
-    },
-    ref,
-    ['mousedown', 'touchstart']
-  );
+  useClickAway(() => {
+    setVisible(false);
+  }, ref);
 
   const style: React.CSSProperties = {
     position: 'fixed',

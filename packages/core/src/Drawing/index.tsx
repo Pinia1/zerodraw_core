@@ -65,8 +65,11 @@ import {
 } from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
+import { ShapeRecognizer } from '@zeroDraw/wasm';
 import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
 import { bitmapCache } from './components/Diagram/Fill';
+
+const shapeRecognizer = new ShapeRecognizer({ threshold: 0.72, exclude: ['v', 'caret', 'check'] });
 import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
@@ -1389,6 +1392,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     onBrushUp,
     commitBrushStroke,
     clearBrushCanvas,
+    getStrokePoints,
+    redrawWithShapePoints,
   } = useBrushTool(
     layerConfig,
     stageConfig,
@@ -1556,6 +1561,12 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       }
       case Actions.BRUSH: {
         onBrushUp();
+        // 图形识别矫正（amendment 开启时，undefined 视为 true）
+        if (lineConfig.amendment ?? true) {
+          const brushPts = getStrokePoints();
+          const result = shapeRecognizer.recognizeAndConvert(brushPts);
+          if (result) redrawWithShapePoints(result.points);
+        }
         void (async () => {
           const buffer = await commitBrushStroke();
           if (!buffer) return;
@@ -1564,22 +1575,19 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
           const id = generateUUID();
 
-          // 预创建 ImageBitmap 并写入缓存，Fill 组件 mount 时直接命中，不再异步加载
           const bitmap = await createImageBitmap(new Blob([buffer], { type: 'image/png' }));
           bitmapCache.set(id, bitmap);
 
-          // 持久化到 indexDB
           await imageManager.saveImage(id, buffer);
 
-          // 缓存已就绪，此时清空 canvas 不会产生闪烁
           clearBrushCanvas();
 
           const fill: FillType = {
             id,
             x: 0,
             y: 0,
-            width: layerConfig.width,
-            height: layerConfig.height,
+            width: Math.floor(layerConfig.width),
+            height: Math.floor(layerConfig.height),
             visible: true,
           };
           const nextLayer: Layers = {
@@ -1602,6 +1610,24 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.ELLIPSE:
       case Actions.LINE:
         if (discardLastStrokeIfTooShort()) return;
+        // PEN 图形识别矫正（undefined 视为 true）
+        if ((lineConfig.amendment ?? true) && activeKey === Actions.PEN) {
+          const active = activeDiagramRef.current?.activeDiagram;
+          if (active?.type === 'path') {
+            const line = active.props as Line;
+            const flat = line.points;
+            const pts: { x: number; y: number }[] = [];
+            for (let i = 0; i + 1 < flat.length; i += 2) pts.push({ x: flat[i], y: flat[i + 1] });
+            const result = shapeRecognizer.recognizeAndConvert(pts);
+            if (result) {
+              const newFlat = result.points.flatMap((p) => [p.x, p.y]);
+              activeDiagramRef.current?.setActiveDiagram({
+                type: 'path',
+                props: { ...line, points: newFlat, pressure: newFlat.map(() => 0.5) } as unknown as Line,
+              });
+            }
+          }
+        }
         return pushDrawingHistory();
       case Actions.REMOVE:
         return onRemoveInputUp(input);

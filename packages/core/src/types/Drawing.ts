@@ -12,6 +12,7 @@ export type LineConfigTypes = Pick<
   | 'stabilizer'
 > & {
   fill?: boolean;
+  amendment?: boolean;
 };
 
 export type EraserConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'> & {

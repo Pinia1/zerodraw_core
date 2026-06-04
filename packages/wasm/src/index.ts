@@ -875,16 +875,13 @@ export class MyPaintEngine {
   }
 }
 
-// ================================================================
-// 公共 API
-// ================================================================
-
 const MyPaint = {
   /**
    * 创建引擎实例（异步，需加载 WASM）
    * 需在加载 libmypaint.js 之后调用
    */
   async create(opts?: CreateOptions): Promise<MyPaintEngine> {
+    //@ts-ignore
     const { default: factory } = await import('../dist/libmypaint.js');
     const wasmModule = await (factory as (opts?: Record<string, any>) => Promise<EmscriptenModule>)(
       opts?.wasmOpts ?? {}
@@ -913,3 +910,13 @@ export default MyPaint;
 if (typeof globalThis !== 'undefined') {
   (globalThis as any).MyPaint = MyPaint;
 }
+
+export { ShapeRecognizer } from './shape';
+export type {
+  ConvertResult,
+  RecognizeResult,
+  RecognizerOptions,
+  ShapeName,
+  BoundingBox,
+  Point as ShapePoint,
+} from './shape';
