@@ -2,6 +2,8 @@ node_modules
 **/node_modules
 **/.turbo
 **/dist
+!packages/wasm/dist
+!packages/wasm/dist/**
 apps/web/.env
 .env
 .git
