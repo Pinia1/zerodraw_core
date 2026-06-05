@@ -1,3 +1,4 @@
+import type { BrushJSON } from '@zeroDraw/wasm';
 import type { Line } from './Layers';
 export type LineConfigTypes = Pick<
   Line,
@@ -13,6 +14,8 @@ export type LineConfigTypes = Pick<
 > & {
   fill?: boolean;
   amendment?: boolean;
+  brushName?: string;
+  brushConfig?: BrushJSON;
 };
 
 export type EraserConfigTypes = Pick<Line, 'strokeWidth' | 'opacity'> & {

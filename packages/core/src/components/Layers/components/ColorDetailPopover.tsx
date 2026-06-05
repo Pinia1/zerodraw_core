@@ -102,7 +102,10 @@ const Muted = styled.div`
   font-size: 13px;
 `;
 
-const getRelativeTime = (timestamp: number, t: (key: string, params?: Record<string, unknown>) => string) => {
+const getRelativeTime = (
+  timestamp: number,
+  t: (key: string, params?: Record<string, unknown>) => string
+) => {
   const diff = Math.max(0, Date.now() - new Date(timestamp).getTime());
   const minutes = Math.floor(diff / 60000);
   if (minutes < 1) return t('assets.justNow');
@@ -192,7 +195,7 @@ const ColorDetailPopover = ({
         </div>
       </Author>
 
-      <Button type="primary" size="large" block onClick={() => onUse(color.hex)}>
+      <Button type="primary" block onClick={() => onUse(color.hex)}>
         {t('assets.useAsset')}
       </Button>
     </Wrapper>

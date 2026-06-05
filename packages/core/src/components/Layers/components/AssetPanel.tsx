@@ -1,5 +1,5 @@
 import { DownOutlined, PlusOutlined } from '@ant-design/icons';
-import { ColorItem, ImageItem, PaletteItem, PromptItem } from '@zeroDraw/api-contract';
+import { BrushItem, ColorItem, ImageItem, PaletteItem, PromptItem } from '@zeroDraw/api-contract';
 import { Popover } from 'antd';
 import { useState } from 'react';
 import styled from 'styled-components';
@@ -14,6 +14,7 @@ export interface AssetPanelProps {
   palettes: PaletteItem[];
   images: ImageItem[];
   prompts: PromptItem[];
+  brushes: BrushItem[];
   loading?: boolean;
 }
 
@@ -91,14 +92,14 @@ export const AddButton = styled.button`
 `;
 
 export const ColorGrid = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
 `;
 
 export const ColorSwatch = styled.div<{ $color: string }>`
-  width: 54px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   border-radius: 6px;
   border: 2px solid rgba(255, 255, 255, 0.18);
   background: ${({ $color }) => $color};

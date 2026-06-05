@@ -17,7 +17,6 @@ type ColorFormat = 'hex' | 'rgb' | 'hsl';
 
 const Wrapper = styled.div`
   width: 250px;
-  height: 330px;
   padding: 8px;
   border-radius: 12px;
   background: var(--color-bg-container);
@@ -446,10 +445,10 @@ const SaveColorDialog = ({
       </HexRow>
 
       <Footer>
-        <Button size="large" type="text" onClick={onClose}>
+        <Button type="text" onClick={onClose}>
           {t('assets.cancel')}
         </Button>
-        <Button size="large" type="primary" loading={loading} onClick={() => onSave(color)}>
+        <Button type="primary" loading={loading} onClick={() => onSave(color)}>
           {t('assets.save')}
         </Button>
       </Footer>

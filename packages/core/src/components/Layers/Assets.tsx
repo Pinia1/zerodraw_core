@@ -3,6 +3,8 @@ import Fetch from '@core/fetch';
 import { useDrawingStore } from '@core/store/useDrawing';
 import type { ColorItem } from '@zeroDraw/api-contract';
 import { useRequest } from '@zeroDraw/common';
+import type { BrushJSON } from '@zeroDraw/wasm';
+import { BUILTIN_BRUSHES } from '@zeroDraw/wasm';
 import { Empty, Input, Popover, Select, Skeleton } from 'antd';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,13 +33,19 @@ import {
   Toolbar,
   Wrapper,
 } from './components/AssetPanel';
+import BrushPreview from './components/BrushPreview';
 import ColorDetailPopover from './components/ColorDetailPopover';
 import SaveColorDialog from './components/SaveColorDialog';
 
 const Assets = () => {
   const { t } = useTranslation();
-  const { projectId, setFillColor } = useDrawingStore(
-    useShallow((s) => ({ projectId: s.currentProjectId, setFillColor: s.setFillColor }))
+  const { projectId, lineConfig, setLineConfig, setFillColor } = useDrawingStore(
+    useShallow((s) => ({
+      projectId: s.currentProjectId,
+      lineConfig: s.lineConfig,
+      setLineConfig: s.setLineConfig,
+      setFillColor: s.setFillColor,
+    }))
   );
   const [qurery, setQuery] = useState({
     name: '',
@@ -112,7 +120,18 @@ const Assets = () => {
   });
 
   const filtered = useMemo(() => {
-    const { colors, palettes, images, prompts } = data || {};
+    const { colors, palettes, images, prompts, brushes } = data || {};
+    const builtinBrushes = Object.entries(BUILTIN_BRUSHES).map(([name, config]) => ({
+      id: `builtin-${name}`,
+      name,
+      config,
+      thumbnail: null,
+      projectId: null,
+      createdAt: 0,
+      updatedAt: 0,
+    }));
+    const allBrushes = [...builtinBrushes, ...(brushes?.list || [])];
+
     return {
       colors:
         colors?.list.filter(
@@ -132,8 +151,24 @@ const Assets = () => {
         prompts?.list.filter(
           (item) => filterText(item.title, qurery.name) || filterText(item.content, qurery.name)
         ) || [],
+      brushes: allBrushes.filter((item) => filterText(item.name, qurery.name)),
     };
   }, [qurery.name, data]);
+
+  const selectedBrushId = useMemo(() => {
+    return filtered.brushes.find((item) => item.name === lineConfig.brushName)?.id;
+  }, [filtered.brushes, lineConfig.brushName]);
+
+  const handleSelectBrush = (id: string) => {
+    const brush = filtered.brushes.find((item) => item.id === id);
+    if (!brush) return;
+
+    setLineConfig({
+      ...lineConfig,
+      brushName: brush.name,
+      brushConfig: brush.config as BrushJSON,
+    });
+  };
 
   const handleQueryChange = (newQuery: Partial<typeof qurery>) => {
     setQuery({ ...qurery, ...newQuery });
@@ -177,6 +212,36 @@ const Assets = () => {
           />
         </Controls>
       </Toolbar>
+
+      <AssetSection title={t('assets.brushes')}>
+        {filtered.brushes.length ? (
+          <Select
+            value={selectedBrushId}
+            onChange={handleSelectBrush}
+            style={{ width: '100%' }}
+            options={filtered.brushes.map((item) => ({ label: item.name, value: item.id }))}
+            optionRender={(option: any) => {
+              const brush = filtered.brushes.find((item) => item.id === option.value);
+              if (!brush) return option.label;
+
+              return (
+                <Popover
+                  arrow={false}
+                  mouseEnterDelay={0.2}
+                  placement="right"
+                  trigger="hover"
+                  content={<BrushPreview config={brush.config as BrushJSON} />}
+                  styles={{ content: { padding: 6, background: 'var(--color-bg-container)' } }}
+                >
+                  <div>{brush.name}</div>
+                </Popover>
+              );
+            }}
+          />
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('assets.noBrushesYet')} />
+        )}
+      </AssetSection>
 
       <AssetSection
         title={t('assets.colors')}

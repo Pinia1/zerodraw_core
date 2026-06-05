@@ -40,14 +40,15 @@ class AssetsService {
   }
 
   async listAll(params: { userId: number } & AssetListQuery): Promise<AssetListAllResult> {
-    const [colors, palettes, images, prompts] = await Promise.all([
+    const [colors, palettes, images, prompts, brushes] = await Promise.all([
       this.listColors(params),
       this.listPalettes(params),
       this.listImages(params),
       this.listPrompts(params),
+      this.listBrushes(params),
     ]);
 
-    return { colors, palettes, images, prompts };
+    return { colors, palettes, images, prompts, brushes };
   }
 
   async createColor({ userId, hex, name, projectId }: { userId: number } & CreateColorInput) {

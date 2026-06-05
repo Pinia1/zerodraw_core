@@ -1392,14 +1392,13 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     onBrushUp,
     commitBrushStroke,
     clearBrushCanvas,
-    getStrokePoints,
-    redrawWithShapePoints,
   } = useBrushTool(
     layerConfig,
     stageConfig,
     fillColor,
     lineConfig.strokeWidth,
     lineConfig.opacity,
+    lineConfig.brushConfig,
     () => drawLayerRef.current?.draw()
   );
 
@@ -1561,15 +1560,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       }
       case Actions.BRUSH: {
         onBrushUp();
-        // 图形识别矫正（amendment 开启时，undefined 视为 true）
-        if (lineConfig.amendment ?? true) {
-          const brushPts = getStrokePoints();
-          const result = shapeRecognizer.recognizeAndConvert(brushPts);
-          if (result) redrawWithShapePoints(result.points);
-        }
         void (async () => {
-          const buffer = await commitBrushStroke();
-          if (!buffer) return;
+          const committed = await commitBrushStroke();
+          if (!committed) return;
+          const { buffer, rect } = committed;
           const drawingLayer = getDrawingLayer();
           if (!drawingLayer) return;
 
@@ -1584,10 +1578,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
           const fill: FillType = {
             id,
-            x: 0,
-            y: 0,
-            width: Math.floor(layerConfig.width),
-            height: Math.floor(layerConfig.height),
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
             visible: true,
           };
           const nextLayer: Layers = {

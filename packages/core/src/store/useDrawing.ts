@@ -1,4 +1,5 @@
 import { WebWorker } from '@zeroDraw/common';
+import { BUILTIN_BRUSHES } from '@zeroDraw/wasm';
 import Konva from 'konva';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -107,6 +108,8 @@ export const useDrawingStore = create<DrawingState>()(
         stabilizer: 2, //0 - 4
         fill: true,
         amendment: true,
+        brushName: '印象派',
+        brushConfig: BUILTIN_BRUSHES['印象派'],
       },
       setLineConfig: (config: LineConfigTypes) => set({ lineConfig: config }),
       //eraser config

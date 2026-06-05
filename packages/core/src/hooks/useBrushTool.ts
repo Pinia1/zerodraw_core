@@ -8,157 +8,20 @@ import type {
   Rect,
   ShapePoint,
 } from '@zeroDraw/wasm';
-import MyPaint, { hexToHsv } from '@zeroDraw/wasm';
+import type Konva from 'konva';
+import MyPaint, { BUILTIN_BRUSHES, hexToHsv } from '@zeroDraw/wasm';
 import { useEffect, useRef } from 'react';
 import type { NormalizedPointerEvent } from '../input/types';
 import type { LayerConfigTypes, StageConfigTypes } from '../types/Drawing';
 
-const IMPRESSIONIST_BRUSH: BrushJSON = {
-  version: 3,
-  settings: {
-    anti_aliasing: { base_value: 0.66, inputs: {} },
-    change_color_h: {
-      base_value: 0.0,
-      inputs: {
-        custom: [
-          [-2.0, -0.04],
-          [2.0, 0.04],
-        ],
-      },
-    },
-    change_color_hsl_s: { base_value: 0.0, inputs: {} },
-    change_color_hsv_s: { base_value: 0.0, inputs: {} },
-    change_color_l: {
-      base_value: 0.0,
-      inputs: {
-        stroke: [
-          [0.0, 0.0],
-          [0.87963, 0.02],
-          [1.0, 0.0],
-        ],
-      },
-    },
-    change_color_v: { base_value: 0.0, inputs: {} },
-    color_h: { base_value: 0.0, inputs: {} },
-    color_s: { base_value: 0.0, inputs: {} },
-    color_v: { base_value: 0.0, inputs: {} },
-    colorize: { base_value: 0.0, inputs: {} },
-    custom_input: {
-      base_value: 0.0,
-      inputs: {
-        random: [
-          [0.0, -10.0],
-          [1.0, 10.0],
-        ],
-      },
-    },
-    custom_input_slowness: {
-      base_value: 0.0,
-      inputs: {
-        tilt_declination: [
-          [0.0, 4.41],
-          [90.0, 0.0],
-        ],
-      },
-    },
-    dabs_per_actual_radius: { base_value: 6.0, inputs: {} },
-    dabs_per_basic_radius: { base_value: 6.0, inputs: {} },
-    dabs_per_second: { base_value: 80.0, inputs: {} },
-    direction_filter: { base_value: 2.0, inputs: {} },
-    elliptical_dab_angle: {
-      base_value: 0.0,
-      inputs: {
-        direction: [
-          [0.0, 0.0],
-          [180.0, 180.0],
-        ],
-      },
-    },
-    elliptical_dab_ratio: {
-      base_value: 7.1,
-      inputs: {
-        speed1: [
-          [0.0, -0.668571],
-          [4.0, 4.68],
-        ],
-        stroke: [
-          [0.0, -0.4],
-          [1.0, 0.4],
-        ],
-        tilt_declination: [
-          [0.0, 3.636875],
-          [90.0, -7.59],
-        ],
-      },
-    },
-    eraser: { base_value: 0.0, inputs: {} },
-    hardness: { base_value: 0.8, inputs: {} },
-    lock_alpha: { base_value: 0.0, inputs: {} },
-    offset_by_random: {
-      base_value: 0.6,
-      inputs: {
-        tilt_declination: [
-          [0.0, 0.0],
-          [45.0, 0.0],
-          [90.0, 0.63],
-        ],
-      },
-    },
-    offset_by_speed: { base_value: 0.0, inputs: {} },
-    offset_by_speed_slowness: { base_value: 1.0, inputs: {} },
-    opaque: {
-      base_value: 1.0,
-      inputs: {
-        pressure: [
-          [0.0, 0.0],
-          [0.166667, 0.75],
-          [1.0, 1.0],
-        ],
-      },
-    },
-    opaque_linearize: { base_value: 0.9, inputs: {} },
-    opaque_multiply: {
-      base_value: 0.0,
-      inputs: {
-        pressure: [
-          [0.0, 0.0],
-          [0.067901, 0.78125],
-          [0.185185, 1.0],
-          [1.0, 1.0],
-        ],
-      },
-    },
-    radius_by_random: { base_value: 0.0, inputs: {} },
-    radius_logarithmic: {
-      base_value: 2.0,
-      inputs: {
-        pressure: [
-          [0.0, -2.0],
-          [0.401235, 0.0],
-          [1.0, 0.0],
-        ],
-        tilt_declination: [
-          [0.0, 0.0],
-          [45.0, 0.0],
-          [90.0, -1.6],
-        ],
-      },
-    },
-    restore_color: { base_value: 0.0, inputs: {} },
-    slow_tracking: { base_value: 0.0, inputs: {} },
-    slow_tracking_per_dab: { base_value: 0.0, inputs: {} },
-    smudge: { base_value: 0.0, inputs: {} },
-    smudge_length: { base_value: 0.5, inputs: {} },
-    smudge_radius_log: { base_value: 0.0, inputs: {} },
-    speed1_gamma: { base_value: 4.0, inputs: {} },
-    speed1_slowness: { base_value: 0.04, inputs: {} },
-    speed2_gamma: { base_value: 4.0, inputs: {} },
-    speed2_slowness: { base_value: 0.8, inputs: {} },
-    stroke_duration_logarithmic: { base_value: 6.0, inputs: {} },
-    stroke_holdtime: { base_value: 10.0, inputs: {} },
-    stroke_threshold: { base_value: 0.0, inputs: {} },
-    tracking_noise: { base_value: 0.2, inputs: {} },
-  },
+const DEFAULT_BRUSH = BUILTIN_BRUSHES['印象派'] as BrushJSON;
+
+const getBrushBaseValue = (brush: BrushJSON, key: string, fallback: number) => {
+  return brush.settings[key]?.base_value ?? fallback;
+};
+
+const hasBrushMapping = (brush: BrushJSON, key: string, input: string) => {
+  return !!brush.settings[key]?.inputs?.[input]?.length;
 };
 
 export interface UseBrushToolReturn {
@@ -167,8 +30,8 @@ export interface UseBrushToolReturn {
   onBrushDown: (input: NormalizedPointerEvent) => void;
   onBrushMove: (input: NormalizedPointerEvent) => void;
   onBrushUp: () => void;
-  /** 将当前画布快照导出为 PNG ArrayBuffer（不清空画布） */
-  commitBrushStroke: () => Promise<ArrayBuffer | null>;
+  /** 将当前笔画脏区导出为 PNG ArrayBuffer（不清空画布） */
+  commitBrushStroke: () => Promise<{ buffer: ArrayBuffer; rect: Rect } | null>;
   /** 清空离屏 canvas 和 WASM surface，为下一笔做准备 */
   clearBrushCanvas: () => void;
   /** 获取本次笔画在画布坐标系内收集的点序列（用于图形识别） */
@@ -179,10 +42,11 @@ export interface UseBrushToolReturn {
 
 export function useBrushTool(
   layerConfig: LayerConfigTypes,
-  stageConfig: StageConfigTypes,
+  _stageConfig: StageConfigTypes,
   fillColor: string,
   strokeWidth: number,
   opacity: number,
+  brushConfig: BrushJSON | undefined,
   /** 每次笔刷画完一帧后调用，触发 Konva 重绘 */
   onRedraw: () => void
 ): UseBrushToolReturn {
@@ -193,11 +57,10 @@ export function useBrushTool(
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastTimeRef  = useRef<number>(0);
   const moveCountRef = useRef<number>(0);
+  const strokeBoundsRef = useRef<Rect | null>(null);
   const strokePtsRef = useRef<ShapePoint[]>([]);
   const layerCfgRef  = useRef(layerConfig);
-  const stageCfgRef = useRef(stageConfig);
   layerCfgRef.current = layerConfig;
-  stageCfgRef.current = stageConfig;
 
   // 初始化 WASM 引擎（只做一次）
   useEffect(() => {
@@ -240,31 +103,46 @@ export function useBrushTool(
 
   const strokeWidthRef = useRef(strokeWidth);
   const opacityRef = useRef(opacity);
+  const brushConfigRef = useRef(brushConfig);
+  const loadedBrushConfigRef = useRef<BrushJSON | null>(null);
   strokeWidthRef.current = strokeWidth;
   opacityRef.current = opacity;
+  brushConfigRef.current = brushConfig;
 
   /** 确保笔刷存在，并同步颜色、粗细、透明度 */
   const ensureBrush = useMemoizedFn((color: string): boolean => {
     if (!engineRef.current) return false;
+    const currentBrushConfig = brushConfigRef.current || DEFAULT_BRUSH;
+    if (brushRef.current && loadedBrushConfigRef.current !== currentBrushConfig) {
+      brushRef.current.destroy();
+      brushRef.current = null;
+      loadedBrushConfigRef.current = null;
+    }
     if (!brushRef.current) {
       brushRef.current = engineRef.current.createBrush();
-      brushRef.current.fromJSON(IMPRESSIONIST_BRUSH);
+      const loaded = brushRef.current.fromJSON(currentBrushConfig);
+      if (!loaded) {
+        brushRef.current.destroy();
+        brushRef.current = engineRef.current.createBrush().fromDefaults();
+      }
+      loadedBrushConfigRef.current = currentBrushConfig;
     }
     const hsv = hexToHsv(color);
     // strokeWidth 是直径像素，libmypaint radius_logarithmic = ln(radius) = ln(strokeWidth/2)
     const radiusLog = Math.log(Math.max(1, strokeWidthRef.current / 2));
-    const radius = Math.exp(radiusLog);
-    // 保证短轴 ≥ 1px：elliptical_dab_ratio = min(7.1, radius / 1px)
-    const ellipRatio = Math.min(7.1, Math.max(1, radius));
-    // opacity 0-1 → opaque 0-2（印象派 base 为 1.0，这里直接用用户值覆盖）
-    const opaque = Math.min(2, Math.max(0, opacityRef.current * 2));
+    const baseOpaque = getBrushBaseValue(currentBrushConfig, 'opaque', 1);
+    const opaque = Math.min(2, Math.max(0, baseOpaque * opacityRef.current));
+    const baseSmudge = getBrushBaseValue(currentBrushConfig, 'smudge', 0);
+    const smudge = hasBrushMapping(currentBrushConfig, 'smudge', 'stroke')
+      ? Math.min(baseSmudge, 0.2)
+      : baseSmudge;
     brushRef.current
       .set('color_h', hsv.h)
       .set('color_s', hsv.s)
       .set('color_v', hsv.v)
       .set('radius_logarithmic', radiusLog)
-      .set('elliptical_dab_ratio', ellipRatio)
-      .set('opaque', opaque);
+      .set('opaque', opaque)
+      .set('smudge', smudge);
     return true;
   });
 
@@ -275,17 +153,36 @@ export function useBrushTool(
     if (!surface || !canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    if (roi && roi.width > 0 && roi.height > 0) {
+      const bounds = strokeBoundsRef.current;
+      if (!bounds) {
+        strokeBoundsRef.current = { ...roi };
+      } else {
+        const minX = Math.min(bounds.x, roi.x);
+        const minY = Math.min(bounds.y, roi.y);
+        const maxX = Math.max(bounds.x + bounds.width, roi.x + roi.width);
+        const maxY = Math.max(bounds.y + bounds.height, roi.y + roi.height);
+        strokeBoundsRef.current = {
+          x: minX,
+          y: minY,
+          width: maxX - minX,
+          height: maxY - minY,
+        };
+      }
+    }
     surface.renderROIToCanvas(ctx, roi);
   });
 
   /** 将 coalesced PointerEvent 的 clientX/Y 转为画布坐标 */
   const clientToCanvas = useMemoizedFn(
-    (clientX: number, clientY: number, stageEl: HTMLDivElement) => {
-      const { scale, x: sx, y: sy } = stageCfgRef.current;
+    (clientX: number, clientY: number, stage: Konva.Stage) => {
       const { x: lx, y: ly } = layerCfgRef.current;
+      const stageEl = stage.container();
       const rect = stageEl.getBoundingClientRect();
-      const stageX = (clientX - rect.left - sx) / scale;
-      const stageY = (clientY - rect.top - sy) / scale;
+      const transform = stage.getAbsoluteTransform().copy().invert();
+      const stagePoint = transform.point({ x: clientX - rect.left, y: clientY - rect.top });
+      const stageX = stagePoint.x;
+      const stageY = stagePoint.y;
       return { x: stageX - lx, y: stageY - ly };
     }
   );
@@ -299,6 +196,7 @@ export function useBrushTool(
     const ytilt = (raw.tiltY || 0) / 60;
 
     moveCountRef.current = 0;
+    strokeBoundsRef.current = null;
     strokePtsRef.current = [{ x: input.canvasPoint.x, y: input.canvasPoint.y }];
     strokeRef.current = surfaceRef.current!.bindBrush(brushRef.current!);
     strokeRef.current.begin();
@@ -328,10 +226,9 @@ export function useBrushTool(
     // 优先使用 coalesced events 获得更平滑的轨迹
     const coalesced = raw.getCoalescedEvents ? raw.getCoalescedEvents() : [];
     if (coalesced.length > 1 && stage) {
-      const stageEl = stage.container();
       const dtPer = totalDt / coalesced.length;
       for (const ce of coalesced) {
-        const pt = clientToCanvas(ce.clientX, ce.clientY, stageEl);
+        const pt = clientToCanvas(ce.clientX, ce.clientY, stage);
         strokePtsRef.current.push(pt);
         const xtilt = (ce.tiltX || 0) / 60;
         const ytilt = (ce.tiltY || 0) / 60;
@@ -340,8 +237,8 @@ export function useBrushTool(
           xtilt,
           ytilt,
         });
-        renderROI(strokeRef.current.flush());
       }
+      renderROI(strokeRef.current.flush());
     } else {
       if (!input.canvasPoint) return;
       strokePtsRef.current.push({ x: input.canvasPoint.x, y: input.canvasPoint.y });
@@ -364,7 +261,7 @@ export function useBrushTool(
     onRedraw();
   });
 
-  const commitBrushStroke = useMemoizedFn(async (): Promise<ArrayBuffer | null> => {
+  const commitBrushStroke = useMemoizedFn(async (): Promise<{ buffer: ArrayBuffer; rect: Rect } | null> => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
     // 移动次数不足时视为误触，清空画布但不写入历史
@@ -374,9 +271,29 @@ export function useBrushTool(
       surfaceRef.current?.clear();
       return null;
     }
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    const bounds = strokeBoundsRef.current;
+    if (!bounds) return null;
+    const padding = 4;
+    const rect: Rect = {
+      x: Math.max(0, Math.floor(bounds.x - padding)),
+      y: Math.max(0, Math.floor(bounds.y - padding)),
+      width: 0,
+      height: 0,
+    };
+    rect.width = Math.min(canvas.width - rect.x, Math.ceil(bounds.x + bounds.width + padding) - rect.x);
+    rect.height = Math.min(canvas.height - rect.y, Math.ceil(bounds.y + bounds.height + padding) - rect.y);
+    if (rect.width <= 0 || rect.height <= 0) return null;
+
+    const cropped = document.createElement('canvas');
+    cropped.width = rect.width;
+    cropped.height = rect.height;
+    const ctx = cropped.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(canvas, rect.x, rect.y, rect.width, rect.height, 0, 0, rect.width, rect.height);
+
+    const blob = await new Promise<Blob | null>((resolve) => cropped.toBlob(resolve, 'image/png'));
     if (!blob) return null;
-    return blob.arrayBuffer();
+    return { buffer: await blob.arrayBuffer(), rect };
   });
 
   const clearBrushCanvas = useMemoizedFn(() => {
@@ -386,6 +303,7 @@ export function useBrushTool(
       if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     surfaceRef.current?.clear();
+    strokeBoundsRef.current = null;
   });
 
   const getStrokePoints = useMemoizedFn((): ShapePoint[] => strokePtsRef.current);

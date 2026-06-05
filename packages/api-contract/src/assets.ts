@@ -165,4 +165,5 @@ export interface AssetListAllResult {
   palettes: AssetListResult<PaletteItem>;
   images: AssetListResult<ImageItem>;
   prompts: AssetListResult<PromptItem>;
+  brushes: AssetListResult<BrushItem>;
 }
