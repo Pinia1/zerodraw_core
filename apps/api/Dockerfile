@@ -14,6 +14,7 @@ COPY packages/config/package.json ./packages/config/
 COPY packages/docs/package.json ./packages/docs/
 COPY packages/core/package.json ./packages/core/
 COPY packages/common/package.json ./packages/common/
+COPY packages/wasm/package.json ./packages/wasm/
 COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 
