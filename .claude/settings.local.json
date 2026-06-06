@@ -48,7 +48,8 @@
       "Bash(node -e \"const {useClickAway} = require\\('/d/code/zeroDraw/packages/common/dist/index.cjs'\\); console.log\\(useClickAway?.toString?.\\(\\)?.slice\\(0,200\\)\\)\")",
       "Bash(grep *)",
       "Bash(git rm *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
