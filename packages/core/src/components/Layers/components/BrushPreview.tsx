@@ -29,17 +29,25 @@ const BrushPreview = ({ config }: BrushPreviewProps) => {
 
   useEffect(() => {
     let cancelled = false;
-    let cleanup: (() => void) | undefined;
+
+    // 持有异步创建的 WASM 资源，确保无论何时 unmount 都能正确清理
+    const resources: { destroy: () => void }[] = [];
 
     getPreviewEngine().then((engine) => {
       if (cancelled) return;
 
-      const width = 160;
-      const height = 56;
-      const surface = engine.createSurface(width, height);
+      const surface = engine.createSurface(160, 56);
       const brush = engine.createBrush();
-      brush.fromJSON(config);
+      resources.push(brush, surface);
 
+      // 若在资源创建完成后立即 unmount，直接清理退出
+      if (cancelled) {
+        brush.destroy();
+        surface.destroy();
+        return;
+      }
+
+      brush.fromJSON(config);
       const hsv = hexToHsv('#ffffff');
       brush
         .set('color_h', hsv.h)
@@ -57,23 +65,20 @@ const BrushPreview = ({ config }: BrushPreviewProps) => {
       }
       stroke.end();
 
+      // 渲染前再检查一次，避免写入已移出 DOM 的 canvas
+      if (cancelled) return;
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       if (canvas && ctx) {
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = 160;
+        canvas.height = 56;
         surface.renderToCanvas(ctx);
       }
-
-      cleanup = () => {
-        brush.destroy();
-        surface.destroy();
-      };
     });
 
     return () => {
       cancelled = true;
-      cleanup?.();
+      resources.forEach((r) => r.destroy());
     };
   }, [config]);
 

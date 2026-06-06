@@ -1644,7 +1644,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     e.evt.preventDefault();
     e.evt.stopPropagation();
     finishLine();
-    if (![Actions.PEN, Actions.ERASER].includes(activeKey)) return;
+    if (![Actions.PEN, Actions.ERASER, Actions.FILL, Actions.BRUSH].includes(activeKey)) return;
     setBrushDetailConfPosition({ visible: true, position: { x: e.evt.clientX, y: e.evt.clientY } });
   });
 
