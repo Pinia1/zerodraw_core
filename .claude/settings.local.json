@@ -43,7 +43,8 @@
       "Bash(npx vite *)",
       "Bash(node_modules/.bin/vite packages/wasm/src --port 3100)",
       "Bash(\"/d/code/zeroDraw/apps/web/node_modules/.bin/vite\" \"D:/code/zeroDraw/packages/wasm/src\" --port 3100 --host)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(git checkout *)"
     ]
   }
 }

@@ -1,5 +1,6 @@
 import useSymmetryStore from '@core/store/useSymmetry';
 import { hexToRgba, useMemoizedFn, useMount } from '@zeroDraw/common';
+import { ShapeRecognizer } from '@zeroDraw/wasm';
 import Konva from 'konva';
 import type { Vector2d } from 'konva/lib/types';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -65,16 +66,15 @@ import {
 } from '../utils/Lasso';
 import { isMac, isMobile, isWindows } from '../utils/platform';
 import { buildShiftLine, snapPointTo45 } from '../utils/shiftLine';
-import { ShapeRecognizer } from '@zeroDraw/wasm';
 import ActiveDiagram, { ActiveDiagramRef, ActiveDiagramState } from './components/ActiveDiagram';
 import { bitmapCache } from './components/Diagram/Fill';
-
-const shapeRecognizer = new ShapeRecognizer({ threshold: 0.72, exclude: ['v', 'caret', 'check'] });
 import DrawLayer, { DrawLayerRef } from './components/DrawLayer';
 import Layer from './components/Layer';
 import Mosic from './components/Mosic';
 import Symmetry from './components/Symmetry';
 import Thumbnail from './components/Thumbnail';
+
+const shapeRecognizer = new ShapeRecognizer({ threshold: 0.72, exclude: ['v', 'caret', 'check'] });
 
 type WheelEventWithWheelDeltaY = WheelEvent & { wheelDeltaY?: number };
 
@@ -366,7 +366,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
     const lassos = drawingLayer.lassos ?? [];
 
-    // 找到所有与新 stroke 有交集的 lassos（不包含新 stroke，因为它尚未写入 drawingLayer）
     const intersectingIndices: number[] = [];
     for (let i = 0; i < lassos.length; i++) {
       if (hasIntersection(lassos[i].points, newStroke.points)) {
@@ -374,7 +373,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       }
     }
 
-    // 没有交集：REMOVE 不产生新选区；ADD 直接追加
     if (intersectingIndices.length === 0) {
       if ((newStroke.mode ?? LassoMode.ADD) === LassoMode.REMOVE) {
         activeDiagramRef.current?.setActiveDiagram(null);
@@ -1387,6 +1385,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
 
   const {
     canvasRef: brushCanvasRef,
+    mirrorCanvasRef: brushMirrorCanvasRef,
     onBrushDown,
     onBrushMove,
     onBrushUp,
@@ -1604,7 +1603,6 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       case Actions.ELLIPSE:
       case Actions.LINE:
         if (discardLastStrokeIfTooShort()) return;
-        // PEN 图形识别矫正（undefined 视为 true）
         if ((lineConfig.amendment ?? true) && activeKey === Actions.PEN) {
           const active = activeDiagramRef.current?.activeDiagram;
           if (active?.type === 'path') {
@@ -1617,7 +1615,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
               const newFlat = result.points.flatMap((p) => [p.x, p.y]);
               activeDiagramRef.current?.setActiveDiagram({
                 type: 'path',
-                props: { ...line, points: newFlat, pressure: newFlat.map(() => 0.5) } as unknown as Line,
+                props: {
+                  ...line,
+                  points: newFlat,
+                  pressure: newFlat.map(() => 0.5),
+                } as unknown as Line,
               });
             }
           }
@@ -1724,6 +1726,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
                   ref={drawLayerRef}
                   activeDiagram={activeDrawLayerDiagram}
                   brushCanvasRef={brushCanvasRef}
+                  brushMirrorCanvasRef={brushMirrorCanvasRef}
                 />
                 {!!layer && <Layer key={layer.id} {...layer} />}
               </React.Fragment>
