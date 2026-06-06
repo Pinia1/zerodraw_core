@@ -10,6 +10,8 @@ interface PortalConfProps {
   setVisible: (visible: boolean) => void;
   content?: React.ReactNode;
   popoverStyles?: React.CSSProperties;
+  /** 触发该 Portal 的控件 ref，点击它时不触发 click-away，由触发器自己负责 toggle */
+  triggerRef?: React.RefObject<HTMLElement | null>;
 }
 
 const Portal: React.FC<PortalConfProps> = ({
@@ -18,12 +20,15 @@ const Portal: React.FC<PortalConfProps> = ({
   setVisible,
   content,
   popoverStyles,
+  triggerRef,
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  useClickAway(() => {
-    setVisible(false);
-  }, ref);
+  useClickAway(
+    () => { setVisible(false); },
+    triggerRef ? [ref, triggerRef] : ref,
+    'pointerdown',
+  );
 
   const style: React.CSSProperties = {
     position: 'fixed',

@@ -133,6 +133,7 @@ const PenConf = () => {
       <ToolItem
         style={ToolItemStyle}
         $active={brushDetailConfPosition.visible}
+        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
           const rect = (e.target as HTMLElement).getBoundingClientRect();

@@ -14,6 +14,7 @@ export type LineConfigTypes = Pick<
 > & {
   fill?: boolean;
   amendment?: boolean;
+  amendmentStrength?: number;
   brushName?: string;
   brushConfig?: BrushJSON;
 };

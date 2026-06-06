@@ -1392,7 +1392,7 @@ export class ShapeRecognizer {
    * @param points 轨迹点序列
    * @returns 识别结果，未识别到返回 null
    */
-  recognize(points: Point[]): RecognizeResult | null {
+  recognize(points: Point[], thresholdOverride?: number): RecognizeResult | null {
     if (points.length < 5) return null;
 
     // 优先检测直线
@@ -1407,7 +1407,8 @@ export class ShapeRecognizer {
     const dollarPts = points.map((p) => P(p.x, p.y));
     const result = this._dollarRecognize(dollarPts);
 
-    if (result.Score < this._opts.threshold) return null;
+    const threshold = thresholdOverride ?? this._opts.threshold;
+    if (result.Score < threshold) return null;
 
     return {
       name: result.Name as ShapeName,
@@ -1421,8 +1422,8 @@ export class ShapeRecognizer {
    * @param points 轨迹点序列
    * @returns 转换结果（含标准图形点序列），未识别到返回 null
    */
-  recognizeAndConvert(points: Point[]): ConvertResult | null {
-    const result = this.recognize(points);
+  recognizeAndConvert(points: Point[], thresholdOverride?: number): ConvertResult | null {
+    const result = this.recognize(points, thresholdOverride);
     if (!result) return null;
 
     // 计算包围盒

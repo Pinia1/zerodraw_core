@@ -120,6 +120,16 @@
     "yes": "Yes",
     "no": "No"
   },
+  "brushConf": {
+    "size": "Size",
+    "opacity": "Opacity",
+    "smoothness": "Smoothness",
+    "hardness": "Hardness",
+    "fill": "Fill",
+    "pressure": "Pressure",
+    "amendment": "Amendment",
+    "amendmentStrength": "Amendment Strength"
+  },
   "assets": {
     "searchPlaceholder": "Find an asset...",
     "project": "Project",

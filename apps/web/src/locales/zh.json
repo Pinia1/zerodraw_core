@@ -120,6 +120,16 @@
     "yes": "确认",
     "no": "取消"
   },
+  "brushConf": {
+    "size": "大小",
+    "opacity": "不透明度",
+    "smoothness": "平滑",
+    "hardness": "硬度",
+    "fill": "填充",
+    "pressure": "压感",
+    "amendment": "抖动修正",
+    "amendmentStrength": "修正强度"
+  },
   "assets": {
     "searchPlaceholder": "查找资源...",
     "project": "当前项目",

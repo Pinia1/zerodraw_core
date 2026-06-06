@@ -1,5 +1,6 @@
 import type Konva from 'konva';
 import { getStroke } from 'perfect-freehand';
+import polygonClipping from 'polygon-clipping';
 import type { Line } from '../types/Layers';
 import { isMobile } from './platform';
 
@@ -83,20 +84,24 @@ export const pint2DToPath = (points: number[], line: Partial<Line>) => {
 
   const taper = (line.hardness || 0) * MAX_TAPER;
 
-  const path = getSvgPathFromStroke(
-    getStroke(pathPoint as number[][], {
-      simulatePressure: suppress, //速度模拟压感
-      size: line.strokeWidth ? line.strokeWidth / 2 : 2,
-      thinning: line.suppress ? 0.8 : 0,
-      smoothing: line.stabilizer || 0.2,
-      streamline: 0.5,
-      easing: (t: number) => Math.sin((t * Math.PI) / 2),
-      start: { taper },
-      end: { taper },
-      last: true,
-    })
-  );
-  return path;
+  const stroke = getStroke(pathPoint as number[][], {
+    simulatePressure: suppress, //速度模拟压感
+    size: line.strokeWidth ? line.strokeWidth / 2 : 2,
+    thinning: line.suppress ? 0.8 : 0,
+    smoothing: line.stabilizer || 0.2,
+    streamline: 0.5,
+    easing: (t: number) => Math.sin((t * Math.PI) / 2),
+    start: { taper },
+    end: { taper },
+    last: true,
+  });
+
+  if (!line.fill) {
+    const faces = polygonClipping.union([stroke as [number, number][]]);
+    return faces.flatMap((face) => face.map((pts) => getSvgPathFromStroke(pts))).join(' ');
+  }
+
+  return getSvgPathFromStroke(stroke);
 };
 
 export const getTouchCenterAndDistance = (stage: Konva.Stage, touches: TouchList) => {

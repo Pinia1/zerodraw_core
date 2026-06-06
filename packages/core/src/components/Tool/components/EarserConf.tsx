@@ -94,6 +94,7 @@ const EarserConf = () => {
       <ToolItem
         style={ToolItemStyle}
         $active={brushDetailConfPosition.visible}
+        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
         onClick={(e: React.MouseEvent) => {
           const rect = (e.target as HTMLElement).getBoundingClientRect();
           setBrushDetailConfPosition({

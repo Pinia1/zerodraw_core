@@ -1,11 +1,12 @@
 import Icon from '@ant-design/icons';
+import { IconRefer } from '@core/icons';
 import { Flex } from 'antd';
 import { useShallow } from 'zustand/react/shallow';
-import { IconRefer } from '@core/icons';
 import useToolsStore from '../../../store/useTools';
 import { Actions } from '../../../types/Drawing';
 import Container from '../../Container';
 import BrushConf from './BrushConf';
+import BrushToolConf from './BrushToolConf';
 import FillConf from './FillConf';
 
 const BrushDetail = () => {
@@ -32,6 +33,7 @@ const BrushDetail = () => {
       </Flex>
 
       {activeKey === Actions.FILL && <FillConf />}
+      {activeKey === Actions.BRUSH && <BrushToolConf />}
       {[Actions.PEN, Actions.ERASER].includes(activeKey) && <BrushConf />}
     </Container>
   );
