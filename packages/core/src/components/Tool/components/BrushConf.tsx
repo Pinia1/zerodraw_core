@@ -1,11 +1,13 @@
 import { Flex, Slider, Space, Switch } from 'antd';
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, EraserConfigTypes, LineConfigTypes } from '../../../types/Drawing';
 
 const BrushConf = () => {
+  const { t } = useTranslation();
   const { lineConfig, setLineConfig, eraserConfig, setEraserConfig, fillColor, setFillColor } =
     useDrawingStore(
       useShallow((state) => ({
@@ -44,7 +46,7 @@ const BrushConf = () => {
         <Flex flex={1} vertical gap={6}>
           <Space direction="vertical" style={{ width: '100%' }}>
             <Flex flex={1} justify="space-between">
-              <span>Size</span>
+              <span>{t('brushConf.size')}</span>
               <span>{config.strokeWidth}px</span>
             </Flex>
             <Flex flex={1} justify="space-between">
@@ -62,7 +64,7 @@ const BrushConf = () => {
 
           <Space direction="vertical" style={{ width: '100%' }}>
             <Flex flex={1} justify="space-between">
-              <span>Opacity</span>
+              <span>{t('brushConf.opacity')}</span>
               <span>{Math.round(config.opacity * 100)}%</span>
             </Flex>
             <Flex flex={1} justify="space-between">
@@ -82,7 +84,7 @@ const BrushConf = () => {
             <>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Flex flex={1} justify="space-between">
-                  <span>Smoothness</span>
+                  <span>{t('brushConf.smoothness')}</span>
                   <span>{lineConfig.stabilizer}x</span>
                 </Flex>
                 <Flex flex={1} justify="space-between">
@@ -100,7 +102,7 @@ const BrushConf = () => {
               </Space>
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Flex flex={1} justify="space-between">
-                  <span>Hardness</span>
+                  <span>{t('brushConf.hardness')}</span>
                   <span>{Math.round(lineConfig.hardness * 100)}%</span>
                 </Flex>
                 <Flex flex={1} justify="space-between">
@@ -161,7 +163,7 @@ const BrushConf = () => {
       {activeKey === Actions.PEN && (
         <Flex style={{ width: '100%', padding: 12, gap: 12 }}>
           <Flex align="center" gap={6}>
-            <span>Fill</span>
+            <span>{t('brushConf.fill')}</span>
             <Switch
               size="small"
               checked={lineConfig.fill}
@@ -169,13 +171,39 @@ const BrushConf = () => {
             />
           </Flex>
           <Flex align="center" gap={6}>
-            <span>Pressure</span>
+            <span>{t('brushConf.pressure')}</span>
             <Switch
               size="small"
               checked={lineConfig.suppress}
               onChange={(value: boolean) => handleSetConfig('suppress', value)}
             />
           </Flex>
+          <Flex align="center" gap={6}>
+            <span>{t('brushConf.amendment')}</span>
+            <Switch
+              size="small"
+              checked={lineConfig.amendment ?? true}
+              onChange={(value: boolean) => handleSetConfig('amendment', value)}
+            />
+          </Flex>
+        </Flex>
+      )}
+      {activeKey === Actions.PEN && (lineConfig.amendment ?? true) && (
+        <Flex style={{ width: '100%', padding: '0 12px 12px' }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Flex justify="space-between">
+              <span>{t('brushConf.amendmentStrength')}</span>
+              <span>{Math.round((lineConfig.amendmentStrength ?? 0.72) * 100)}%</span>
+            </Flex>
+            <Slider
+              style={{ width: '100%', margin: 0 }}
+              min={50}
+              max={95}
+              step={1}
+              value={Math.round((lineConfig.amendmentStrength ?? 0.72) * 100)}
+              onChange={(value) => handleSetConfig('amendmentStrength', value / 100)}
+            />
+          </Space>
         </Flex>
       )}
     </>

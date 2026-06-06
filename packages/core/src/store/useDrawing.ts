@@ -108,6 +108,7 @@ export const useDrawingStore = create<DrawingState>()(
         stabilizer: 2, //0 - 4
         fill: true,
         amendment: true,
+        amendmentStrength: 0.72,
         brushName: '印象派',
         brushConfig: BUILTIN_BRUSHES['印象派'],
       },

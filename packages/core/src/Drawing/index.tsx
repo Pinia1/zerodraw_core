@@ -1559,6 +1559,14 @@ const Drawing: React.FC<DrawingProps> = (props) => {
       }
       case Actions.BRUSH: {
         onBrushUp();
+        // 图形识别矫正
+        if (lineConfig.amendment ?? true) {
+          const result = shapeRecognizer.recognizeAndConvert(
+            getStrokePoints(),
+            lineConfig.amendmentStrength ?? 0.72
+          );
+          if (result) redrawWithShapePoints(result.points);
+        }
         void (async () => {
           const committed = await commitBrushStroke();
           if (!committed) return;
@@ -1610,7 +1618,7 @@ const Drawing: React.FC<DrawingProps> = (props) => {
             const flat = line.points;
             const pts: { x: number; y: number }[] = [];
             for (let i = 0; i + 1 < flat.length; i += 2) pts.push({ x: flat[i], y: flat[i + 1] });
-            const result = shapeRecognizer.recognizeAndConvert(pts);
+            const result = shapeRecognizer.recognizeAndConvert(pts, lineConfig.amendmentStrength ?? 0.72);
             if (result) {
               const newFlat = result.points.flatMap((p) => [p.x, p.y]);
               activeDiagramRef.current?.setActiveDiagram({
