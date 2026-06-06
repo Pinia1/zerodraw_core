@@ -53,6 +53,7 @@
     "@zeroDraw/common": "workspace:*",
     "@zeroDraw/wasm": "workspace:*",
     "file-saver": "^2.0.5",
+    "polygon-clipping": "^0.15.7",
     "tippy.js": "^6.3.7",
     "zod": "^4.0.0"
   },
