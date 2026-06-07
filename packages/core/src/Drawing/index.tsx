@@ -1391,6 +1391,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
     onBrushUp,
     commitBrushStroke,
     clearBrushCanvas,
+    getStrokePoints,
+    redrawWithShapePoints,
   } = useBrushTool(
     layerConfig,
     stageConfig,
