@@ -754,6 +754,11 @@ const Drawing: React.FC<DrawingProps> = (props) => {
           }
         }
 
+        if (activeKey === Actions.BRUSH) {
+          onBrushUp();
+          clearBrushCanvas();
+        }
+
         isDrawing.current = false;
         setDrawingId(null);
       }
