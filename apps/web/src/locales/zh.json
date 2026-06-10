@@ -68,8 +68,8 @@
     "custom": "自定义"
   },
   "prompt": {
-    "modify": "生图",
-    "history": "历史"
+    "modify": "modify",
+    "history": "history"
   },
   "flow": {
     "promptRequired": "请输入提示词",

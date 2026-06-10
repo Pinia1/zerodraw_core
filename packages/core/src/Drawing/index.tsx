@@ -1,3 +1,4 @@
+import { IconLogo } from '@core/icons';
 import useSymmetryStore from '@core/store/useSymmetry';
 import { hexToRgba, useMemoizedFn, useMount } from '@zeroDraw/common';
 import { ShapeRecognizer } from '@zeroDraw/wasm';
@@ -1625,7 +1626,10 @@ const Drawing: React.FC<DrawingProps> = (props) => {
             const flat = line.points;
             const pts: { x: number; y: number }[] = [];
             for (let i = 0; i + 1 < flat.length; i += 2) pts.push({ x: flat[i], y: flat[i + 1] });
-            const result = shapeRecognizer.recognizeAndConvert(pts, lineConfig.amendmentStrength ?? 0.72);
+            const result = shapeRecognizer.recognizeAndConvert(
+              pts,
+              lineConfig.amendmentStrength ?? 0.72
+            );
             if (result) {
               const newFlat = result.points.flatMap((p) => [p.x, p.y]);
               activeDiagramRef.current?.setActiveDiagram({
@@ -1686,7 +1690,8 @@ const Drawing: React.FC<DrawingProps> = (props) => {
             }}
           />
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-          <div style={{ color: '#666', fontSize: 14 }}>loading…</div>
+          {/* <div style={{ color: '#666', fontSize: 14 }}>loading…</div> */}
+          <IconLogo />
         </div>
       </div>
     );

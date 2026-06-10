@@ -1,6 +1,6 @@
+import { ConfigProvider } from 'antd';
 import enUS from 'antd/locale/en_US';
 import zhCN from 'antd/locale/zh_CN';
-import { ConfigProvider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { RouterProvider } from 'react-router-dom';
 import { router } from './router';
