@@ -15,8 +15,45 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
   const { onSuccess, onError, accept, multiple, onComplete, local } = options || {};
   const [loading, setLoading] = useState(false);
 
-  const run = async () => {
+  const uploadFiles = async (files: File[]) => {
+    if (!files.length) return;
+    setLoading(true);
+    return Promise.allSettled(
+      files.map(async (file) => {
+        try {
+          if (local) {
+            const id = generateUUID();
+            const url = URL.createObjectURL(file);
+            await imageManager.saveImage(id, await file.arrayBuffer(), file.type || undefined);
+            onSuccess?.({ id: id, url: url });
+            return { id: id, url: url };
+          }
+
+          const formData = new FormData();
+          formData.append('file', file);
+          const data = await Fetch.httpUploadImage(formData);
+          const url = Fetch.getFileUrl('file', data);
+
+          onSuccess?.({ id: data, url: url });
+          return { id: data, url: url };
+        } catch (error) {
+          onError?.(error as Error);
+          return { id: '', url: '' };
+        }
+      })
+    )
+      .then((r) => {
+        onComplete?.(r);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const run = async (files?: File[] | FileList) => {
     if (loading) return;
+    if (files) return uploadFiles(Array.from(files));
+
     return new Promise(async (resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -54,43 +91,10 @@ const useUpload = (options?: Partial<UseUploadOptions>) => {
         window.removeEventListener('focus', checkCancel, true);
         const files = input.files;
         if (files && files.length > 0) {
-          setLoading(true);
-          Promise.allSettled(
-            Array.from(files).map(async (file) => {
-              try {
-                if (local) {
-                  const id = generateUUID();
-                  const url = URL.createObjectURL(file);
-                  await imageManager.saveImage(
-                    id,
-                    await file.arrayBuffer(),
-                    file.type || undefined
-                  );
-                  onSuccess?.({ id: id, url: url });
-                  return { id: id, url: url };
-                }
-
-                const formData = new FormData();
-                formData.append('file', file);
-                const data = await Fetch.httpUploadImage(formData);
-                const url = Fetch.getFileUrl('file', data);
-
-                onSuccess?.({ id: data, url: url });
-                return { id: data, url: url };
-              } catch (error) {
-                onError?.(error as Error);
-                return { id: '', url: '' };
-              }
-            })
-          )
-            .then((r) => {
-              onComplete?.(r);
-            })
-            .finally(() => {
-              setLoading(false);
-              cleanup();
-              resolve(null);
-            });
+          uploadFiles(Array.from(files)).finally(() => {
+            cleanup();
+            resolve(null);
+          });
         } else {
           setLoading(false);
           cleanup();

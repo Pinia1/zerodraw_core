@@ -133,7 +133,11 @@ const Layers: React.FC = () => {
           menu={{
             items: [
               { label: 'Empty layer', key: 'layer', onClick: handleCreateLayer },
-              { label: 'Reference picture', key: 'Reference', onClick: createReferencePictureRun },
+              {
+                label: 'Reference picture',
+                key: 'Reference',
+                onClick: () => createReferencePictureRun(),
+              },
             ],
           }}
         >

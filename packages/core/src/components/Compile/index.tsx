@@ -12,12 +12,8 @@ import { useMemoizedFn } from '@zeroDraw/common';
 import { Tooltip } from 'antd';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { useShallow } from 'zustand/react/shallow';
 import Fetch from '../../fetch';
 import useUpload from '../../hooks/useUpload';
-import { useDrawingStore } from '../../store/useDrawing';
-import useLayerStore from '../../store/useLayer';
-import { exportStageWithBlendModes } from '../../utils/BlendMode';
 import { generateUUID } from '../../utils/drawing';
 import { MentionItem } from './MentionList';
 import { createMentionSuggestion } from './mentionSuggestion';
@@ -69,13 +65,6 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     ref
   ) => {
     const [mentionedList, setMentionedList] = useState<MentionItem[]>([]);
-    const { stageRef, layerConfig } = useDrawingStore(
-      useShallow((s) => ({
-        stageRef: s.stageRef,
-        layerConfig: s.layerConfig,
-      }))
-    );
-    const storeLayers = useLayerStore((s) => s.layers);
 
     const { run: uploadImage, loading: uploading } = useUpload({
       onSuccess: (result) => {
@@ -118,6 +107,34 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       ],
       editorProps: {
         attributes: { class: 'prompt-editor' },
+        handlePaste: (_view, event) => {
+          const imageFiles = Array.from(event.clipboardData?.files ?? []).filter((file) =>
+            file.type.startsWith('image/')
+          );
+
+          if (!imageFiles.length) return false;
+
+          event.preventDefault();
+          event.stopPropagation();
+          void uploadImage(imageFiles);
+          return true;
+        },
+        handleKeyDown: (_view, event) => {
+          const isUndo =
+            (event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
+
+          const isRedo =
+            (event.ctrlKey || event.metaKey) &&
+            (event.key.toLowerCase() === 'y' ||
+              (event.shiftKey && event.key.toLowerCase() === 'z'));
+
+          if (isUndo || isRedo) {
+            event.stopPropagation();
+            return false;
+          }
+
+          return false;
+        },
       },
       onUpdate: ({ editor: e }) => {
         onChange?.({
@@ -159,33 +176,33 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       editor.view.dispatch(tr);
     });
 
-    const captureStage = useMemoizedFn(async () => {
-      const stage = stageRef?.current;
-      if (!stage) return;
+    // const captureStage = useMemoizedFn(async () => {
+    //   const stage = stageRef?.current;
+    //   if (!stage) return;
 
-      const dataUrl = await exportStageWithBlendModes(stage, storeLayers, {
-        applyStageTransform: false,
-        cropX: layerConfig.x,
-        cropY: layerConfig.y,
-        cropWidth: layerConfig.width,
-        cropHeight: layerConfig.height,
-        targetWidth: layerConfig.width,
-        backgroundColor: layerConfig.backgroundVisible
-          ? layerConfig.backgroundColor
-          : 'transparent',
-        mimeType: 'image/webp',
-        quality: 1,
-      });
+    //   const dataUrl = await exportStageWithBlendModes(stage, storeLayers, {
+    //     applyStageTransform: false,
+    //     cropX: layerConfig.x,
+    //     cropY: layerConfig.y,
+    //     cropWidth: layerConfig.width,
+    //     cropHeight: layerConfig.height,
+    //     targetWidth: layerConfig.width,
+    //     backgroundColor: layerConfig.backgroundVisible
+    //       ? layerConfig.backgroundColor
+    //       : 'transparent',
+    //     mimeType: 'image/webp',
+    //     quality: 1,
+    //   });
 
-      if (!dataUrl) return;
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setMentionedList((prev) => [
-        ...prev,
-        { id: generateUUID(), label: 'Stage Snapshot', url, type: 'stage' as const },
-      ]);
-    });
+    //   if (!dataUrl) return;
+    //   const res = await fetch(dataUrl);
+    //   const blob = await res.blob();
+    //   const url = URL.createObjectURL(blob);
+    //   setMentionedList((prev) => [
+    //     ...prev,
+    //     { id: generateUUID(), label: 'Stage Snapshot', url, type: 'stage' as const },
+    //   ]);
+    // });
 
     const handleSubmit = () => {
       if (loading) return;
@@ -233,7 +250,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
         <Toolbar>
           <ToolGroup>
             <Tooltip title="reference Image">
-              <ToolButton onClick={uploadImage}>
+              <ToolButton onClick={() => uploadImage()}>
                 {uploading ? <LoadingOutlined /> : <PlusOutlined />}
               </ToolButton>
             </Tooltip>
@@ -358,7 +375,6 @@ export const EditorArea = styled.div`
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.8) transparent;
 
-    /* Webkit (Chrome, Safari, Edge) */
     &::-webkit-scrollbar {
       width: 6px;
     }

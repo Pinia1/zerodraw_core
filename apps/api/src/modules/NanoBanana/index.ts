@@ -6,16 +6,19 @@ export const getRequstUrl = (model: ModelType) => {
   switch (model) {
     case 'nano-banana-2':
     case 'nano-banana-pro':
+    case 'nano-banana-2-lite':
       return '/v1/draw/nano-banana';
     case 'gpt-image-2':
       return '/v1/draw/completions';
   }
+  return '';
 };
 
 export const getRequestParmas = (model: ModelType, args: NanobananaGenerateParams['args']) => {
   switch (model) {
     case 'nano-banana-2':
     case 'nano-banana-pro':
+    case 'nano-banana-2-lite':
       return {
         model: model,
         prompt: args.prompt,
