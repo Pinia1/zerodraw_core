@@ -23,10 +23,12 @@ export const bananaSizes = ['1K', '2K'];
 export const bananaProSzies = ['1K', '2K', '4K'];
 export const gpt2ProSzies = ['1K', '2K', '4K'];
 export const banana2Sizes = ['512px', '1K', '2K', '4K'];
+export const bananaLiteSizes = ['1K'];
 export const sizeMap = {
   'nano-banana-pro': bananaProSzies,
   'nano-banana-2': banana2Sizes,
   'gpt-image-2': gpt2ProSzies,
+  'nano-banana-2-lite': bananaLiteSizes,
 };
 export const getSizeOptions = (model: string) => {
   if (!model) return [];
@@ -88,10 +90,10 @@ export const getArOptions = (model: NanobananaGenerateParams['args']['model']) =
   switch (model) {
     case 'nano-banana-2':
     case 'nano-banana-pro':
+    case 'nano-banana-2-lite':
       return nanobananaAR;
     case 'gpt-image-2':
       return gptAR;
-      return [];
   }
 };
 
@@ -100,17 +102,17 @@ export const getImageAspectRatio = (
   imageSize: NanobananaGenerateParams['args']['imageSize'],
   aspectRatio: string
 ) => {
-  console.log(imageSize, aspectRatio, '???');
-
   if (!model) return 'auto';
   if (aspectRatio === 'auto') return 'auto';
   switch (model) {
     case 'nano-banana-2':
     case 'nano-banana-pro':
+    case 'nano-banana-2-lite':
       return aspectRatio;
     case 'gpt-image-2': {
       const sizeMap = gptArMap[aspectRatio];
       return sizeMap?.[imageSize] ?? sizeMap?.['2K'] ?? 'auto';
     }
   }
+  return '';
 };

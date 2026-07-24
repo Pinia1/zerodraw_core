@@ -5,7 +5,7 @@ export const nanobananaGenerateSchema = z.object({
   s3Key: z.array(z.string()).optional(),
   args: z
     .object({
-      model: z.enum(['nano-banana-2', 'gpt-image-2', 'nano-banana-pro']),
+      model: z.enum(['nano-banana-2', 'gpt-image-2', 'nano-banana-pro', 'nano-banana-2-lite']),
       prompt: z.string(),
       aspectRatio: z.string(),
       imageSize: z.enum(['512px', '1K', '2K', '4K']),
