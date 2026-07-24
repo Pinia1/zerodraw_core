@@ -8,6 +8,7 @@ const NotFoundPage = lazy(() => import('../pages/NotFound'));
 const AuthPage = lazy(() => import('../pages/Login/AuchCallback'));
 const ProjectPage = lazy(() => import('../pages/Project'));
 const Flow = lazy(() => import('../pages/Flow'));
+const LandingPage = lazy(() => import('../pages/Landing'));
 
 export const router = createBrowserRouter([
   {
@@ -34,6 +35,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: 'flow',
+    element: (
+      <Suspense fallback={null}>
+        <Flow />
+      </Suspense>
+    ),
+  },
+  {
     path: '/drawing',
     element: (
       <Suspense fallback={null}>
@@ -42,6 +51,14 @@ export const router = createBrowserRouter([
     ),
   },
 
+  {
+    path: 'landing',
+    element: (
+      <Suspense fallback={null}>
+        <LandingPage />
+      </Suspense>
+    ),
+  },
   {
     path: 'login',
     element: (
