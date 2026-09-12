@@ -3,3 +3,4 @@ export * from './aiTask';
 export * from './project';
 export * from './projectLayer';
 export * from './assets';
+export * from './agent';

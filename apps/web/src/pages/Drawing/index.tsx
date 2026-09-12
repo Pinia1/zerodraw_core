@@ -1,6 +1,7 @@
 import Dot from '@/componenets/Dot';
 import { useMediaQuery, useRequest, useSize } from '@zeroDraw/common';
-import { Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
+import AgentChatPanel from '@/features/agent/AgentChatPanel';
+import { AgentChatProvider, Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
 import { ConfigProvider, theme } from 'antd';
 import { useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -57,14 +58,16 @@ const DrawingPage = () => {
         ref={containerRef}
       >
         {ready && (
-          <Drawing
-            key={projectId ?? 'default'}
-            size={size!}
-            tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]}
-            canvasWidth={project?.canvasWidth}
-            canvasHeight={project?.canvasHeight}
-            initialImageFile={initialImageFile}
-          />
+          <AgentChatProvider component={AgentChatPanel}>
+            <Drawing
+              key={projectId ?? 'default'}
+              size={size!}
+              tools={[Tools.TOOL, Tools.LAYERS_CONTROL, Tools.FLEXIBLE]}
+              canvasWidth={project?.canvasWidth}
+              canvasHeight={project?.canvasHeight}
+              initialImageFile={initialImageFile}
+            />
+          </AgentChatProvider>
         )}
         <Dot />
       </Container>

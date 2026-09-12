@@ -9,7 +9,7 @@ export default defineConfig((options) => ({
   format: ['cjs', 'esm'],
   dts: true,
   splitting: false,
-  external: ['react', 'react-dom'],
+  external: ['react', 'react-dom', '@assistant-ui/react', '@assistant-ui/react-markdown'],
   treeshake: true,
   minify: false,
   clean: options.watch ? false : true,

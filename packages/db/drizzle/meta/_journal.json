@@ -15,6 +15,13 @@
       "when": 1769948274066,
       "tag": "0001_swift_mephisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1789138791075,
+      "tag": "0002_mixed_nicolaos",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,171 @@
+/* ZeroDraw 侧栏 Chat：280px 窄面板适配 */
+.agent-chat-panel {
+  --thread-max-width: 100%;
+}
+
+.agent-chat-panel .aui-thread-root {
+  background: transparent !important;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 消息区滚动，输入框始终贴底 */
+.agent-chat-panel [data-slot='aui_thread-viewport'] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
+}
+
+.agent-chat-panel [data-slot='aui_thread-viewport']::-webkit-scrollbar {
+  width: 5px;
+}
+
+.agent-chat-panel [data-slot='aui_thread-viewport']::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.agent-chat-panel [data-slot='aui_thread-viewport']::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+}
+
+.agent-chat-panel [data-slot='aui_thread-viewport']::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklch, var(--foreground) 32%, transparent);
+}
+
+/* 收紧边距；覆盖空对话时的 justify-center，改由 footer 贴底 */
+.agent-chat-panel .aui-thread-root .mx-auto {
+  flex: 1;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: flex-start !important;
+  padding-inline: 0;
+  padding-top: 0;
+}
+
+.agent-chat-panel .aui-thread-welcome-root {
+  flex: 1;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.agent-chat-panel [data-slot='aui_message-group'] {
+  gap: 0.75rem;
+  margin-bottom: 0;
+  padding-bottom: 0.5rem;
+}
+
+.agent-chat-panel .aui-root {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* 用户消息 */
+.agent-chat-panel .aui-user-message-content {
+  font-size: 13px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.875rem;
+  background: color-mix(in oklch, var(--primary) 22%, var(--muted));
+  border: 1px solid color-mix(in oklch, var(--primary) 28%, transparent);
+}
+
+/* 助手消息：侧栏内增加轻量气泡，避免文字直接贴在背景上 */
+.agent-chat-panel [data-slot='aui_assistant-message-content'] {
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.875rem;
+  background: color-mix(in oklch, var(--muted) 88%, var(--background));
+  border: 1px solid color-mix(in oklch, var(--border) 80%, transparent);
+}
+
+.agent-chat-panel [data-slot='aui_assistant-message-root'] {
+  margin-bottom: -1.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.agent-chat-panel .aui-assistant-action-bar-root {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.agent-chat-panel [data-slot='aui_assistant-message-root']:hover .aui-assistant-action-bar-root,
+.agent-chat-panel [data-slot='aui_assistant-message-root']:focus-within .aui-assistant-action-bar-root {
+  opacity: 1;
+}
+
+/* Composer：文本区在上，操作按钮在底部左右 */
+.agent-chat-panel {
+  --composer-bg: transparent;
+  --composer-radius: 0.875rem;
+  --composer-padding: 0;
+}
+
+.agent-chat-panel [data-slot='aui_composer-shell'] {
+  overflow: hidden;
+  padding: 10px;
+}
+
+.agent-chat-panel .aui-composer-add-attachment {
+  width: 2rem;
+  height: 2rem;
+  color: color-mix(in oklch, var(--foreground) 55%, transparent);
+}
+
+.agent-chat-panel .aui-composer-add-attachment:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground) 10%, transparent);
+}
+
+.agent-chat-panel .aui-composer-send,
+.agent-chat-panel .aui-composer-cancel {
+  width: 2rem;
+  height: 2rem;
+}
+
+.agent-chat-panel .aui-composer-attachments {
+  padding-inline: 0.125rem;
+}
+
+.agent-chat-panel .aui-thread-viewport-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  margin-top: auto;
+  flex-shrink: 0;
+  gap: 0.375rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0;
+  background: color-mix(in oklch, var(--background) 92%, transparent) !important;
+  backdrop-filter: blur(8px);
+}
+
+/* 窄面板隐藏欢迎建议，减少干扰 */
+.agent-chat-panel .aui-thread-welcome-suggestions,
+.agent-chat-panel [data-slot='aui_followup-suggestions'] {
+  display: none;
+}
+
+.agent-chat-panel .aui-thread-welcome-message-inner {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.agent-chat-panel .aui-thread-scroll-to-bottom {
+  padding: 0.625rem;
+}
+
+/* Markdown 紧凑 */
+.agent-chat-panel .aui-md {
+  font-size: 13px;
+}
+
+.agent-chat-panel .aui-md p {
+  margin-block: 0.35em;
+}
+
+.agent-chat-panel .aui-md pre {
+  font-size: 11px;
+}

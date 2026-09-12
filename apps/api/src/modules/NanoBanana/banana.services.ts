@@ -1,6 +1,7 @@
 import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
 import { getRequestParmas, getRequstUrl } from '.';
 import { env } from '../../config/env';
+import { getGrsaiHost } from '../../config/grsai';
 import { volcService } from '../Volc/volc.services';
 
 const resolveImageUrl = (key: string) =>
@@ -32,8 +33,7 @@ export interface BananaResultResponse {
 
 class BananaService {
   private readonly API_KEY = env.NANOBANANA_API_KEY;
-  private readonly BASE_URL =
-    env.NODE_ENV === 'development' ? 'https://grsai.dakka.com.cn' : 'https://grsaiapi.com';
+  private readonly BASE_URL = getGrsaiHost();
 
   async generate(
     params: NanobananaGenerateParams,

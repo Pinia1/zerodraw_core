@@ -1,3 +1,4 @@
+export * from './agent';
 export * from './generate';
 export * from './github';
 export * from './guest';

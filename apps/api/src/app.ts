@@ -43,7 +43,7 @@ export async function createApp() {
   await app.register(responseWrapper);
   await registerRoutes(app);
 
-  app.addHook('onRequest', async (request, reply) => {
+  app.addHook('onRequest', async (request, _reply) => {
     request.log.info({
       method: request.method,
       url: request.url,

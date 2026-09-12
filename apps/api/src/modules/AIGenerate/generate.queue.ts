@@ -50,14 +50,11 @@ class GenerateQueue {
 
     this.worker.on('failed', (job, err) => this.onFailed(job, err));
     this.worker.on('error', (err) => logger.error('[Worker] Worker error', err));
-
-    logger.info('[Worker] AI generate worker started', { concurrency: this.CONCURRENCY });
   }
 
   async close() {
     if (this.worker) {
       await this.worker.close();
-      logger.info('[Worker] AI generate worker stopped');
     }
     await this.queue.close();
   }

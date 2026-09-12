@@ -2,6 +2,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { closeDatabase } from './db';
 import { generateQueue } from './modules/AIGenerate/generate.queue';
+import { agentService } from './modules/Agent';
 import { closeRedis } from './redis';
 import { logger } from './utils/logger';
 
@@ -20,6 +21,7 @@ async function start() {
     const shutdown = async () => {
       try {
         await app.close();
+        await agentService.closeAll();
         await generateQueue.close();
         await closeRedis();
         await closeDatabase();

@@ -68,8 +68,24 @@
     "custom": "Custom"
   },
   "prompt": {
+    "chat": "Chat",
     "modify": "Modify",
-    "history": "History"
+    "history": "History",
+    "chatConnecting": "Connecting…",
+    "chatReady": "Ready",
+    "chatStreaming": "Replying…",
+    "chatSuspended": "Awaiting approval",
+    "chatEmpty": "Ask the assistant, e.g. show me my current project",
+    "chatPlaceholder": "Type a message. Enter to send, Shift+Enter for newline",
+    "chatNewSession": "New chat",
+    "chatApprove": "Continue",
+    "chatReject": "Cancel",
+    "chatAssistant": "Assistant",
+    "chatTool": "Tool",
+    "chatSummary": "Summary",
+    "chatCopy": "Copy",
+    "chatCopied": "Copied",
+    "chatRegenerate": "Regenerate"
   },
   "flow": {
     "promptRequired": "Please enter a prompt",

@@ -18,7 +18,7 @@ export const outputItemSchema = z.object({
   action: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'failed']),
   s3Key: z.string(),
-  args: z.record(z.unknown()).nullable(),
+  args: z.record(z.string(), z.unknown()).nullable(),
   createdAt: z.number(),
 });
 

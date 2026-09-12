@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import { agentRoutes } from '../modules/Agent';
 import { generateRoutes } from '../modules/AIGenerate';
 import { authRoutes } from '../modules/Auth/auth.routes';
 import { fileRoutes } from '../modules/File';
@@ -9,7 +10,7 @@ import { projectRoutes } from '../modules/Project';
 import { createSuccessResponse } from '../types/response';
 
 export async function registerRoutes(app: FastifyInstance) {
-  app.get('/health', (request, reply) => {
+  app.get('/health', (_request, reply) => {
     const response = createSuccessResponse({
       status: 'ok',
       timestamp: new Date().toISOString(),
@@ -35,5 +36,8 @@ export async function registerRoutes(app: FastifyInstance) {
   });
   await app.register(assetsRoutes, {
     prefix: '/api/assets',
+  });
+  await app.register(agentRoutes, {
+    prefix: '/api/agent',
   });
 }

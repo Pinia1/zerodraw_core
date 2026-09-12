@@ -39,4 +39,11 @@ export type {
 export { useDrawingStore } from './store/useDrawing';
 export { default as useLayerStore } from './store/useLayer';
 export { default as imageManager } from './utils/imageManager';
+export { AgentChatProvider, useAgentChatComponent } from './contexts/AgentChatContext';
+export type { AgentChatComponent } from './contexts/AgentChatContext';
+export { useZeroDrawAgentRuntime } from './components/Prompt/components/Chat/useZeroDrawAgentRuntime';
+export type {
+  UseZeroDrawAgentRuntimeOptions,
+  UseZeroDrawAgentRuntimeReturn,
+} from './components/Prompt/components/Chat/useZeroDrawAgentRuntime';
 export { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload };

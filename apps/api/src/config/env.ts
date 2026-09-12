@@ -11,11 +11,11 @@ config({ path: resolve(__dirname, '../../../..', '.env') });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.string().transform(Number).default('3000'),
+  PORT: z.string().transform(Number).default(3000),
   HOST: z.string().default('0.0.0.0'),
 
   DB_HOST: z.string(),
-  DB_PORT: z.string().transform(Number).default('3306'),
+  DB_PORT: z.string().transform(Number).default(3306),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),
@@ -31,10 +31,13 @@ const envSchema = z.object({
 
   SEEDREAM_API_KEY: z.string(),
 
+  // Agent 对话模型（Grsai，与生图 NanoBanana 同供应商 / 同 API Key）
+  AGENT_MODEL: z.string().default('gemini-3.8-flash'),
+
   REDIS_HOST: z.string().default('127.0.0.1'),
-  REDIS_PORT: z.string().transform(Number).default('6379'),
+  REDIS_PORT: z.string().transform(Number).default(6379),
   REDIS_PASSWORD: z.string().default(''),
-  REDIS_DB: z.string().transform(Number).default('0'),
+  REDIS_DB: z.string().transform(Number).default(0),
 
   NANOBANANA_API_KEY: z.string(),
 
@@ -54,7 +57,7 @@ function validateEnv() {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const missingVars = error.errors.map((err) => err.path.join('.')).join(', ');
+      const missingVars = error.issues.map((err) => err.path.join('.')).join(', ');
       throw new Error(`Missing or invalid environment variables: ${missingVars}`);
     }
     throw error;

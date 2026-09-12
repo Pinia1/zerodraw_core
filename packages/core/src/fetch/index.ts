@@ -5,6 +5,12 @@ import {
   httpUpdateAssetColor,
 } from '../services/assets';
 import {
+  httpAgentResume,
+  httpCreateAgentSession,
+  httpGetAgentSession,
+  streamAgentPrompt,
+} from '../services/agent';
+import {
   httpDeleteLibOutput,
   httpGetFileUrl,
   httpGetLibOutputs,
@@ -43,6 +49,11 @@ class Fetch {
   static createAssetColor = httpCreateAssetColor;
   static updateAssetColor = httpUpdateAssetColor;
   static deleteAssetColor = httpDeleteAssetColor;
+
+  static createAgentSession = httpCreateAgentSession;
+  static getAgentSession = httpGetAgentSession;
+  static agentResume = httpAgentResume;
+  static streamAgentPrompt = streamAgentPrompt;
 
   static getFileUrl = (type: 'thumbnail' | 'file', s3: string) => {
     if (type === 'file') {

@@ -28,6 +28,10 @@ const pool = mysql.createPool({
 
 export const db = drizzle(pool, { schema, mode: 'default' });
 
+// Agent 会话存储层使用 mysql2 原生连接做参数化 SQL + 事务（与官方 sqlite backend
+// 的实现方式一致，便于对齐语义）。这是同一个连接池的附加导出。
+export { pool };
+
 export const closeDatabase = async () => {
   await pool.end();
 };

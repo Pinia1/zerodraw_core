@@ -29,7 +29,7 @@ function wrapResponse(data: unknown, code = 1000, message: string | null = null)
   };
 }
 
-const responseWrapperPlugin: FastifyPluginCallback = (fastify, opts, done) => {
+const responseWrapperPlugin: FastifyPluginCallback = (fastify, _opts, done) => {
   fastify.decorateReply('success', function (data: unknown, message: string | null = null) {
     return this.send(wrapResponse(data, 1000, message));
   });

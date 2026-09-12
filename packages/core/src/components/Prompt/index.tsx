@@ -9,6 +9,7 @@ import { isMobile } from '../../utils/platform';
 import Container from '../Container';
 import { StyledTabs } from '../Layers';
 import Lib from '../Lib';
+import Chat from './components/Chat';
 import CreateWithAI from './components/CreateWithAI';
 
 const Prompt: React.FC = () => {
@@ -61,6 +62,11 @@ const Prompt: React.FC = () => {
         style={{ height: '100%' }}
         defaultActiveKey="1"
         items={[
+          {
+            key: 'Chat',
+            label: t('prompt.chat'),
+            children: <Chat />,
+          },
           {
             key: 'Modify',
             label: t('prompt.modify'),

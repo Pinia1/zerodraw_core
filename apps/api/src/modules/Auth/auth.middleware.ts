@@ -4,7 +4,7 @@ import { db } from '../../db';
 import { UnauthorizedError } from '../../utils/errors';
 import { JwtPayload } from './auth.types';
 
-export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
+export async function authenticate(request: FastifyRequest, _reply: FastifyReply) {
   try {
     const decoded = await request.jwtVerify<JwtPayload>();
     const [foundUser] = await db.select().from(user).where(eq(user.id, decoded.userId));

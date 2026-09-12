@@ -68,8 +68,24 @@
     "custom": "自定义"
   },
   "prompt": {
+    "chat": "对话",
     "modify": "modify",
-    "history": "history"
+    "history": "history",
+    "chatConnecting": "连接会话中…",
+    "chatReady": "就绪",
+    "chatStreaming": "回复中…",
+    "chatSuspended": "等待确认",
+    "chatEmpty": "向创作助手提问，例如：帮我看看当前项目",
+    "chatPlaceholder": "输入消息，Enter 发送，Shift+Enter 换行",
+    "chatNewSession": "新对话",
+    "chatApprove": "继续",
+    "chatReject": "取消",
+    "chatAssistant": "助手",
+    "chatTool": "工具",
+    "chatSummary": "摘要",
+    "chatCopy": "复制",
+    "chatCopied": "已复制",
+    "chatRegenerate": "重新生成"
   },
   "flow": {
     "promptRequired": "请输入提示词",
