@@ -22,13 +22,16 @@ const Paths: React.FC<PathProps> = (props) => {
     }))
   );
 
-  const svgPath = useMemo(() => pint2DToPath(points, props), [points, props]);
+  const svgPath = useMemo(() => {
+    if (props.pathD) return props.pathD;
+    return pint2DToPath(points, props);
+  }, [props.pathD, points, props]);
 
-  const path2D = useMemo(() => {
-    return new Path2D(svgPath);
-  }, [svgPath]);
+  const path2D = useMemo(() => new Path2D(svgPath), [svgPath]);
 
   const bounds = useMemo(() => {
+    if (props.pathBounds) return props.pathBounds;
+
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
@@ -60,18 +63,26 @@ const Paths: React.FC<PathProps> = (props) => {
       width: maxX - minX + pad * 2,
       height: maxY - minY + pad * 2,
     };
-  }, [points, props.strokeWidth]);
+  }, [props.pathBounds, points, props.strokeWidth]);
 
   const renderAllPaths = useCallback(
     (ctx: Konva.Context, p2d: Path2D, line: Line) => {
-      ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = true;
       ctx.save();
+
+      if (line.layout) {
+        ctx.translate(line.layout.x, line.layout.y);
+        ctx.scale(line.layout.scale, line.layout.scale);
+      }
 
       ctx.globalAlpha = shapeOpacity;
       if (line.fill) {
         ctx.fillStyle = line.stroke;
         ctx.fill(p2d);
       } else {
+        ctx.lineWidth = line.strokeWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.strokeStyle = line.stroke;
         ctx.stroke(p2d);
       }
@@ -81,7 +92,8 @@ const Paths: React.FC<PathProps> = (props) => {
     [shapeOpacity]
   );
 
-  if (points.length < MIN_POINT) return null;
+  if (!props.pathD && points.length < MIN_POINT) return null;
+  if (props.pathD && !props.pathD.trim()) return null;
 
   const isRemove = activeKey === Actions.REMOVE;
   const isRope = activeKey === Actions.ROPE;

@@ -76,6 +76,11 @@ export interface Diagram {
 export interface Line {
   id: string;
   points: number[];
+  /** 预烘焙 SVG path d；存在时跳过 perfect-freehand，直接 Path2D 渲染 */
+  pathD?: string;
+  pathBounds?: { x: number; y: number; width: number; height: number };
+  /** viewBox → 画布 的布局变换 */
+  layout?: { x: number; y: number; scale: number };
   strokeWidth: number;
   stroke: string;
   opacity: number;

@@ -23,8 +23,9 @@ export function buildAgentSystemPrompt(
     '2. 用户询问当前画布、图层、正在画什么 → **必须调用** get_canvas_state，禁止编造图层信息。',
     '3. 需要项目列表或项目详情 → 调用 list_projects / read_project，禁止编造项目内容。',
     '4. 用户要生成图像 → 调用 generate_image；完成后告知 taskId。',
+    '5. 用户要求在画布上绘制简单图形/图标/线条插画 → **必须调用** place_svg，传入完整 SVG（含 xmlns，用 path/基本形状+fill/stroke）；禁止未调用就声称已画到画布。',
     '',
-    '前端工具（switch_draw_tool、get_canvas_state）已接入：调用后由浏览器执行并返回结果，禁止声称工具通道未生效。',
+    '前端工具（switch_draw_tool、get_canvas_state、place_svg）已接入：调用后由浏览器执行并返回结果，禁止声称工具通道未生效。',
     '用简洁的中文回答。',
   ].join('\n');
 }

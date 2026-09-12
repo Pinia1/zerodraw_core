@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** 由浏览器执行、服务端 deferred 挂起的工具名 */
-export const FRONTEND_TOOL_NAMES = ['get_canvas_state', 'switch_draw_tool'] as const;
+export const FRONTEND_TOOL_NAMES = ['get_canvas_state', 'switch_draw_tool', 'place_svg'] as const;
 
 export const drawToolModeSchema = z.enum(['pen', 'brush', 'fill']);
 
@@ -47,6 +47,25 @@ export const switchDrawToolResultSchema = z.object({
 });
 
 export type SwitchDrawToolResult = z.infer<typeof switchDrawToolResultSchema>;
+
+/** place_svg：SVG 解析为矢量 path，Path2D 渲染为新图层 */
+export const placeSvgArgsSchema = z.object({
+  svg: z.string().min(1),
+  width: z.number().positive().optional(),
+  height: z.number().positive().optional(),
+  name: z.string().optional(),
+});
+
+export type PlaceSvgArgs = z.infer<typeof placeSvgArgsSchema>;
+
+export const placeSvgResultSchema = z.object({
+  layerId: z.string(),
+  pathCount: z.number().int().nonnegative(),
+  width: z.number(),
+  height: z.number(),
+});
+
+export type PlaceSvgResult = z.infer<typeof placeSvgResultSchema>;
 
 /** 前端完成 deferred 工具调用 */
 export const agentFrontendToolCompleteSchema = z.object({

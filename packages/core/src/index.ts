@@ -75,4 +75,20 @@ export type {
   PromptEditorRef,
 } from './components/Compile';
 export { default as Fetch } from './fetch';
+export { addImageLayerFromSrc } from './utils/addImageLayerFromSrc';
+export type {
+  AddImageLayerFromSrcOptions,
+  AddImageLayerFromSrcResult,
+} from './utils/addImageLayerFromSrc';
+export { addSvgPathsToLayer } from './utils/addSvgPathsToLayer';
+export type {
+  AddSvgPathsToLayerOptions,
+  AddSvgPathsToLayerResult,
+} from './utils/addSvgPathsToLayer';
+export { parseSvgToVectorPaths } from './utils/svgToVectorPaths';
+export type {
+  ParseSvgToPathsOptions,
+  ParseSvgToPathsResult,
+  SvgLayout,
+} from './utils/svgToVectorPaths';
 export { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload };

@@ -3,7 +3,7 @@ import { generateService } from '../../AIGenerate/generate.services';
 import { projectService } from '../../Project/project.services';
 import type { AgentToolContext } from '../session/types';
 import { createGenerateImageTool } from './generateImage.tool';
-import { createGetCanvasStateTool, createSwitchDrawToolTool } from './frontend';
+import { createGetCanvasStateTool, createPlaceSvgTool, createSwitchDrawToolTool } from './frontend';
 import { createListProjectsTool } from './listProjects.tool';
 import { createReadProjectTool } from './readProject.tool';
 
@@ -27,6 +27,7 @@ export function createAgentTools(): AgentHarnessTool<AgentToolContext, any, any>
     createGenerateImageTool(),
     createGetCanvasStateTool(),
     createSwitchDrawToolTool(),
+    createPlaceSvgTool(),
   ];
 }
 
