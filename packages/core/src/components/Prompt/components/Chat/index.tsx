@@ -1,5 +1,5 @@
 import { useAgentChatComponent } from '../../../../contexts/AgentChatContext';
-import { useZeroDrawAgentRuntime } from './useZeroDrawAgentRuntime';
+import { useAgentChatRuntime } from './useAgentChatRuntime';
 import { AssistantThread } from './AssistantThread';
 
 const DefaultChat = () => {
@@ -7,7 +7,7 @@ const DefaultChat = () => {
   const projectId = params.get('projectId') ?? '';
 
   const { runtime, phase, error, isReady, isSuspended, resume, startNewSession } =
-    useZeroDrawAgentRuntime({ projectId });
+    useAgentChatRuntime({ projectId });
 
   const busy = phase === 'streaming' || phase === 'initializing';
 

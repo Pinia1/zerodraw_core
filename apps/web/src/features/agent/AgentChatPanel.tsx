@@ -1,7 +1,7 @@
 import { Thread } from '@/components/thread.aui';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useAgentFrontendToolsConfig, useZeroDrawAgentRuntime } from '@zeroDraw/core';
+import { useAgentChatRuntime, useAgentFrontendToolsConfig } from '@zeroDraw/core';
 import { useMediaQuery } from '@zeroDraw/common';
 import { Alert, Button as AntButton } from 'antd';
 import { MessageSquarePlusIcon } from 'lucide-react';
@@ -31,8 +31,8 @@ const AgentChatPanel = () => {
 
   const frontendTools = useAgentFrontendToolsConfig();
 
-  const { runtime, phase, error, isSuspended, resume, startNewSession, sessionId } =
-    useZeroDrawAgentRuntime({
+  const { runtime, phase, error, isSuspended, resume, startNewSession, sessionId, sendPrompt } =
+    useAgentChatRuntime({
       projectId,
       frontendTools: frontendTools ?? undefined,
     });
@@ -49,10 +49,12 @@ const AgentChatPanel = () => {
   const threadComponents = useMemo(
     () => ({
       Welcome: AgentChatWelcome,
-      Composer: SidebarComposer,
+      Composer: (props: { autoFocus: boolean }) => (
+        <SidebarComposer {...props} disabled={isSuspended} onSend={sendPrompt} />
+      ),
       AssistantMessage: SidebarAssistantMessage,
     }),
-    [],
+    [isSuspended, sendPrompt],
   );
 
   return (

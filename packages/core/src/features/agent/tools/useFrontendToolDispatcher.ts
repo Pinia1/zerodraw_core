@@ -8,9 +8,15 @@ import type { AgentFrontendToolsConfig } from './types';
 export interface UseFrontendToolDispatcherOptions {
   sessionId: string | null;
   config?: AgentFrontendToolsConfig;
+  /** complete() 落库成功但服务端已找不到挂起上下文时触发（如服务重启），提示用户重新发送消息 */
+  onUndelivered?: (toolName: string) => void;
 }
 
-export function useFrontendToolDispatcher({ sessionId, config }: UseFrontendToolDispatcherOptions) {
+export function useFrontendToolDispatcher({
+  sessionId,
+  config,
+  onUndelivered,
+}: UseFrontendToolDispatcherOptions) {
   const inFlightRef = useRef(new Set<string>());
 
   const registry = useMemo(
@@ -27,7 +33,11 @@ export function useFrontendToolDispatcher({ sessionId, config }: UseFrontendTool
 
     inFlightRef.current.add(toolCallId);
     try {
-      await dispatchFrontendToolFromSse({ sessionId, frame, config, registry });
+      const result = await dispatchFrontendToolFromSse({ sessionId, frame, config, registry });
+      if (result.dispatched && result.delivered === false) {
+        const toolName = String((frame as { toolName?: string }).toolName ?? '');
+        onUndelivered?.(toolName);
+      }
     } finally {
       inFlightRef.current.delete(toolCallId);
     }

@@ -92,7 +92,10 @@
 }
 
 .agent-chat-panel [data-slot='aui_assistant-message-root']:hover .aui-assistant-action-bar-root,
-.agent-chat-panel [data-slot='aui_assistant-message-root']:focus-within .aui-assistant-action-bar-root {
+.agent-chat-panel
+  [data-slot='aui_assistant-message-root']:focus-within
+  .aui-assistant-action-bar-root,
+.agent-chat-panel .aui-assistant-action-bar-root:has(.ant-dropdown-open) {
   opacity: 1;
 }
 
@@ -138,6 +141,7 @@
   gap: 0.375rem;
   padding-top: 0.375rem;
   padding-bottom: 0;
+  background: transparent;
 }
 
 /* 窄面板隐藏欢迎建议，减少干扰 */

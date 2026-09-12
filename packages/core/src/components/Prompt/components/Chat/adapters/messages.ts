@@ -287,11 +287,14 @@ export function transcriptToThreadMessages(
   return dedupeAssistantMessages(messages);
 }
 
-export function createUserThreadMessage(text: string): ThreadMessageLike {
+export function createUserThreadMessage(text: string, imageUrls: string[] = []): ThreadMessageLike {
   return {
     id: createId('user'),
     role: 'user',
-    content: [{ type: 'text', text }],
+    content: [
+      ...imageUrls.map((image) => ({ type: 'image' as const, image })),
+      { type: 'text' as const, text },
+    ],
     createdAt: new Date(),
   };
 }

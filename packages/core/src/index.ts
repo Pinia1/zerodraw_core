@@ -62,9 +62,17 @@ export type {
   FrontendToolDefinition,
   FrontendToolRegistry,
 } from './features/agent/tools';
-export { useZeroDrawAgentRuntime } from './components/Prompt/components/Chat/useZeroDrawAgentRuntime';
+export { useAgentChatRuntime } from './components/Prompt/components/Chat/useAgentChatRuntime';
 export type {
-  UseZeroDrawAgentRuntimeOptions,
-  UseZeroDrawAgentRuntimeReturn,
-} from './components/Prompt/components/Chat/useZeroDrawAgentRuntime';
+  AgentChatImage,
+  UseAgentChatRuntimeOptions,
+  UseAgentChatRuntimeReturn,
+} from './components/Prompt/components/Chat/useAgentChatRuntime';
+export { default as PromptEditor } from './components/Compile';
+export type {
+  EditorValue,
+  PromptEditorProps,
+  PromptEditorRef,
+} from './components/Compile';
+export { default as Fetch } from './fetch';
 export { Container, generateUUID, Icons, ToolItem, ToolTypes, useUpload };

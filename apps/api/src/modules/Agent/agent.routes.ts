@@ -9,6 +9,7 @@ import {
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { authenticate } from '../Auth/auth.middleware';
+import { buildPromptImageContents } from './runtime/images';
 import { withAgentPromptLock } from './runtime/prompt-lock';
 import { streamAgentPrompt } from './runtime/sse';
 import { agentService } from './session/service';
@@ -48,9 +49,10 @@ export async function agentRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const userId = request.user.userId;
       const { id } = request.params;
-      const { message } = request.body;
+      const { message, images } = request.body;
 
       const { harness, lane } = await agentService.getRuntime(id, userId);
+      const imageContents = await buildPromptImageContents(images);
 
       reply.hijack();
       await withAgentPromptLock(id, () =>
@@ -59,6 +61,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
           harness,
           lane,
           message,
+          images: imageContents,
           raw: reply.raw,
           corsOrigin: request.headers.origin,
           markSuspended: agentService.markSuspended.bind(agentService),

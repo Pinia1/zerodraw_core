@@ -76,6 +76,8 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     });
     const mentionItemsRef = useRef(mentionItems);
     mentionItemsRef.current = mentionItems;
+    const mentionOpenRef = useRef(false);
+    const submitRef = useRef<() => void>(() => undefined);
 
     const handleMentionSelect = useMemoizedFn((item: MentionItem) => {
       setMentionedList((prev) => {
@@ -85,7 +87,13 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
     });
 
     const [suggestion] = useState(() =>
-      createMentionSuggestion(() => mentionItemsRef.current, handleMentionSelect)
+      createMentionSuggestion(
+        () => mentionItemsRef.current,
+        handleMentionSelect,
+        (open) => {
+          mentionOpenRef.current = open;
+        },
+      )
     );
 
     const editor = useEditor({
@@ -131,6 +139,13 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
           if (isUndo || isRedo) {
             event.stopPropagation();
             return false;
+          }
+
+          if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
+            if (mentionOpenRef.current) return false;
+            event.preventDefault();
+            submitRef.current();
+            return true;
           }
 
           return false;
@@ -209,6 +224,7 @@ const PromptEditor = forwardRef<PromptEditorRef, PromptEditorProps>(
       const val = getValue();
       onSubmit?.(val);
     };
+    submitRef.current = handleSubmit;
 
     const handleEditorClick = useMemoizedFn((e: React.MouseEvent) => {
       if (!editor) return;
@@ -313,14 +329,14 @@ export const Wrapper = styled.div`
   transition:
     border-color 0.2s,
     background-color 0.2s;
-  background: var(--color-fill-tertiary, rgba(40, 40, 42, 0.5));
+  background: var(--color-fill-tertiary, #28282a);
 
   &:hover {
   }
 
   &:focus-within {
     border-color: var(--color-primary-active, #722ed1);
-    background: var(--color-fill-tertiary, rgba(40, 40, 42, 0.8));
+    background: var(--color-fill-tertiary, #28282a);
   }
 `;
 

@@ -62,13 +62,13 @@ class AgentService {
     id: string,
     userId: number,
     input: AgentFrontendToolCompleteParams,
-  ): Promise<{ ok: true }> {
+  ): Promise<{ ok: true; delivered: boolean }> {
     await this.requireOwnedMeta(id, userId);
-    const ok = frontendToolBridge.complete(id, input);
-    if (!ok) {
+    const outcome = await frontendToolBridge.complete(id, input);
+    if (outcome.status === 'not_found') {
       throw new BusinessError('未找到待完成的前端工具调用');
     }
-    return { ok: true };
+    return { ok: true, delivered: outcome.delivered };
   }
 
   /** 放行或拒绝被挂起的 deferred 操作。 */
@@ -149,7 +149,7 @@ class AgentService {
     context: Context = BACKGROUND_CONTEXT,
   ): Promise<string> {
     await this.requireOwnedMeta(id, userId);
-    frontendToolBridge.clearSession(id);
+    await frontendToolBridge.clearSession(id);
     await agentRegister.close(id, context);
     await agentRepository.updateStatus(id, 'closed');
     return id;

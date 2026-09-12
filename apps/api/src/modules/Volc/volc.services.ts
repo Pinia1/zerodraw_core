@@ -61,6 +61,18 @@ class VolcService {
     }
   }
 
+  async getFileBuffer(key: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    const { stream, headers } = await this.getFileStream(key);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    return {
+      buffer: Buffer.concat(chunks),
+      mimeType: String(headers['content-type'] ?? 'image/png'),
+    };
+  }
+
   generateObjectKey() {
     return randomUUID().replace(/-/g, '');
   }

@@ -135,3 +135,25 @@ export const agentBranchMeta = mysqlTable(
     uq_agent_bm_tip: uniqueIndex('uq_agent_bm_tip').on(t.sessionId, t.tipEntryId),
   }),
 );
+
+// 前端 deferred 工具调用：应用层持久化 pending 状态，与 pi-agent 内存中挂起的
+// execute() Promise 分离——进程重启后仍能查到该调用曾经存在及其最终归宿。
+export const agentFrontendToolCall = mysqlTable(
+  'agent_frontend_tool_calls',
+  {
+    sessionId: varchar('session_id', { length: 36 }).notNull(),
+    toolCallId: varchar('tool_call_id', { length: 64 }).notNull(),
+    toolName: varchar('tool_name', { length: 64 }).notNull(),
+    args: json('args').notNull(),
+    status: mysqlEnum('status', ['pending', 'completed', 'error', 'timeout', 'orphaned']).notNull().default('pending'),
+    result: json('result'),
+    message: varchar('message', { length: 1024 }),
+    createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+    updatedAt: bigint('updated_at', { mode: 'number' }).notNull(),
+    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
+  },
+  (t) => ({
+    pk_agent_ftc: primaryKey({ columns: [t.sessionId, t.toolCallId] }),
+    idx_agent_ftc_status: index('idx_agent_ftc_status').on(t.status),
+  }),
+);

@@ -7,7 +7,8 @@ export type { MentionItem };
 
 export const createMentionSuggestion = (
   getItems: () => MentionItem[],
-  onSelect?: (item: MentionItem) => void
+  onSelect?: (item: MentionItem) => void,
+  onOpenChange?: (open: boolean) => void
 ): Omit<SuggestionOptions<MentionItem>, 'editor'> => ({
   items: ({ query }) => {
     const all = getItems();
@@ -29,6 +30,7 @@ export const createMentionSuggestion = (
 
     return {
       onStart: (props) => {
+        onOpenChange?.(true);
         component = new ReactRenderer(MentionList, {
           props,
           editor: props.editor,
@@ -65,6 +67,7 @@ export const createMentionSuggestion = (
       },
 
       onExit: () => {
+        onOpenChange?.(false);
         popup?.[0]?.destroy();
         component?.destroy();
       },

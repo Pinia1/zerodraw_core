@@ -22,9 +22,22 @@ export const agentSessionParamsSchema = z.object({
 
 export type AgentSessionParams = z.infer<typeof agentSessionParamsSchema>;
 
+export const agentPromptImageSchema = z
+  .object({
+    data: z.string().min(1).max(20_000_000).optional(),
+    mimeType: z.string().min(1).optional(),
+    s3Key: z.string().min(1).optional(),
+  })
+  .refine((value) => Boolean(value.s3Key) || Boolean(value.data), {
+    message: 'image requires s3Key or data',
+  });
+
+export type AgentPromptImage = z.infer<typeof agentPromptImageSchema>;
+
 /** 发起创作请求（prompt） */
 export const agentPromptSchema = z.object({
   message: z.string().min(1),
+  images: z.array(agentPromptImageSchema).max(4).optional(),
 });
 
 export type AgentPromptParams = z.infer<typeof agentPromptSchema>;

@@ -23,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import {
-  ActionBarMorePrimitive,
   ActionBarPrimitive,
   AuiIf,
   BranchPickerPrimitive,
@@ -53,6 +52,7 @@ import {
   RefreshCwIcon,
   SquareIcon,
 } from 'lucide-react';
+import { Dropdown } from 'antd';
 import {
   createContext,
   useContext,
@@ -483,11 +483,32 @@ export const AssistantMessage: FC = () => {
   );
 };
 
+function messagePlainText(content: unknown): string {
+  if (typeof content === 'string') return content.trim();
+  if (!Array.isArray(content)) return '';
+  return content
+    .filter((part): part is { type: 'text'; text: string } => part?.type === 'text')
+    .map((part) => part.text)
+    .join('')
+    .trim();
+}
+
+function downloadMarkdown(text: string) {
+  const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'assistant.md';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 const AssistantActionBar: FC = () => {
+  const text = useAuiState((s) => messagePlainText(s.message.content));
+
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
-      autohide="not-last"
       className="aui-assistant-action-bar-root text-muted-foreground animate-in fade-in col-start-3 row-start-2 -ms-1 flex gap-1 duration-200"
     >
       <ActionBarPrimitive.Copy render={<TooltipIconButton tooltip="Copy" />}>
@@ -501,28 +522,28 @@ const AssistantActionBar: FC = () => {
       <ActionBarPrimitive.Reload render={<TooltipIconButton tooltip="Refresh" />}>
         <RefreshCwIcon />
       </ActionBarPrimitive.Reload>
-      <ActionBarMorePrimitive.Root>
-        <ActionBarMorePrimitive.Trigger
-          render={<TooltipIconButton tooltip="More" className="data-[state=open]:bg-accent" />}
-        >
-          <MoreHorizontalIcon />
-        </ActionBarMorePrimitive.Trigger>
-        <ActionBarMorePrimitive.Content
-          side="bottom"
-          align="start"
-          sideOffset={6}
-          className="aui-action-bar-more-content bg-popover text-popover-foreground data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:animate-in data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:animate-out data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-xl border p-1.5"
-        >
-          <ActionBarPrimitive.ExportMarkdown
-            render={
-              <ActionBarMorePrimitive.Item className="aui-action-bar-more-item hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm outline-none select-none" />
-            }
-          >
-            <DownloadIcon className="size-4" />
-            Export as Markdown
-          </ActionBarPrimitive.ExportMarkdown>
-        </ActionBarMorePrimitive.Content>
-      </ActionBarMorePrimitive.Root>
+      <Dropdown
+        trigger={['click']}
+        placement="topLeft"
+        getPopupContainer={() => document.body}
+        menu={{
+          items: [
+            {
+              key: 'export-md',
+              icon: <DownloadIcon className="size-4" />,
+              label: '导出为 Markdown',
+              disabled: !text,
+              onClick: () => downloadMarkdown(text),
+            },
+          ],
+        }}
+      >
+        <span className="inline-flex">
+          <TooltipIconButton tooltip="更多">
+            <MoreHorizontalIcon />
+          </TooltipIconButton>
+        </span>
+      </Dropdown>
     </ActionBarPrimitive.Root>
   );
 };

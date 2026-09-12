@@ -2,7 +2,7 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { closeDatabase } from './db';
 import { generateQueue } from './modules/AIGenerate/generate.queue';
-import { agentService } from './modules/Agent';
+import { agentService, frontendToolBridge } from './modules/Agent';
 import { closeRedis } from './redis';
 import { logger } from './utils/logger';
 
@@ -10,6 +10,7 @@ async function start() {
   try {
     const app = await createApp();
 
+    await frontendToolBridge.reconcileOrphaned();
     await app.listen({ port: env.PORT, host: env.HOST });
 
     logger.info(`Server started successfully`, {

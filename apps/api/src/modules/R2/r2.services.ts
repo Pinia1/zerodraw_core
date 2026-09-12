@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'node:crypto';
 import { env } from '../../config/env';
@@ -49,6 +49,20 @@ class R2Service {
     });
     const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: 300 });
     return { key, uploadUrl };
+  }
+
+  async getFileBuffer(key: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    const result = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.BUCKET,
+        Key: key,
+      }),
+    );
+    const bytes = await result.Body!.transformToByteArray();
+    return {
+      buffer: Buffer.from(bytes),
+      mimeType: result.ContentType || 'image/png',
+    };
   }
 }
 

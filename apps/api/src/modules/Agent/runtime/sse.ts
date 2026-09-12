@@ -5,6 +5,7 @@ import {
   type AgentLane,
   type Context,
 } from '@earendil-works/pi-agent-core';
+import type { ImageContent } from '@earendil-works/pi-ai';
 import type { ServerResponse } from 'http';
 import { logger } from '../../../utils/logger';
 import { AGENT_MAIN_LANE, type AgentToolContext } from '../session/types';
@@ -37,6 +38,7 @@ export interface AgentPromptStreamOptions {
   harness: AgentHarness<AgentToolContext>;
   lane: AgentLane;
   message: string;
+  images?: ImageContent[];
   raw: ServerResponse;
   /** 浏览器请求的 Origin，hijack SSE 时必须手动写入 CORS 头 */
   corsOrigin?: string;
@@ -163,6 +165,7 @@ export async function streamAgentPrompt({
   harness,
   lane,
   message,
+  images,
   raw,
   corsOrigin,
   markSuspended,
@@ -192,16 +195,16 @@ export async function streamAgentPrompt({
   };
   raw.on('close', onClientClose);
 
-  logger.info('[Agent LLM] prompt', { sessionId, message });
+  logger.info('[Agent LLM] prompt', { sessionId, message, imageCount: images?.length ?? 0 });
 
   try {
     await releaseLaneIfBusy(lane, context);
-    const result = await lane.prompt(message, undefined, context);
+    const result = await lane.prompt(message, images, context);
     if (!result.ok) {
       const errText = String(result.error);
       if (errText.includes('LaneBusy')) {
         await releaseLaneIfBusy(lane, context);
-        const retry = await lane.prompt(message, undefined, context);
+        const retry = await lane.prompt(message, images, context);
         if (!retry.ok) {
           send({ type: 'error', message: String(retry.error) });
         } else if (retry.value.status === 'suspended') {

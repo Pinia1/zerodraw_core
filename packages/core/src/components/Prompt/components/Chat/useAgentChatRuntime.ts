@@ -1,4 +1,4 @@
-import type { AgentSessionDetail } from '@zeroDraw/api-contract';
+import type { AgentPromptImage, AgentSessionDetail } from '@zeroDraw/api-contract';
 import type { AppendMessage, CreateStartRunConfig, ThreadMessageLike } from '@assistant-ui/react';
 import { fromThreadMessageLike, useExternalStoreRuntime } from '@assistant-ui/react';
 import { useMemoizedFn } from '@zeroDraw/common';
@@ -27,12 +27,17 @@ import {
   writeStoredSessionId,
 } from './utils';
 
-export interface UseZeroDrawAgentRuntimeOptions {
+export interface UseAgentChatRuntimeOptions {
   projectId?: string;
   frontendTools?: AgentFrontendToolsConfig;
 }
 
-export interface UseZeroDrawAgentRuntimeReturn {
+export interface AgentChatImage {
+  s3Key: string;
+  previewUrl: string;
+}
+
+export interface UseAgentChatRuntimeReturn {
   runtime: ReturnType<typeof useExternalStoreRuntime<ThreadMessageLike>>;
   phase: AgentChatPhase;
   sessionId: string | null;
@@ -40,14 +45,15 @@ export interface UseZeroDrawAgentRuntimeReturn {
   error: string | null;
   isReady: boolean;
   isSuspended: boolean;
+  sendPrompt: (input: { text: string; images?: AgentChatImage[] }) => Promise<void>;
   resume: (decision: 'approve' | 'reject') => Promise<void>;
   startNewSession: () => Promise<void>;
 }
 
-export function useZeroDrawAgentRuntime({
+export function useAgentChatRuntime({
   projectId = '',
   frontendTools,
-}: UseZeroDrawAgentRuntimeOptions = {}): UseZeroDrawAgentRuntimeReturn {
+}: UseAgentChatRuntimeOptions = {}): UseAgentChatRuntimeReturn {
   const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
   const [phase, setPhase] = useState<AgentChatPhase>('initializing');
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -112,6 +118,9 @@ export function useZeroDrawAgentRuntime({
   const { handleSseFrame: dispatchFrontendTool } = useFrontendToolDispatcher({
     sessionId,
     config: frontendTools,
+    onUndelivered: (toolName) => {
+      setError(`${toolName} 执行结果已记录，但会话已中断，请重新发送消息以继续`);
+    },
   });
 
   const handleSseFrame = useMemoizedFn((frame: AgentSseFrame) => {
@@ -137,7 +146,7 @@ export function useZeroDrawAgentRuntime({
     setMessages((prev) => applySseToMessages(prev, frame));
   });
 
-  const runPrompt = useMemoizedFn(async (text: string) => {
+  const runPrompt = useMemoizedFn(async (text: string, images?: AgentPromptImage[]) => {
     const id = sessionIdRef.current;
     if (!id || sendingRef.current) return;
 
@@ -151,7 +160,12 @@ export function useZeroDrawAgentRuntime({
     abortRef.current = controller;
 
     try {
-      await streamAgentPrompt(id, { message: text }, handleSseFrame, controller.signal);
+      await streamAgentPrompt(
+        id,
+        { message: text, images: images && images.length > 0 ? images : undefined },
+        handleSseFrame,
+        controller.signal,
+      );
       setMessages((prev) => finalizeAllStreams(prev));
       setPhase((current) => (current === 'suspended' ? 'suspended' : 'idle'));
     } catch (err: unknown) {
@@ -178,6 +192,32 @@ export function useZeroDrawAgentRuntime({
 
     setMessages((prev) => [...prev, createUserThreadMessage(text)]);
     await runPrompt(text);
+  });
+
+  const sendPrompt = useMemoizedFn(async (input: { text: string; images?: AgentChatImage[] }) => {
+    const text = input.text.trim();
+    const images = (input.images ?? []).slice(0, 4);
+    if (
+      (!text && images.length === 0) ||
+      phaseRef.current === 'streaming' ||
+      phaseRef.current === 'initializing' ||
+      !sessionIdRef.current
+    ) {
+      return;
+    }
+
+    const message = text || '请看这些图片';
+    setMessages((prev) => [
+      ...prev,
+      createUserThreadMessage(
+        message,
+        images.map((image) => image.previewUrl),
+      ),
+    ]);
+    await runPrompt(
+      message,
+      images.map((image) => ({ s3Key: image.s3Key })),
+    );
   });
 
   const onCancel = useMemoizedFn(async () => {
@@ -274,6 +314,7 @@ export function useZeroDrawAgentRuntime({
     error,
     isReady,
     isSuspended,
+    sendPrompt,
     resume,
     startNewSession,
   };

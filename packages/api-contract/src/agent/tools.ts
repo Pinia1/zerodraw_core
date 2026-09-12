@@ -60,6 +60,8 @@ export type AgentFrontendToolCompleteParams = z.infer<typeof agentFrontendToolCo
 
 export const agentFrontendToolCompleteResponseSchema = z.object({
   ok: z.literal(true),
+  /** false = 结果已落库，但服务端已找不到对应挂起的执行上下文（进程重启等），对话无法自动续接，需重新发送消息 */
+  delivered: z.boolean(),
 });
 
 export type AgentFrontendToolCompleteResponse = z.infer<
