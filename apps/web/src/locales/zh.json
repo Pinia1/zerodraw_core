@@ -74,6 +74,7 @@
     "chatConnecting": "连接会话中…",
     "chatReady": "就绪",
     "chatStreaming": "回复中…",
+    "chatThinking": "思考中…",
     "chatSuspended": "等待确认",
     "chatEmpty": "向创作助手提问，例如：帮我看看当前项目",
     "chatPlaceholder": "输入消息，Enter 发送，Shift+Enter 换行",

@@ -33,6 +33,8 @@ export type AgentPromptParams = z.infer<typeof agentPromptSchema>;
 export const agentResumeSchema = z.object({
   toolCallId: z.string().optional(),
   decision: z.enum(['approve', 'reject']).default('approve'),
+  /** 预留：人工确认类前端工具回传结果 */
+  result: z.unknown().optional(),
 });
 
 export type AgentResumeParams = z.infer<typeof agentResumeSchema>;

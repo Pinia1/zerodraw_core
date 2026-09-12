@@ -83,10 +83,13 @@ function subscribeHarnessEvents(
 ): Array<() => void> {
   return [
     harness.events.on('message_start', (e) => {
-      if (inMainLane(e)) send({ type: 'message_start' });
+      if (!inMainLane(e)) return;
+      if ((e.message as { role?: string })?.role !== 'assistant') return;
+      send({ type: 'message_start' });
     }),
     harness.events.on('message_update', (e) => {
       if (!inMainLane(e)) return;
+      if ((e.message as { role?: string })?.role !== 'assistant') return;
       if (e.event.type === 'text_delta') {
         logger.debug('[Agent LLM] delta', { sessionId, delta: e.event.delta });
         send({ type: 'delta', text: e.event.delta });
@@ -94,8 +97,9 @@ function subscribeHarnessEvents(
     }),
     harness.events.on('message_end', (e) => {
       if (!inMainLane(e)) return;
+      const msg = e.message as { role?: string; stopReason?: string; usage?: unknown };
+      if (msg.role !== 'assistant') return;
       const text = assistantText(e.message);
-      const msg = e.message as { stopReason?: string; usage?: unknown };
       // 流式过程中会有多次 message_end（stopReason 非 stop），只推送最终完整回复
       if (msg.stopReason && msg.stopReason !== 'stop') return;
       if (text) {
@@ -203,9 +207,6 @@ export async function streamAgentPrompt({
         } else if (retry.value.status === 'suspended') {
           await markSuspended(sessionId);
           send({ type: 'suspended', operationId: retry.value.operationId });
-        } else {
-          await markActive(sessionId);
-          send({ type: 'done', status: retry.value.status ?? 'completed' });
         }
         return;
       }
@@ -213,9 +214,6 @@ export async function streamAgentPrompt({
     } else if (result.value.status === 'suspended') {
       await markSuspended(sessionId);
       send({ type: 'suspended', operationId: result.value.operationId });
-    } else {
-      await markActive(sessionId);
-      send({ type: 'done', status: 'completed' });
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'HarnessFault') {

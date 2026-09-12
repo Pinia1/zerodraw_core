@@ -1,4 +1,6 @@
 export * from './agent';
+export * from './agent/sse';
+export * from './agent/tools';
 export * from './generate';
 export * from './github';
 export * from './guest';

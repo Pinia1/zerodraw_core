@@ -31,8 +31,10 @@ const envSchema = z.object({
 
   SEEDREAM_API_KEY: z.string(),
 
-  // Agent 对话模型（Grsai，与生图 NanoBanana 同供应商 / 同 API Key）
-  AGENT_MODEL: z.string().default('gemini-3.8-flash'),
+  // Agent 对话模型（独立于生图 NanoBanana 的供应商/Key，OpenAI-completions 兼容中转站）
+  AGENT_MODEL: z.string().default('claude-sonnet-5'),
+  AGENT_BASE_URL: z.string().default('https://nekocode.ai/v1'),
+  AGENT_API_KEY: z.string(),
 
   REDIS_HOST: z.string().default('127.0.0.1'),
   REDIS_PORT: z.string().transform(Number).default(6379),

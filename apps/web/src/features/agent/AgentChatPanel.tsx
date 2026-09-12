@@ -1,13 +1,14 @@
 import { Thread } from '@/components/thread.aui';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useZeroDrawAgentRuntime } from '@zeroDraw/core';
+import { useAgentFrontendToolsConfig, useZeroDrawAgentRuntime } from '@zeroDraw/core';
 import { useMediaQuery } from '@zeroDraw/common';
 import { Alert, Button as AntButton } from 'antd';
 import { MessageSquarePlusIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AssistantRuntimeProvider } from '@assistant-ui/react';
+import { SidebarAssistantMessage } from './SidebarAssistantMessage';
 import { SidebarComposer } from './SidebarComposer';
 import './agent-chat.css';
 
@@ -28,9 +29,13 @@ const AgentChatPanel = () => {
   const [windowTheme] = useMediaQuery();
   const projectId = new URLSearchParams(window.location.search).get('projectId') ?? '';
 
-  const { runtime, phase, error, isSuspended, resume, startNewSession } = useZeroDrawAgentRuntime({
-    projectId,
-  });
+  const frontendTools = useAgentFrontendToolsConfig();
+
+  const { runtime, phase, error, isSuspended, resume, startNewSession, sessionId } =
+    useZeroDrawAgentRuntime({
+      projectId,
+      frontendTools: frontendTools ?? undefined,
+    });
 
   const busy = phase === 'streaming' || phase === 'initializing';
 
@@ -42,7 +47,11 @@ const AgentChatPanel = () => {
   }, [isSuspended, phase, t]);
 
   const threadComponents = useMemo(
-    () => ({ Welcome: AgentChatWelcome, Composer: SidebarComposer }),
+    () => ({
+      Welcome: AgentChatWelcome,
+      Composer: SidebarComposer,
+      AssistantMessage: SidebarAssistantMessage,
+    }),
     [],
   );
 
@@ -84,7 +93,7 @@ const AgentChatPanel = () => {
       ) : null}
 
       <div className="min-h-0 flex-1">
-        <AssistantRuntimeProvider runtime={runtime}>
+        <AssistantRuntimeProvider key={sessionId ?? 'pending'} runtime={runtime}>
           <Thread
             components={threadComponents}
             autoFocus={!isSuspended && phase !== 'initializing'}

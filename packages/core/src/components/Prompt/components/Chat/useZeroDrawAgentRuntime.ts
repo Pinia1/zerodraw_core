@@ -3,6 +3,8 @@ import type { AppendMessage, CreateStartRunConfig, ThreadMessageLike } from '@as
 import { fromThreadMessageLike, useExternalStoreRuntime } from '@assistant-ui/react';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { AgentFrontendToolsConfig } from '../../../../features/agent/tools';
+import { useFrontendToolDispatcher } from '../../../../features/agent/tools';
 import {
   httpAgentResume,
   httpCreateAgentSession,
@@ -27,6 +29,7 @@ import {
 
 export interface UseZeroDrawAgentRuntimeOptions {
   projectId?: string;
+  frontendTools?: AgentFrontendToolsConfig;
 }
 
 export interface UseZeroDrawAgentRuntimeReturn {
@@ -43,6 +46,7 @@ export interface UseZeroDrawAgentRuntimeReturn {
 
 export function useZeroDrawAgentRuntime({
   projectId = '',
+  frontendTools,
 }: UseZeroDrawAgentRuntimeOptions = {}): UseZeroDrawAgentRuntimeReturn {
   const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
   const [phase, setPhase] = useState<AgentChatPhase>('initializing');
@@ -105,10 +109,15 @@ export function useZeroDrawAgentRuntime({
     };
   }, []);
 
+  const { handleSseFrame: dispatchFrontendTool } = useFrontendToolDispatcher({
+    sessionId,
+    config: frontendTools,
+  });
+
   const handleSseFrame = useMemoizedFn((frame: AgentSseFrame) => {
     if (frame.type === 'started') return;
     if (isSseErrorFrame(frame)) {
-      setError(frame.message);
+      setError(String((frame as { message?: string }).message ?? 'Unknown error'));
       return;
     }
     if (frame.type === 'suspended') {
@@ -121,6 +130,9 @@ export function useZeroDrawAgentRuntime({
       setPhase('idle');
       setMessages((prev) => finalizeAllStreams(prev));
       return;
+    }
+    if (frame.type === 'tool_start') {
+      void dispatchFrontendTool(frame);
     }
     setMessages((prev) => applySseToMessages(prev, frame));
   });
@@ -210,7 +222,11 @@ export function useZeroDrawAgentRuntime({
     isLoading: phase === 'initializing',
     isDisabled: !isReady || isSuspended,
     convertMessage: (message, idx) =>
-      fromThreadMessageLike(message, message.id ?? `msg-${idx}`, { type: 'complete', reason: 'stop' }),
+      fromThreadMessageLike(
+        message,
+        message.id ?? `msg-${idx}`,
+        message.status ?? { type: 'complete', reason: 'stop' },
+      ),
     onNew,
     onCancel,
     onReload,

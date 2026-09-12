@@ -3,6 +3,7 @@ import { generateService } from '../../AIGenerate/generate.services';
 import { projectService } from '../../Project/project.services';
 import type { AgentToolContext } from '../session/types';
 import { createGenerateImageTool } from './generateImage.tool';
+import { createGetCanvasStateTool, createSwitchDrawToolTool } from './frontend';
 import { createListProjectsTool } from './listProjects.tool';
 import { createReadProjectTool } from './readProject.tool';
 
@@ -20,7 +21,13 @@ export const agentDeps: AgentDeps = {
 
 /** 注册全部 Agent 工具（新增 tool 时在此追加）。 */
 export function createAgentTools(): AgentHarnessTool<AgentToolContext, any, any>[] {
-  return [createListProjectsTool(), createReadProjectTool(), createGenerateImageTool()];
+  return [
+    createListProjectsTool(),
+    createReadProjectTool(),
+    createGenerateImageTool(),
+    createGetCanvasStateTool(),
+    createSwitchDrawToolTool(),
+  ];
 }
 
 export { createGenerateImageTool } from './generateImage.tool';

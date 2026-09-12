@@ -4,10 +4,10 @@ import { Divider, Flex, Input, Slider } from 'antd';
 import React from 'react';
 import styled from 'styled-components';
 import { useShallow } from 'zustand/react/shallow';
+import { setDrawToolMode } from '../../../store/drawToolMode';
 import { useDrawingStore } from '../../../store/useDrawing';
 import useToolsStore from '../../../store/useTools';
 import { Actions, LineConfigTypes } from '../../../types/Drawing';
-import { createFillWorker } from '../../../utils/fillWorker';
 import Container from '../../Container';
 import { ToolItem } from '../../index';
 
@@ -38,10 +38,9 @@ export const ActionFlex = styled(Flex)`
 `;
 
 const PenConf = () => {
-  const { activeKey, setActiveKey } = useToolsStore(
+  const { activeKey } = useToolsStore(
     useShallow((state) => ({
       activeKey: state.activeKey,
-      setActiveKey: state.setActiveKey,
     }))
   );
   const {
@@ -49,14 +48,12 @@ const PenConf = () => {
     setLineConfig,
     brushDetailConfPosition,
     setBrushDetailConfPosition,
-    bindWorkerRef,
   } = useDrawingStore(
     useShallow((state) => ({
       lineConfig: state.lineConfig,
       setLineConfig: state.setLineConfig,
       brushDetailConfPosition: state.brushDetailConfPosition,
       setBrushDetailConfPosition: state.setBrushDetailConfPosition,
-      bindWorkerRef: state.bindWorkerRef,
     }))
   );
 
@@ -67,24 +64,21 @@ const PenConf = () => {
   return (
     <Container style={ContainerStyle}>
       <ToolItem
-        onClick={() => setActiveKey(Actions.PEN)}
+        onClick={() => setDrawToolMode('pen')}
         style={ToolItemStyle}
         $active={activeKey === Actions.PEN}
       >
         <Icon component={IconPen} />
       </ToolItem>
       <ToolItem
-        onClick={() => setActiveKey(Actions.BRUSH)}
+        onClick={() => setDrawToolMode('brush')}
         style={ToolItemStyle}
         $active={activeKey === Actions.BRUSH}
       >
         <Icon component={IconBrush} />
       </ToolItem>
       <ToolItem
-        onClick={() => {
-          setActiveKey(Actions.FILL);
-          bindWorkerRef(createFillWorker());
-        }}
+        onClick={() => setDrawToolMode('fill')}
         style={ToolItemStyle}
         $active={activeKey === Actions.FILL}
       >

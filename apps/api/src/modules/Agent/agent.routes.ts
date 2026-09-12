@@ -1,6 +1,7 @@
 import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import {
   agentCreateSessionSchema,
+  agentFrontendToolCompleteSchema,
   agentListQuerySchema,
   agentPromptSchema,
   agentResumeSchema,
@@ -64,6 +65,18 @@ export async function agentRoutes(fastify: FastifyInstance) {
           markActive: agentService.markActive.bind(agentService),
         }),
       );
+    },
+  );
+
+  /** 浏览器完成 deferred 前端工具。 */
+  app.post(
+    '/:id/frontend-tools/complete',
+    { schema: { params: agentSessionParamsSchema, body: agentFrontendToolCompleteSchema } },
+    async (request, reply) => {
+      const userId = request.user.userId;
+      const { id } = request.params;
+      const data = await agentService.completeFrontendTool(id, userId, request.body);
+      return reply.success(data);
     },
   );
 

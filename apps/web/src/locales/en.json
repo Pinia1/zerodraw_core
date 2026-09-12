@@ -74,6 +74,7 @@
     "chatConnecting": "Connecting…",
     "chatReady": "Ready",
     "chatStreaming": "Replying…",
+    "chatThinking": "Thinking…",
     "chatSuspended": "Awaiting approval",
     "chatEmpty": "Ask the assistant, e.g. show me my current project",
     "chatPlaceholder": "Type a message. Enter to send, Shift+Enter for newline",

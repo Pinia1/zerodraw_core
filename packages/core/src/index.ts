@@ -37,10 +37,31 @@ export type {
   StorageProvider,
 } from './local/types';
 export { useDrawingStore } from './store/useDrawing';
+export {
+  DRAW_TOOL_MODES,
+  getDrawToolMode,
+  setDrawToolMode,
+} from './store/drawToolMode';
+export type { DrawToolMode } from './store/drawToolMode';
 export { default as useLayerStore } from './store/useLayer';
 export { default as imageManager } from './utils/imageManager';
 export { AgentChatProvider, useAgentChatComponent } from './contexts/AgentChatContext';
 export type { AgentChatComponent } from './contexts/AgentChatContext';
+export {
+  useAgentFrontendToolsConfig,
+  AgentFrontendToolsProvider,
+} from './contexts/AgentFrontendToolsContext';
+export {
+  createFrontendToolRegistry,
+  dispatchFrontendToolFromSse,
+  useFrontendToolDispatcher,
+} from './features/agent/tools';
+export type {
+  AgentFrontendToolsConfig,
+  FrontendToolContext,
+  FrontendToolDefinition,
+  FrontendToolRegistry,
+} from './features/agent/tools';
 export { useZeroDrawAgentRuntime } from './components/Prompt/components/Chat/useZeroDrawAgentRuntime';
 export type {
   UseZeroDrawAgentRuntimeOptions,

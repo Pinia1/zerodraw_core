@@ -1,9 +1,12 @@
 import type {
   AgentCreateSessionParams,
+  AgentFrontendToolCompleteParams,
+  AgentFrontendToolCompleteResponse,
   AgentPromptParams,
   AgentResumeParams,
   AgentResumeResponse,
   AgentSessionDetail,
+  AgentSseFrame,
 } from '@zeroDraw/api-contract';
 import request from '.';
 
@@ -14,9 +17,7 @@ export interface AgentSessionSummary {
   createdAt: number;
 }
 
-export type AgentSseFrame = Record<string, unknown> & {
-  type: string;
-};
+export type { AgentSseFrame };
 
 const getApiBaseUrl = () => {
   if (typeof import.meta !== 'undefined' && (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_API_URL) {
@@ -50,6 +51,13 @@ export const httpAgentResume = (
   data: AgentResumeParams,
 ): Promise<AgentResumeResponse> => {
   return request.post(`/api/agent/${id}/resume`, data);
+};
+
+export const httpCompleteFrontendTool = (
+  id: string,
+  data: AgentFrontendToolCompleteParams,
+): Promise<AgentFrontendToolCompleteResponse> => {
+  return request.post(`/api/agent/${id}/frontend-tools/complete`, data);
 };
 
 /** 解析 SSE 文本块 */

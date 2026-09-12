@@ -1,6 +1,7 @@
 import { BACKGROUND_CONTEXT, type Context } from '@earendil-works/pi-agent-core';
 import type {
   AgentCreateSessionParams,
+  AgentFrontendToolCompleteParams,
   AgentListQuery,
   AgentResumeParams,
   AgentResumeResponse,
@@ -8,6 +9,7 @@ import type {
 import { BusinessError, ForbiddenError, NotFoundError } from '../../../utils/errors';
 import { logger } from '../../../utils/logger';
 import { agentRegister } from '../runtime/register';
+import { frontendToolBridge } from '../tools/frontend';
 import { readMainLaneTranscript, summarizeTranscriptRoles } from './history';
 import { agentRepository } from './repository';
 import type { AgentRuntime, AgentSessionMeta } from './types';
@@ -53,6 +55,20 @@ class AgentService {
 
   async markActive(id: string): Promise<void> {
     await agentRepository.updateStatus(id, 'active');
+  }
+
+  /** 浏览器完成 deferred 前端工具调用。 */
+  async completeFrontendTool(
+    id: string,
+    userId: number,
+    input: AgentFrontendToolCompleteParams,
+  ): Promise<{ ok: true }> {
+    await this.requireOwnedMeta(id, userId);
+    const ok = frontendToolBridge.complete(id, input);
+    if (!ok) {
+      throw new BusinessError('未找到待完成的前端工具调用');
+    }
+    return { ok: true };
   }
 
   /** 放行或拒绝被挂起的 deferred 操作。 */
@@ -133,6 +149,7 @@ class AgentService {
     context: Context = BACKGROUND_CONTEXT,
   ): Promise<string> {
     await this.requireOwnedMeta(id, userId);
+    frontendToolBridge.clearSession(id);
     await agentRegister.close(id, context);
     await agentRepository.updateStatus(id, 'closed');
     return id;

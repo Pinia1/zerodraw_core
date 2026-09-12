@@ -15,24 +15,27 @@ import {
 } from '@earendil-works/pi-ai';
 import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy';
 import { env } from '../../../config/env';
-import { getGrsaiChatBaseUrl } from '../../../config/grsai';
-import { MySqlStorage } from '../storage/mysql.storage';
+import { logger } from '../../../utils/logger';
 import {
   AGENT_MAIN_LANE,
   createAgentToolContext,
   type AgentSessionMeta,
   type AgentToolContext,
 } from '../session/types';
+import { MySqlStorage } from '../storage/mysql.storage';
 import { agentDeps, createAgentTools, type AgentDeps } from '../tools';
+import { frontendToolBridge } from '../tools/frontend';
 import { releaseLaneIfBusy } from './lane-idle';
+import { buildAgentSystemPrompt, buildToolsFingerprint } from './systemPrompt';
+
+const AGENT_PROVIDER_ID = 'agent-relay';
 
 function buildAgentModel(): Model<'openai-completions'> {
-  const baseUrl = getGrsaiChatBaseUrl();
   return {
     id: env.AGENT_MODEL,
     name: env.AGENT_MODEL,
-    provider: 'grsai',
-    baseUrl,
+    provider: AGENT_PROVIDER_ID,
+    baseUrl: env.AGENT_BASE_URL,
     api: 'openai-completions',
     reasoning: false,
     input: ['text'],
@@ -42,24 +45,19 @@ function buildAgentModel(): Model<'openai-completions'> {
   };
 }
 
-const SYSTEM_PROMPT = [
-  '你是 zeroDraw 的创作助手，帮助用户创作插画、设计图等内容。',
-  '你可以调用工具来查询用户的创作项目、读取项目详情、提交图像生成任务。',
-  '需要项目信息时优先调用工具，不要编造项目内容。',
-  '生成图像是异步任务：调用 generate_image 后告知用户 taskId，并提示可轮询进度。',
-  '用简洁的中文回答。',
-].join('\n');
-
 interface CachedRuntime {
   session: Session<AgentSessionMeta>;
   harness: AgentHarness<AgentToolContext>;
   lane: AgentLane;
+  toolsFingerprint: string;
 }
 
 export class AgentRegister {
   private readonly models: MutableModels;
   private readonly model: Model<'openai-completions'>;
   private readonly tools: AgentHarnessTool<AgentToolContext, any, any>[];
+  private readonly toolsFingerprint: string;
+  private readonly systemPrompt: string;
   private readonly cache = new Map<string, CachedRuntime>();
 
   constructor(private readonly deps: AgentDeps = agentDeps) {
@@ -67,23 +65,33 @@ export class AgentRegister {
     this.models = createModels();
     this.models.setProvider(
       createProvider({
-        id: 'grsai',
-        name: 'Grsai',
-        baseUrl: getGrsaiChatBaseUrl(),
-        auth: { apiKey: envApiKeyAuth('Grsai API key', ['NANOBANANA_API_KEY']) },
+        id: AGENT_PROVIDER_ID,
+        name: 'Agent Relay',
+        baseUrl: env.AGENT_BASE_URL,
+        auth: { apiKey: envApiKeyAuth('Agent relay API key', ['AGENT_API_KEY']) },
         models: [this.model],
         api: openAICompletionsApi(),
-      }),
+      })
     );
     this.tools = createAgentTools();
+    this.toolsFingerprint = buildToolsFingerprint(this.tools);
+    this.systemPrompt = buildAgentSystemPrompt(this.tools);
+    logger.info('[Agent] tools registered', {
+      tools: this.tools.map((tool) => tool.name),
+    });
   }
 
   /** 取（或惰性打开）一个会话的运行时，跨请求复用同一 harness/lane。 */
   async get(meta: AgentSessionMeta, context: Context): Promise<CachedRuntime> {
     const hit = this.cache.get(meta.id);
     if (hit) {
-      await releaseLaneIfBusy(hit.lane, context).catch(() => undefined);
-      return hit;
+      if (hit.toolsFingerprint !== this.toolsFingerprint) {
+        logger.info('[Agent] tools changed, recreating harness', { sessionId: meta.id });
+        await this.close(meta.id, context);
+      } else {
+        await releaseLaneIfBusy(hit.lane, context).catch(() => undefined);
+        return hit;
+      }
     }
 
     const session = new StorageBackedSession<AgentSessionMeta>(meta, new MySqlStorage(meta.id));
@@ -93,15 +101,20 @@ export class AgentRegister {
         models: this.models,
         model: this.model,
         tools: this.tools,
-        toolContext: createAgentToolContext(meta.userId, this.deps),
-        systemPrompt: SYSTEM_PROMPT,
+        toolContext: createAgentToolContext(meta.userId, meta.id, this.deps, frontendToolBridge),
+        systemPrompt: this.systemPrompt,
       },
-      context,
+      context
     );
 
     const lane = await harness.lane(AGENT_MAIN_LANE, context);
     await releaseLaneIfBusy(lane, context).catch(() => undefined);
-    const entry: CachedRuntime = { session, harness, lane };
+    const entry: CachedRuntime = {
+      session,
+      harness,
+      lane,
+      toolsFingerprint: this.toolsFingerprint,
+    };
     this.cache.set(meta.id, entry);
     return entry;
   }
@@ -138,7 +151,7 @@ export class AgentRegister {
         } catch {
           // 尽力而为
         }
-      }),
+      })
     );
   }
 }

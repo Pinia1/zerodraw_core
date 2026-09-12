@@ -1,9 +1,6 @@
-import type { AgentTranscriptEntry } from '@zeroDraw/api-contract';
 import type { AppendMessage, ThreadMessageLike } from '@assistant-ui/react';
+import type { AgentTranscriptEntry } from '@zeroDraw/api-contract';
 import type { AgentSseFrame } from '../../../../../services/agent';
-import { extractAgentMessageText } from '../utils';
-
-export const ASSISTANT_STREAM_ID = '__assistant_stream__';
 
 function createId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -26,12 +23,40 @@ function textFromThreadMessageLike(message: ThreadMessageLike): string {
     .join('');
 }
 
+function lastUserText(list: ThreadMessageLike[]): string {
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    if (list[i].role === 'user') return textFromThreadMessageLike(list[i]).trim();
+  }
+  return '';
+}
+
+/** 忽略 harness 误推的用户消息回显 */
+function isEchoOfLastUser(list: ThreadMessageLike[], text: string): boolean {
+  const userText = lastUserText(list);
+  return userText !== '' && userText === text.trim();
+}
+
+function isRunningAssistant(message: ThreadMessageLike): boolean {
+  return message.role === 'assistant' && message.status?.type === 'running';
+}
+
+function findRunningAssistantIndex(list: ThreadMessageLike[]): number {
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    if (isRunningAssistant(list[i])) return i;
+  }
+  return -1;
+}
+
+function hasActiveAssistantStream(list: ThreadMessageLike[]): boolean {
+  return findRunningAssistantIndex(list) !== -1;
+}
+
 function ensureAssistantStream(list: ThreadMessageLike[]): ThreadMessageLike[] {
-  if (list.some((item) => item.id === ASSISTANT_STREAM_ID)) return list;
+  if (hasActiveAssistantStream(list)) return list;
   return [
     ...list,
     {
-      id: ASSISTANT_STREAM_ID,
+      id: createId('assistant'),
       role: 'assistant',
       content: [{ type: 'text', text: '', status: { type: 'running' } }],
       status: { type: 'running' },
@@ -41,7 +66,8 @@ function ensureAssistantStream(list: ThreadMessageLike[]): ThreadMessageLike[] {
 
 function setAssistantStreamText(list: ThreadMessageLike[], text: string): ThreadMessageLike[] {
   const withStream = ensureAssistantStream(list);
-  const index = withStream.findIndex((item) => item.id === ASSISTANT_STREAM_ID);
+  const index = findRunningAssistantIndex(withStream);
+  if (index === -1) return withStream;
   const current = textFromThreadMessageLike(withStream[index]);
   if (text.length < current.length) return withStream;
   const next = withStream.slice();
@@ -56,13 +82,35 @@ function setAssistantStreamText(list: ThreadMessageLike[], text: string): Thread
 
 function appendAssistantDelta(list: ThreadMessageLike[], delta: string): ThreadMessageLike[] {
   const withStream = ensureAssistantStream(list);
-  const index = withStream.findIndex((item) => item.id === ASSISTANT_STREAM_ID);
+  const index = findRunningAssistantIndex(withStream);
+  if (index === -1) return withStream;
   const prevText = textFromThreadMessageLike(withStream[index]);
   return setAssistantStreamText(withStream, prevText + delta);
 }
 
+/** message 帧晚于 done 到达时，合并到最后一条 assistant，避免重复写入 */
+function upsertLastAssistantText(list: ThreadMessageLike[], text: string): ThreadMessageLike[] {
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    if (list[i].role !== 'assistant') break;
+    const prevText = textFromThreadMessageLike(list[i]);
+    if (text === prevText) return list;
+    if (text.startsWith(prevText) || prevText.startsWith(text)) {
+      const merged = text.length >= prevText.length ? text : prevText;
+      const next = list.slice();
+      next[i] = {
+        ...list[i],
+        content: [{ type: 'text', text: merged, status: { type: 'complete' } }],
+        status: { type: 'complete', reason: 'stop' },
+      };
+      return next;
+    }
+    break;
+  }
+  return finalizeAssistantStream(list, text);
+}
+
 function finalizeAssistantStream(list: ThreadMessageLike[], text?: string): ThreadMessageLike[] {
-  const index = list.findIndex((item) => item.id === ASSISTANT_STREAM_ID);
+  const index = findRunningAssistantIndex(list);
   if (index === -1) {
     if (!text) return list;
     return [
@@ -82,9 +130,9 @@ function finalizeAssistantStream(list: ThreadMessageLike[], text?: string): Thre
     next.splice(index, 1);
     return next;
   }
+  // 保持 id 不变，避免 assistant-ui MessageRepository 把同一条回复当成新分支
   next[index] = {
     ...current,
-    id: createId('assistant'),
     role: 'assistant',
     content: [{ type: 'text', text: finalText, status: { type: 'complete' } }],
     status: { type: 'complete', reason: 'stop' },
@@ -98,17 +146,23 @@ function transcriptRole(raw: { role?: string } | undefined): ThreadMessageLike['
   return 'system';
 }
 
+function isTextOnlyMessage(message: ThreadMessageLike): boolean {
+  const { content } = message;
+  if (typeof content === 'string') return true;
+  return content.every((part) => part.type === 'text');
+}
+
 /** 合并 transcript 里因早期 partial message_end 产生的重复 assistant 气泡 */
 function dedupeAssistantMessages(messages: ThreadMessageLike[]): ThreadMessageLike[] {
   const result: ThreadMessageLike[] = [];
   for (const message of messages) {
-    if (message.role !== 'assistant') {
+    if (message.role !== 'assistant' || !isTextOnlyMessage(message)) {
       result.push(message);
       continue;
     }
     const text = textFromThreadMessageLike(message);
     const prev = result[result.length - 1];
-    if (prev?.role === 'assistant') {
+    if (prev?.role === 'assistant' && isTextOnlyMessage(prev)) {
       const prevText = textFromThreadMessageLike(prev);
       if (text.startsWith(prevText) || prevText.startsWith(text)) {
         result[result.length - 1] = text.length >= prevText.length ? message : prev;
@@ -120,24 +174,100 @@ function dedupeAssistantMessages(messages: ThreadMessageLike[]): ThreadMessageLi
   return result;
 }
 
-export function transcriptToThreadMessages(transcript: AgentTranscriptEntry[]): ThreadMessageLike[] {
+interface RawToolCallBlock {
+  type: 'toolCall';
+  id: string;
+  name: string;
+  arguments: Record<string, unknown>;
+}
+
+interface RawTextBlock {
+  type: 'text';
+  text: string;
+}
+
+function isRawTextBlock(part: unknown): part is RawTextBlock {
+  return !!part && typeof part === 'object' && (part as { type?: unknown }).type === 'text';
+}
+
+function isRawToolCallBlock(part: unknown): part is RawToolCallBlock {
+  return !!part && typeof part === 'object' && (part as { type?: unknown }).type === 'toolCall';
+}
+
+function rawContentParts(content: unknown): unknown[] {
+  return Array.isArray(content) ? content : [];
+}
+
+export function transcriptToThreadMessages(
+  transcript: AgentTranscriptEntry[]
+): ThreadMessageLike[] {
   const messages: ThreadMessageLike[] = [];
+  const toolCallIndexById = new Map<string, number>();
+
   for (const entry of transcript) {
     switch (entry.type) {
       case 'message': {
-        const raw = entry.message as { role?: string } | undefined;
+        const raw = entry.message as
+          | { role?: string; content?: unknown; toolCallId?: string; toolName?: string; isError?: boolean }
+          | undefined;
+
+        if (raw?.role === 'toolResult') {
+          const toolCallId = String(raw.toolCallId ?? '');
+          const index = toolCallIndexById.get(toolCallId);
+          if (index === undefined) break;
+          const existing = messages[index];
+          const part = Array.isArray(existing.content) ? existing.content[0] : undefined;
+          if (!part || part.type !== 'tool-call') break;
+          const resultText =
+            rawContentParts(raw.content)
+              .filter(isRawTextBlock)
+              .map((block) => block.text)
+              .join('') || (raw.isError ? '执行失败' : `${part.toolName} 已完成`);
+          messages[index] = {
+            ...existing,
+            content: [{ ...part, result: resultText, isError: raw.isError }],
+            status: { type: 'complete', reason: 'stop' },
+          };
+          break;
+        }
+
         const role = transcriptRole(raw);
-        const content = extractAgentMessageText(entry.message);
-        if (!content) continue;
-        messages.push({
-          id: entry.id,
-          role,
-          content: [{ type: 'text', text: content }],
-          createdAt: new Date(entry.timestamp),
-          ...(role === 'assistant'
-            ? { status: { type: 'complete' as const, reason: 'stop' as const } }
-            : {}),
-        });
+        const parts = rawContentParts(raw?.content);
+        const text = parts
+          .filter(isRawTextBlock)
+          .map((block) => block.text)
+          .join('');
+        if (text) {
+          messages.push({
+            id: entry.id,
+            role,
+            content: [{ type: 'text', text }],
+            createdAt: new Date(entry.timestamp),
+            ...(role === 'assistant'
+              ? { status: { type: 'complete' as const, reason: 'stop' as const } }
+              : {}),
+          });
+        }
+
+        for (const call of parts.filter(isRawToolCallBlock)) {
+          messages.push({
+            id: `${entry.id}:${call.id}`,
+            role: 'assistant',
+            content: [
+              {
+                type: 'tool-call',
+                toolCallId: call.id,
+                toolName: call.name,
+                args: call.arguments as any,
+                argsText: JSON.stringify(call.arguments),
+                result: '等待结果…',
+              },
+            ],
+            createdAt: new Date(entry.timestamp),
+            status: { type: 'running' },
+          });
+          toolCallIndexById.set(call.id, messages.length - 1);
+        }
         break;
       }
       case 'compaction':
@@ -166,6 +296,40 @@ export function createUserThreadMessage(text: string): ThreadMessageLike {
   };
 }
 
+export function createCompletedToolCallMessage(input: {
+  toolName: string;
+  args: Record<string, unknown>;
+  result: unknown;
+}): ThreadMessageLike {
+  const toolCallId = createId('tool');
+  const resultText =
+    typeof input.result === 'string' ? input.result : JSON.stringify(input.result ?? null);
+  return {
+    id: toolCallId,
+    role: 'assistant',
+    content: [
+      {
+        type: 'tool-call',
+        toolCallId,
+        toolName: input.toolName,
+        args: input.args as any,
+        argsText: JSON.stringify(input.args),
+        result: resultText,
+      },
+    ],
+    status: { type: 'complete', reason: 'stop' },
+  };
+}
+
+export function createAssistantTextMessage(text: string): ThreadMessageLike {
+  return {
+    id: createId('assistant'),
+    role: 'assistant',
+    content: [{ type: 'text', text, status: { type: 'complete' } }],
+    status: { type: 'complete', reason: 'stop' },
+  };
+}
+
 export function extractTextFromAppendMessage(message: AppendMessage): string {
   if (message.role !== 'user') return '';
   return message.content
@@ -175,18 +339,27 @@ export function extractTextFromAppendMessage(message: AppendMessage): string {
     .trim();
 }
 
-export function applySseToMessages(list: ThreadMessageLike[], frame: AgentSseFrame): ThreadMessageLike[] {
+export function applySseToMessages(
+  list: ThreadMessageLike[],
+  frame: AgentSseFrame
+): ThreadMessageLike[] {
   switch (frame.type) {
     case 'message_start':
-      return ensureAssistantStream(list);
+      return list;
     case 'delta':
       return appendAssistantDelta(list, String(frame.text ?? ''));
     case 'message': {
       const incoming = String(frame.text ?? '');
-      if (!incoming) return list;
-      return setAssistantStreamText(list, incoming);
+      if (!incoming || isEchoOfLastUser(list, incoming)) {
+        return ensureAssistantStream(list);
+      }
+      if (hasActiveAssistantStream(list)) {
+        return finalizeAssistantStream(list, incoming);
+      }
+      return upsertLastAssistantText(list, incoming);
     }
-    case 'tool_start':
+    case 'tool_start': {
+      const toolArgs = (frame.args as Record<string, unknown> | undefined) ?? {};
       return [
         ...finalizeAssistantStream(list),
         {
@@ -197,14 +370,15 @@ export function applySseToMessages(list: ThreadMessageLike[], frame: AgentSseFra
               type: 'tool-call',
               toolCallId: String(frame.toolCallId ?? createId('tool')),
               toolName: String(frame.toolName ?? 'tool'),
-              args: {},
-              argsText: JSON.stringify(frame.args ?? {}),
+              args: toolArgs as any,
+              argsText: JSON.stringify(toolArgs),
               result: `正在调用 ${String(frame.toolName ?? 'tool')}…`,
             },
           ],
           status: { type: 'running' },
         },
       ];
+    }
     case 'tool_update':
     case 'tool_end': {
       const toolCallId = String(frame.toolCallId ?? '');
@@ -234,5 +408,6 @@ export function applySseToMessages(list: ThreadMessageLike[], frame: AgentSseFra
 }
 
 export function finalizeAllStreams(list: ThreadMessageLike[]): ThreadMessageLike[] {
+  if (!hasActiveAssistantStream(list)) return list;
   return finalizeAssistantStream(list);
 }

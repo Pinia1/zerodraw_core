@@ -1,7 +1,14 @@
 import Dot from '@/componenets/Dot';
 import { useMediaQuery, useRequest, useSize } from '@zeroDraw/common';
 import AgentChatPanel from '@/features/agent/AgentChatPanel';
-import { AgentChatProvider, Drawing, Tools, useDrawingStore } from '@zeroDraw/core';
+import { createDrawingAgentTools } from '@/features/agent/tools';
+import {
+  AgentChatProvider,
+  Drawing,
+  Tools,
+  useDrawingStore,
+  useLayerStore,
+} from '@zeroDraw/core';
 import { ConfigProvider, theme } from 'antd';
 import { useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -51,6 +58,24 @@ const DrawingPage = () => {
 
   const ready = size && (!projectId || project?.id === projectId);
 
+  const frontendTools = useMemo(() => {
+    return createDrawingAgentTools(() => ({
+      projectId: projectId ?? '',
+      getLayerState: () => {
+        const state = useLayerStore.getState();
+        return {
+          layers: state.layers.map((layer) => ({
+            id: layer.id,
+            name: layer.name,
+            visible: layer.visible,
+            opacity: layer.opacity,
+            order: layer.order,
+          })),
+        };
+      },
+    }));
+  }, [projectId]);
+
   return (
     <ConfigProvider theme={{ algorithm: [algorithm, theme.compactAlgorithm] }}>
       <Container
@@ -58,7 +83,7 @@ const DrawingPage = () => {
         ref={containerRef}
       >
         {ready && (
-          <AgentChatProvider component={AgentChatPanel}>
+          <AgentChatProvider component={AgentChatPanel} frontendTools={frontendTools}>
             <Drawing
               key={projectId ?? 'default'}
               size={size!}
