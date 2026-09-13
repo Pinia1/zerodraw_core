@@ -1,12 +1,17 @@
 import type { Context } from '@earendil-works/pi-agent-core';
 import type { ImageContent } from '@earendil-works/pi-ai';
-import type { AgentResumeParams, AgentResumeResponse } from '@zeroDraw/api-contract';
+import type { AgentPromptRunStatus, AgentResumeParams, AgentResumeResponse } from '@zeroDraw/api-contract';
 import type { AgentSessionMeta } from '@zeroDraw/agent-worker/runtime';
 import type { ServerResponse } from 'http';
 
 export type { AgentSessionMeta };
 
 export type AgentRuntimeHostMode = 'inprocess' | 'worker';
+
+export interface AgentPromptFinishedResult {
+  status: AgentPromptRunStatus;
+  errorMessage?: string | null;
+}
 
 export interface AgentStreamPromptOptions {
   sessionId: string;
@@ -17,6 +22,7 @@ export interface AgentStreamPromptOptions {
   corsOrigin?: string;
   markSuspended: (sessionId: string) => void | Promise<void>;
   markActive: (sessionId: string) => void | Promise<void>;
+  onFinished?: (result: AgentPromptFinishedResult) => void | Promise<void>;
 }
 
 export interface AgentRuntimeHost {

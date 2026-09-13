@@ -1,5 +1,6 @@
-import type { AgentRuntimeHost } from './runtime/host/types';
 import type { AgentToolingCatalog } from '@zeroDraw/agent-worker/runtime';
+import type { AgentObservabilityService } from './observability';
+import type { AgentRuntimeHost } from './runtime/host/types';
 import type { AgentRepository } from './session/repository';
 import type { AgentService } from './session/service';
 import type { FrontendToolBridge } from './tools/frontend/bridge';
@@ -10,6 +11,7 @@ export interface AgentModuleContext {
   toolingCatalog: AgentToolingCatalog;
   runtimeHost: AgentRuntimeHost;
   service: AgentService;
+  observability: AgentObservabilityService;
 }
 
 let moduleContext: AgentModuleContext | null = null;

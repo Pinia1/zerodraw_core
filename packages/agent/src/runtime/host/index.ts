@@ -1,4 +1,5 @@
 import type { AgentToolingCatalog } from '@zeroDraw/agent-worker/runtime';
+import type { AgentRuntimeObservability } from '../../observability';
 import type { AgentDeps } from '../../tools';
 import type { FrontendToolBridge } from '../../tools/frontend/bridge';
 import { InProcessRuntimeHost } from './in-process';
@@ -16,11 +17,30 @@ export interface CreateAgentRuntimeHostOptions {
   deps: AgentDeps;
   frontendToolBridge: FrontendToolBridge;
   toolingCatalog: AgentToolingCatalog;
+  /** worker 模式下的子进程池大小 */
+  workerPoolSize?: number;
+  /** harness 空闲自动关闭（毫秒） */
+  harnessIdleCloseMs?: number;
+  observability: AgentRuntimeObservability;
 }
 
 export function createAgentRuntimeHost(options: CreateAgentRuntimeHostOptions): AgentRuntimeHost {
-  const { mode, deps, frontendToolBridge, toolingCatalog } = options;
+  const {
+    mode,
+    deps,
+    frontendToolBridge,
+    toolingCatalog,
+    workerPoolSize = 1,
+    harnessIdleCloseMs = 0,
+    observability,
+  } = options;
   return mode === 'worker'
-    ? new WorkerRuntimeHost(deps, frontendToolBridge)
-    : new InProcessRuntimeHost(deps, frontendToolBridge, toolingCatalog);
+    ? new WorkerRuntimeHost(deps, frontendToolBridge, workerPoolSize, observability)
+    : new InProcessRuntimeHost(
+        deps,
+        frontendToolBridge,
+        toolingCatalog,
+        harnessIdleCloseMs,
+        observability,
+      );
 }

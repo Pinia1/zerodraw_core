@@ -21,9 +21,17 @@ export type WorkerParentMessage =
       error?: string;
     };
 
+export type HarnessLifecycleEvent = 'harness_opened' | 'harness_idle_closed';
+
 export type WorkerChildMessage =
   | { type: 'ready' }
   | { type: 'worker_error'; message: string }
+  | {
+      type: 'harness_lifecycle';
+      sessionId: string;
+      event: HarnessLifecycleEvent;
+      meta: AgentSessionMeta;
+    }
   | { type: 'close_session_result'; requestId: string; ok: boolean; error?: string }
   | { type: 'prompt_event'; requestId: string; event: string; payload: Record<string, unknown> }
   | {

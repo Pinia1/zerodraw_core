@@ -7,6 +7,7 @@ export { createWorkerRequestId } from './request-id';
 export { resolveAgentWorkerForkEntry } from './resolve-entry';
 export {
   isWorkerChildMessage,
+  type HarnessLifecycleEvent,
   type WorkerChildMessage,
   type WorkerParentMessage,
 } from './protocol';

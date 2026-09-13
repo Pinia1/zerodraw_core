@@ -10,4 +10,5 @@ setAgentRuntimeLogger(config.logger);
 startAgentWorkerChild({
   tooling: ctx.toolingCatalog,
   createStorage: (meta) => new MySqlStorage(meta.id),
+  harnessIdleCloseMs: config.env.AGENT_HARNESS_IDLE_MS,
 });

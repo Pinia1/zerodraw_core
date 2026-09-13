@@ -18,6 +18,7 @@ import type { ListElement, StoredValue } from '@earendil-works/pi-agent-core';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import type { Pool, PoolConnection } from 'mysql2/promise';
 import { getAgentPool } from '../config';
+import { addUsage } from '../usage/utils';
 
 /** 可执行参数化 SQL 的最小接口（pool 或单连接都满足）。 */
 type Executor = Pick<Pool, 'execute'> & Pick<PoolConnection, 'execute'>;
@@ -146,29 +147,6 @@ async function advanceNextSeq(ex: Executor, sessionId: string, nextSeq: number):
 }
 
 type Usage = import('@earendil-works/pi-ai').Usage;
-
-function addUsage(left: Usage, right: Usage): Usage {
-  return {
-    input: left.input + right.input,
-    output: left.output + right.output,
-    cacheRead: left.cacheRead + right.cacheRead,
-    cacheWrite: left.cacheWrite + right.cacheWrite,
-    ...(left.cacheWrite1h === undefined && right.cacheWrite1h === undefined
-      ? {}
-      : { cacheWrite1h: (left.cacheWrite1h ?? 0) + (right.cacheWrite1h ?? 0) }),
-    ...(left.reasoning === undefined && right.reasoning === undefined
-      ? {}
-      : { reasoning: (left.reasoning ?? 0) + (right.reasoning ?? 0) }),
-    totalTokens: left.totalTokens + right.totalTokens,
-    cost: {
-      input: left.cost.input + right.cost.input,
-      output: left.cost.output + right.cost.output,
-      cacheRead: left.cost.cacheRead + right.cost.cacheRead,
-      cacheWrite: left.cost.cacheWrite + right.cost.cacheWrite,
-      total: left.cost.total + right.cost.total,
-    },
-  };
-}
 
 async function readSessionStats(ex: Executor, sessionId: string) {
   const rows = await query<RowDataPacket>(

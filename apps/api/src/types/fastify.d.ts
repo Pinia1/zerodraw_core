@@ -1,6 +1,11 @@
 import 'fastify';
-import type { AgentRepository, AgentService, FrontendToolBridge } from '@zeroDraw/agent';
-import type { AgentRuntimeHost } from '@zeroDraw/agent';
+import type {
+  AgentObservabilityService,
+  AgentRepository,
+  AgentRuntimeHost,
+  AgentService,
+  FrontendToolBridge,
+} from '@zeroDraw/agent';
 import type { AuthService } from '../modules/Auth/auth.services';
 import type { AssetsService } from '../modules/Assets/assets.services';
 import type { GenerateQueue } from '../modules/AIGenerate/generate.queue';
@@ -44,5 +49,6 @@ declare module 'fastify' {
     frontendToolBridge: FrontendToolBridge;
     agentRuntimeHost: AgentRuntimeHost;
     agentRepository: AgentRepository;
+    agentObservability: AgentObservabilityService;
   }
 }

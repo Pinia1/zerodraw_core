@@ -3,28 +3,20 @@ import {
   agentBranchMeta,
   agentEntry,
   agentListValue,
+  agentPromptRun,
   agentScalarValue,
   agentSession,
+  agentSessionEvent,
   agentUsageLedger,
   and,
   desc,
   eq,
   sql,
 } from '@zeroDraw/db';
-import type { Usage } from '@earendil-works/pi-ai';
 import { randomUUID } from 'crypto';
 import { getAgentDb } from '../config';
+import { zeroUsage } from '../usage/utils';
 import type { AgentSessionMeta, AgentSessionStatus } from './types';
-
-/** pi-agent 会话初始统计量（Usage 全零）。 */
-const zeroUsage = (): Usage => ({
-  input: 0,
-  output: 0,
-  cacheRead: 0,
-  cacheWrite: 0,
-  totalTokens: 0,
-  cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
-});
 
 type AgentSessionRow = typeof agentSession.$inferSelect;
 
@@ -36,6 +28,7 @@ function toMeta(row: AgentSessionRow): AgentSessionMeta {
     userId: row.userId,
     title: row.title ?? null,
     status: row.status,
+    projectId: row.projectId ?? null,
   };
 }
 
@@ -43,23 +36,36 @@ export interface CreateAgentSessionData {
   id?: string;
   userId: number;
   title?: string;
+  projectId?: string;
+  runtimeHost?: 'inprocess' | 'worker';
 }
 
 export class AgentRepository {
-  async create({ id, userId, title }: CreateAgentSessionData): Promise<AgentSessionMeta> {
+  async create({
+    id,
+    userId,
+    title,
+    projectId,
+    runtimeHost,
+  }: CreateAgentSessionData): Promise<AgentSessionMeta> {
     const sessionId = id ?? randomUUID();
+    const now = Date.now();
     await getAgentDb().insert(agentSession).values({
       id: sessionId,
       userId,
       status: 'active',
       title: title ?? null,
-      createdAt: Date.now(),
+      createdAt: now,
       parentSessionId: null,
       storageVersion: 1,
       metadata: null,
       messageCount: 0,
       usagePayload: zeroUsage(),
       nextSeq: 1,
+      projectId: projectId ?? null,
+      lastActivityAt: now,
+      promptCount: 0,
+      runtimeHost: runtimeHost ?? null,
     });
     const row = await this.findRow(sessionId);
     if (!row) throw new Error(`Failed to create agent session ${sessionId}`);
@@ -121,6 +127,8 @@ export class AgentRepository {
       await tx.delete(agentScalarValue).where(eq(agentScalarValue.sessionId, id));
       await tx.delete(agentListValue).where(eq(agentListValue.sessionId, id));
       await tx.delete(agentUsageLedger).where(eq(agentUsageLedger.sessionId, id));
+      await tx.delete(agentPromptRun).where(eq(agentPromptRun.sessionId, id));
+      await tx.delete(agentSessionEvent).where(eq(agentSessionEvent.sessionId, id));
       await tx.delete(agentSession).where(eq(agentSession.id, id));
     });
   }

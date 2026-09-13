@@ -1,12 +1,19 @@
 import { BACKGROUND_CONTEXT, type Context } from '@earendil-works/pi-agent-core';
 import type {
+  AgentCloseReason,
   AgentCreateSessionParams,
   AgentFrontendToolCompleteParams,
   AgentListQuery,
   AgentResumeParams,
   AgentResumeResponse,
 } from '@zeroDraw/api-contract';
-import { getAgentErrors, getAgentLogger } from '../config';
+import { getAgentEnv, getAgentErrors, getAgentLogger } from '../config';
+import {
+  AgentObservabilityService,
+  startPromptRunScope,
+  toObservabilityContext,
+  withPromptRun,
+} from '../observability';
 import type { AgentRuntimeHost, AgentStreamPromptOptions } from '../runtime/host/types';
 import type { FrontendToolBridge } from '../tools/frontend/bridge';
 import { readMainLaneTranscript, summarizeTranscriptRoles } from './history';
@@ -26,13 +33,23 @@ export interface AgentServiceDeps {
   repository: AgentRepository;
   runtimeHost: AgentRuntimeHost;
   frontendToolBridge: FrontendToolBridge;
+  observability: AgentObservabilityService;
 }
 
 export class AgentService {
   constructor(private readonly deps: AgentServiceDeps) {}
 
   async createSession(userId: number, input: AgentCreateSessionParams) {
-    const meta = await this.deps.repository.create({ userId, title: input.title });
+    const meta = await this.deps.repository.create({
+      userId,
+      title: input.title,
+      projectId: input.projectId,
+      runtimeHost: getAgentEnv().AGENT_RUNTIME_HOST,
+    });
+    await this.deps.observability.onSessionCreated({
+      ...toObservabilityContext(meta),
+      title: meta.title ?? null,
+    });
     return toDto(meta);
   }
 
@@ -58,6 +75,8 @@ export class AgentService {
 
   async markSuspended(id: string): Promise<void> {
     await this.deps.repository.updateStatus(id, 'suspended');
+    const meta = await this.deps.repository.findById(id);
+    if (meta) await this.deps.observability.onSessionSuspended(toObservabilityContext(meta));
   }
 
   async markActive(id: string): Promise<void> {
@@ -71,11 +90,30 @@ export class AgentService {
     options: Omit<AgentStreamPromptOptions, 'sessionId' | 'meta'>,
   ): Promise<void> {
     const meta = await this.requireOwnedMeta(id, userId);
-    await this.deps.runtimeHost.streamPrompt({
-      sessionId: id,
-      meta,
-      ...options,
+    const ctx = toObservabilityContext(meta);
+    const scope = await startPromptRunScope(this.deps.observability, ctx, {
+      runtimeHost: this.deps.runtimeHost.mode,
+      kind: 'prompt',
     });
+
+    try {
+      await this.deps.runtimeHost.streamPrompt({
+        sessionId: id,
+        meta,
+        ...options,
+        onFinished: (result) =>
+          scope.finish({
+            status: result.status,
+            errorMessage: result.errorMessage,
+          }),
+      });
+    } catch (error) {
+      await scope.finish({
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   /** 浏览器完成 deferred 前端工具调用。 */
@@ -104,7 +142,18 @@ export class AgentService {
       throw getAgentErrors().business('会话已关闭，无法恢复');
     }
 
-    const result = await this.deps.runtimeHost.resumeSession(id, meta, input, context);
+    const ctx = toObservabilityContext(meta);
+    const result = await withPromptRun(
+      this.deps.observability,
+      ctx,
+      { runtimeHost: this.deps.runtimeHost.mode, kind: 'resume' },
+      () => this.deps.runtimeHost.resumeSession(id, meta, input, context),
+      (resumeResult) => ({ status: resumeResult.status }),
+    );
+
+    if (result.status !== 'failed' && result.status !== 'aborted') {
+      await this.deps.observability.onSessionResumed(ctx);
+    }
 
     if (result.status === 'suspended') {
       await this.markSuspended(id);
@@ -131,11 +180,31 @@ export class AgentService {
     userId: number,
     context: Context = BACKGROUND_CONTEXT,
   ): Promise<string> {
-    await this.requireOwnedMeta(id, userId);
-    await this.deps.frontendToolBridge.clearSession(id);
-    await this.deps.runtimeHost.closeSession(id, context);
-    await this.deps.repository.updateStatus(id, 'closed');
-    return id;
+    const meta = await this.requireOwnedMeta(id, userId);
+    return this.closeSessionInternal(meta, 'user_close', context);
+  }
+
+  /** Admin 强制关闭（无需 user 归属校验）。 */
+  async closeSessionAdmin(
+    id: string,
+    closeReason: AgentCloseReason = 'admin',
+    context: Context = BACKGROUND_CONTEXT,
+  ): Promise<string> {
+    const meta = await this.deps.repository.findById(id);
+    if (!meta) throw getAgentErrors().notFound();
+    if (meta.status === 'closed') return id;
+    return this.closeSessionInternal(meta, closeReason, context);
+  }
+
+  private async closeSessionInternal(
+    meta: AgentSessionMeta,
+    closeReason: AgentCloseReason,
+    context: Context,
+  ): Promise<string> {
+    await this.deps.frontendToolBridge.clearSession(meta.id);
+    await this.deps.runtimeHost.closeSession(meta.id, context);
+    await this.deps.observability.onSessionClosed(toObservabilityContext(meta), closeReason);
+    return meta.id;
   }
 
   async closeAll(): Promise<void> {

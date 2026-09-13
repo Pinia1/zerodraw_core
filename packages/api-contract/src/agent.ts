@@ -5,6 +5,7 @@ export * from './agent/framework';
 /** 创建创作助手会话 */
 export const agentCreateSessionSchema = z.object({
   title: z.string().trim().max(255).optional(),
+  projectId: z.string().uuid().optional(),
 });
 
 export type AgentCreateSessionParams = z.infer<typeof agentCreateSessionSchema>;

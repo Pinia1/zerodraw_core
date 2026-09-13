@@ -1,4 +1,5 @@
 export * from './agent';
+export * from './agent/observability';
 export * from './agent/sse';
 export * from './agent/tools';
 export * from './generate';

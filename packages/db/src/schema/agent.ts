@@ -7,7 +7,19 @@
 // 注：seq 用整数序列（非自增列），由 storage 层通过 agent_sessions.next_seq 管理，
 // 与 pi-agent 的 commit/scan 语义一致。详见 packages/agent/src/storage/mysql.storage.ts。
 
-import { bigint, index, int, json, mysqlTable, primaryKey, timestamp, uniqueIndex, varchar, mysqlEnum } from 'drizzle-orm/mysql-core';
+import {
+  bigint,
+  index,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
+  primaryKey,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/mysql-core';
+import { project } from './project';
 import { user } from './user';
 
 // 会话元数据 = pi-agent storage 元数据 + 应用层归属/列表字段
@@ -29,12 +41,88 @@ export const agentSession = mysqlTable(
     messageCount: int('message_count').notNull().default(0), // 统计缓存
     usagePayload: json('usage_payload').notNull(), // SessionStats.usage 序列化
     nextSeq: bigint('next_seq', { mode: 'number' }).notNull(), // 下一次 commit 起始序列
+    projectId: varchar('project_id', { length: 36 }).references(() => project.id),
+    lastPromptAt: bigint('last_prompt_at', { mode: 'number' }),
+    lastActivityAt: bigint('last_activity_at', { mode: 'number' }),
+    promptCount: int('prompt_count').notNull().default(0),
+    closedAt: bigint('closed_at', { mode: 'number' }),
+    closeReason: mysqlEnum('close_reason', ['user_close', 'idle', 'admin', 'error']),
+    runtimeHost: mysqlEnum('runtime_host', ['inprocess', 'worker']),
     updatedAt: timestamp('updated_at')
       .notNull()
       .defaultNow()
       .onUpdateNow(), // 应用层排序用
   },
-  (t) => ({ idx_agent_sessions_user: index('idx_agent_sessions_user').on(t.userId) }),
+  (t) => ({
+    idx_agent_sessions_user: index('idx_agent_sessions_user').on(t.userId),
+    idx_agent_sessions_project: index('idx_agent_sessions_project').on(t.projectId),
+    idx_agent_sessions_status: index('idx_agent_sessions_status').on(t.status),
+  }),
+);
+
+/** append-only 会话观测事件流水（Phase 2） */
+export const agentSessionEvent = mysqlTable(
+  'agent_session_events',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    sessionId: varchar('session_id', { length: 36 }).notNull(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => user.userId),
+    projectId: varchar('project_id', { length: 36 }),
+    eventType: varchar('event_type', { length: 64 }).notNull(),
+    payload: json('payload'),
+    createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+  },
+  (t) => ({
+    idx_agent_events_session: index('idx_agent_events_session').on(t.sessionId, t.createdAt),
+    idx_agent_events_user: index('idx_agent_events_user').on(t.userId, t.createdAt),
+    idx_agent_events_type: index('idx_agent_events_type').on(t.eventType, t.createdAt),
+  }),
+);
+
+/** 每次 prompt 一行（Phase 3 usage 聚合基础） */
+export const agentPromptRun = mysqlTable(
+  'agent_prompt_runs',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    sessionId: varchar('session_id', { length: 36 }).notNull(),
+    userId: int('user_id')
+      .notNull()
+      .references(() => user.userId),
+    projectId: varchar('project_id', { length: 36 }),
+    status: mysqlEnum('status', [
+      'pending',
+      'running',
+      'completed',
+      'failed',
+      'suspended',
+      'aborted',
+    ])
+      .notNull()
+      .default('pending'),
+    startedAt: bigint('started_at', { mode: 'number' }).notNull(),
+    finishedAt: bigint('finished_at', { mode: 'number' }),
+    durationMs: int('duration_ms'),
+    usage: json('usage'),
+    errorMessage: varchar('error_message', { length: 1024 }),
+    runtimeHost: mysqlEnum('runtime_host', ['inprocess', 'worker']),
+    workerSlot: int('worker_slot'),
+    /** usage 聚合起点：start 时 agent_usage_ledger 最大 seq */
+    ledgerFromSeq: bigint('ledger_from_seq', { mode: 'number' }),
+  },
+  (t) => ({
+    idx_agent_prompt_runs_stale: index('idx_agent_prompt_runs_stale').on(t.status, t.startedAt),
+    idx_agent_prompt_runs_session: index('idx_agent_prompt_runs_session').on(
+      t.sessionId,
+      t.startedAt,
+    ),
+    idx_agent_prompt_runs_user: index('idx_agent_prompt_runs_user').on(t.userId, t.startedAt),
+    idx_agent_prompt_runs_project: index('idx_agent_prompt_runs_project').on(
+      t.projectId,
+      t.startedAt,
+    ),
+  }),
 );
 
 // 对话条目：append-only 日志。type = message / compaction / branch_summary / custom

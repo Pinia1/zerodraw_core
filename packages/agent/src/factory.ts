@@ -1,5 +1,6 @@
 import { configureAgentModule, type AgentModuleConfig } from './config';
 import { setAgentModuleContext, type AgentModuleContext } from './context';
+import { AgentObservabilityService } from './observability';
 import { createAgentRuntimeHost } from './runtime/host';
 import { createAgentToolingCatalog } from './runtime/tooling-catalog';
 import { AgentRepository } from './session/repository';
@@ -13,13 +14,25 @@ export function createAgentModuleContext(config: AgentModuleConfig): AgentModule
   const repository = new AgentRepository();
   const frontendToolBridge = new FrontendToolBridge();
   const toolingCatalog = createAgentToolingCatalog();
+  const observability = new AgentObservabilityService({
+    runtimeHost: config.env.AGENT_RUNTIME_HOST,
+    redis: config.redis,
+  });
   const runtimeHost = createAgentRuntimeHost({
     mode: config.env.AGENT_RUNTIME_HOST,
     deps: config.deps,
     frontendToolBridge,
     toolingCatalog,
+    workerPoolSize: config.env.AGENT_WORKER_POOL_SIZE,
+    harnessIdleCloseMs: config.env.AGENT_HARNESS_IDLE_MS,
+    observability,
   });
-  const service = new AgentService({ repository, runtimeHost, frontendToolBridge });
+  const service = new AgentService({
+    repository,
+    runtimeHost,
+    frontendToolBridge,
+    observability,
+  });
 
   const context: AgentModuleContext = {
     repository,
@@ -27,6 +40,7 @@ export function createAgentModuleContext(config: AgentModuleConfig): AgentModule
     toolingCatalog,
     runtimeHost,
     service,
+    observability,
   };
 
   setAgentModuleContext(context);

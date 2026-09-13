@@ -96,7 +96,9 @@ export function useAgentChatRuntime({
       }
     }
 
-    const created = await httpCreateAgentSession({});
+    const created = await httpCreateAgentSession(
+      projectId ? { projectId } : {},
+    );
     const detail = await httpGetAgentSession(created.id);
     bindSession(detail);
     setPhase('idle');

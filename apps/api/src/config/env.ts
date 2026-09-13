@@ -38,6 +38,16 @@ const envSchema = z.object({
 
   /** Agent harness 运行位置：inprocess=API 进程内，worker=独立子进程（防 LLM/harness 崩溃拖垮主进程） */
   AGENT_RUNTIME_HOST: z.enum(['inprocess', 'worker']).default('inprocess'),
+  /** worker 模式下 fork 子进程池大小（session 亲和性 + 最少负载分配） */
+  AGENT_WORKER_POOL_SIZE: z.string().transform(Number).default(2),
+  /** harness 空闲自动关闭（毫秒）；仅释放内存，DB session 保留以便下次 prompt 重建 */
+  AGENT_HARNESS_IDLE_MS: z.string().transform(Number).default(15 * 60 * 1000),
+  /** Agent 观测台 Admin API token（Header: X-Admin-Token）；未设置则禁用 /api/admin/agent */
+  AGENT_ADMIN_TOKEN: z.string().optional(),
+  /** running prompt run 超过此时间未 finish，启动时标记 aborted（毫秒） */
+  AGENT_PROMPT_RUN_STALE_MS: z.string().transform(Number).default(2 * 60 * 60 * 1000),
+  /** 无活动会话超过此时间在启动时以 idle 关闭；0 禁用（毫秒） */
+  AGENT_SESSION_IDLE_CLOSE_MS: z.string().transform(Number).default(0),
 
   REDIS_HOST: z.string().default('127.0.0.1'),
   REDIS_PORT: z.string().transform(Number).default(6379),

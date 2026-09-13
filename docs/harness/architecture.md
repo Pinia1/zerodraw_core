@@ -130,25 +130,35 @@ API 进程
             └─ lane.prompt → subscribeHarnessEventsToSse → SSE
 ```
 
-### 4.2 Worker（生产隔离）
+### 4.2 Worker 池（生产隔离）
 
 ```
-API 主进程                          Worker 子进程
-├─ HostToolExecutor                 ├─ HarnessSessionStore
-├─ frontendToolBridge               ├─ openHarnessSession(bindings:
-├─ fork(agent.worker.ts)       IPC     wrapTools: ipc-tools,
-└─ parent-host 转发 SSE/events         createToolContext: isolated)
-                                    └─ lane.prompt → IPC prompt_event
+API 主进程                              Worker 池（AGENT_WORKER_POOL_SIZE，默认 2）
+├─ HostToolExecutor                     ├─ slot-0 → HarnessSessionStore
+├─ frontendToolBridge                   ├─ slot-1 → HarnessSessionStore
+├─ AgentWorkerPool                      └─ slot-N …
+│    sessionId → slot（亲和性 + 最少负载）
+└─ parent-host 转发 SSE/events
 ```
+
+- **Session 亲和性**：同一 `sessionId` 始终路由到同一 slot（harness 在子进程内存中）。
+- **新 session**：分配到当前绑定 session 最少的 slot。
+- **配置**：`AGENT_RUNTIME_HOST=worker`，`AGENT_WORKER_POOL_SIZE=2`（可调）。
 
 **Worker 模式下工具执行路径：**
 
 1. Worker 内 tool `execute` 被 `ipc-tools` 代理
 2. IPC `tool_execute` → 主进程 `HostToolExecutor`
 3. 主进程用真实 capability 执行（含 `frontend.bridge.wait`）
-4. IPC `tool_result` → Worker resolve → harness 继续
+4. IPC `tool_result` → 对应 slot 的 Worker resolve → harness 继续
 
-**Worker 崩溃：** 主进程 API 存活；进行中的 prompt 报错；可重启 worker。
+**单个 slot 崩溃：** 主进程 API 与其它 slot 存活；该 slot 上的 session 绑定清除，进行中的 prompt 报错；下次 prompt 会在新 slot 上重建 harness。
+
+**Harness 空闲回收（`AGENT_HARNESS_IDLE_MS`，默认 15 分钟）：**
+
+- prompt / resume 正常结束后，若 session 非 `suspended`，`HarnessSessionStore.scheduleIdleClose()` 启动计时器。
+- 超时后调用 `harness.close()` + `session.close()`，**仅释放内存**；DB session 仍为 `active`，下次 prompt 会 lazy 重建 harness。
+- `suspended` 等待 deferred 工具时不回收；下次 `get()` 会取消已有计时器。
 
 ---
 

@@ -14,4 +14,5 @@ export interface AgentSessionMeta extends SessionMetadata {
   userId: number;
   title: string | null;
   status: AgentSessionStatus;
+  projectId?: string | null;
 }

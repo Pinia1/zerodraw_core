@@ -11,7 +11,10 @@ export {
   type AgentRuntimeHost,
   type CreateAgentRuntimeHostOptions,
 } from './runtime/host';
+export { AgentWorkerPool } from './runtime/host/worker/worker-pool';
 export { createAgentToolingCatalog } from './runtime/tooling-catalog';
 export { FrontendToolBridge } from './tools/frontend';
 export { MySqlStorage } from './storage/mysql.storage';
+export { AgentObservabilityService } from './observability';
+export type { AgentRedisLike, AgentRuntimeSnapshot } from './observability';
 export type { AgentDeps } from './tools';

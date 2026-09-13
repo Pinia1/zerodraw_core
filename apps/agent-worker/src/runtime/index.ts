@@ -21,7 +21,7 @@ export {
   openHarnessSession,
   type AgentHarnessBundle,
 } from './harness-session';
-export { HarnessSessionStore } from './session-store';
+export { HarnessSessionStore, type HarnessSessionStoreOptions } from './session-store';
 export { releaseLaneIfBusy, runLanePrompt, runLaneResume, type LanePromptResult } from './lane-ops';
 export {
   attachHarnessEventForwarder,

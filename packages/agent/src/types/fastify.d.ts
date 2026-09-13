@@ -1,4 +1,5 @@
 import 'fastify';
+import type { AgentObservabilityService } from '../observability';
 import type { AgentRepository } from '../session/repository';
 import type { AgentService } from '../session/service';
 import type { AgentRuntimeHost } from '../runtime/host/types';
@@ -20,5 +21,6 @@ declare module 'fastify' {
     frontendToolBridge: FrontendToolBridge;
     agentRuntimeHost: AgentRuntimeHost;
     agentRepository: AgentRepository;
+    agentObservability: AgentObservabilityService;
   }
 }

@@ -10,7 +10,6 @@ import {
   runLaneResume,
   type AgentSessionMeta,
   type AgentToolingCatalog,
-  type IsolatedAgentToolContext,
 } from '../runtime';
 import { getAgentRuntimeLogger } from '../runtime/types/logger';
 import type { WorkerChildMessage, WorkerParentMessage } from './protocol';
@@ -21,20 +20,43 @@ type PostMessage = (message: WorkerChildMessage) => void;
 export interface AgentWorkerChildConfig {
   tooling: AgentToolingCatalog;
   createStorage: (meta: AgentSessionMeta) => Storage;
+  /** 空闲多久后关闭 harness（毫秒）；0 表示禁用 */
+  harnessIdleCloseMs?: number;
 }
 
 export class AgentWorkerChildRuntime {
   private readonly ipcTools = new WorkerToolIpcBridge((message) => this.post(message));
-  private readonly sessions: HarnessSessionStore<AgentSessionMeta, IsolatedAgentToolContext>;
+  private readonly sessions;
 
   constructor(
     private readonly post: PostMessage,
     config: AgentWorkerChildConfig,
   ) {
-    this.sessions = new HarnessSessionStore<AgentSessionMeta, IsolatedAgentToolContext>(config.tooling, {
-      wrapTools: (tools) => this.ipcTools.wrapTools(tools),
-      createToolContext: createIsolatedToolContext,
-      createStorage: config.createStorage,
+    this.sessions = new HarnessSessionStore(
+      config.tooling,
+      {
+        wrapTools: (tools) => this.ipcTools.wrapTools(tools),
+        createToolContext: createIsolatedToolContext,
+        createStorage: config.createStorage,
+      },
+      {
+        idleCloseMs: config.harnessIdleCloseMs ?? 0,
+        onHarnessOpened: (_sessionId, meta) => {
+          this.postHarnessLifecycle(meta, 'harness_opened');
+        },
+        onHarnessIdleClosed: (_sessionId, meta) => {
+          this.postHarnessLifecycle(meta, 'harness_idle_closed');
+        },
+      },
+    );
+  }
+
+  private postHarnessLifecycle(meta: AgentSessionMeta, event: 'harness_opened' | 'harness_idle_closed'): void {
+    this.post({
+      type: 'harness_lifecycle',
+      sessionId: meta.id,
+      event,
+      meta,
     });
   }
 
@@ -72,6 +94,8 @@ export class AgentWorkerChildRuntime {
     images?: ImageContent[],
   ): Promise<void> {
     const sessionId = meta.id;
+    let scheduleIdleClose = true;
+
     try {
       const { harness, lane } = await this.sessions.get(meta, BACKGROUND_CONTEXT);
       const context = withAbortSignal(new AbortController().signal, BACKGROUND_CONTEXT);
@@ -92,6 +116,10 @@ export class AgentWorkerChildRuntime {
       const result = await runLanePrompt(lane, message, images, context);
       for (const stop of stops) stop();
 
+      if (result.suspended) {
+        scheduleIdleClose = false;
+      }
+
       this.post({
         type: 'prompt_finished',
         requestId,
@@ -100,12 +128,17 @@ export class AgentWorkerChildRuntime {
         operationId: result.operationId,
       });
     } catch (error) {
+      scheduleIdleClose = false;
       this.post({
         type: 'prompt_finished',
         requestId,
         ok: false,
         error: error instanceof Error ? error.message : String(error),
       });
+    } finally {
+      if (scheduleIdleClose) {
+        this.sessions.scheduleIdleClose(sessionId, BACKGROUND_CONTEXT);
+      }
     }
   }
 
@@ -114,9 +147,13 @@ export class AgentWorkerChildRuntime {
     meta: AgentSessionMeta,
     input: AgentResumeParams,
   ): Promise<void> {
+    const sessionId = meta.id;
     try {
       const { lane } = await this.sessions.get(meta, BACKGROUND_CONTEXT);
       const result = await runLaneResume(lane, input, BACKGROUND_CONTEXT);
+      if (result.status !== 'suspended') {
+        this.sessions.scheduleIdleClose(sessionId, BACKGROUND_CONTEXT);
+      }
       this.post({ type: 'resume_result', requestId, ok: true, result });
     } catch (error) {
       this.post({
@@ -130,7 +167,10 @@ export class AgentWorkerChildRuntime {
 
   private async handleCloseSession(requestId: string, sessionId: string): Promise<void> {
     try {
-      await this.sessions.close(sessionId, BACKGROUND_CONTEXT);
+      const { meta, hadHarness } = await this.sessions.close(sessionId, BACKGROUND_CONTEXT);
+      if (meta && hadHarness) {
+        this.postHarnessLifecycle(meta, 'harness_idle_closed');
+      }
       this.post({ type: 'close_session_result', requestId, ok: true });
     } catch (error) {
       this.post({

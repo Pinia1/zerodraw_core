@@ -14,6 +14,7 @@ import { VolcService } from '../modules/Volc/volc.services';
 import { createUploadServices } from '../plugins/infra.plugin';
 import { BusinessError, ForbiddenError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { redis } from '../redis';
 import { createBuildPromptImageContents } from './prompt-images';
 
 const workerEntryPath = join(dirname(fileURLToPath(import.meta.url)), 'agent.worker.ts');
@@ -30,7 +31,13 @@ function createBaseAgentModuleConfig(
       AGENT_BASE_URL: env.AGENT_BASE_URL,
       AGENT_API_KEY: env.AGENT_API_KEY,
       AGENT_RUNTIME_HOST: env.AGENT_RUNTIME_HOST,
+      AGENT_WORKER_POOL_SIZE: env.AGENT_WORKER_POOL_SIZE,
+      AGENT_HARNESS_IDLE_MS: env.AGENT_HARNESS_IDLE_MS,
+      AGENT_ADMIN_TOKEN: env.AGENT_ADMIN_TOKEN,
+      AGENT_PROMPT_RUN_STALE_MS: env.AGENT_PROMPT_RUN_STALE_MS,
+      AGENT_SESSION_IDLE_CLOSE_MS: env.AGENT_SESSION_IDLE_CLOSE_MS,
     },
+    redis,
     deps: deps.deps,
     errors: {
       business: (message) => new BusinessError(message),
