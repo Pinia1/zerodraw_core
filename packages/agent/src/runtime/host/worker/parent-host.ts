@@ -1,16 +1,20 @@
 import { BACKGROUND_CONTEXT, type Context } from '@earendil-works/pi-agent-core';
-import type { AgentPromptRunStatus, AgentResumeParams, AgentResumeResponse } from '@zeroDraw/api-contract';
 import {
   mapHarnessEventToSseFrame,
   withAgentSseStream,
   type AgentSessionMeta,
   type AgentSseStreamContext,
 } from '@zeroDraw/agent-worker/runtime';
+import type {
+  AgentPromptRunStatus,
+  AgentResumeParams,
+  AgentResumeResponse,
+} from '@zeroDraw/api-contract';
 import { getAgentErrors, getAgentLogger } from '../../../config';
 import { toObservabilityContext, type AgentRuntimeObservability } from '../../../observability';
+import type { AgentRepository } from '../../../session/repository';
 import type { AgentDeps } from '../../../tools';
 import type { FrontendToolBridge } from '../../../tools/frontend/bridge';
-import type { AgentRepository } from '../../../session/repository';
 import { HostToolExecutor } from '../tool-executor';
 import type { AgentRuntimeHost, AgentStreamPromptOptions } from '../types';
 import { AgentWorkerPool } from './worker-pool';
@@ -25,7 +29,7 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
     frontendToolBridge: FrontendToolBridge,
     poolSize: number,
     observability: AgentRuntimeObservability,
-    repository: AgentRepository,
+    repository: AgentRepository
   ) {
     const toolExecutor = new HostToolExecutor(frontendToolBridge, repository, deps);
     this.observability = observability;
@@ -60,7 +64,10 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
     } = options;
 
     const slot = await this.pool.acquireForSession(sessionId);
-    await this.observability.onWorkerAssigned({ ...toObservabilityContext(meta), workerSlot: slot.id });
+    await this.observability.onWorkerAssigned({
+      ...toObservabilityContext(meta),
+      workerSlot: slot.id,
+    });
 
     let finishStatus: AgentPromptRunStatus = 'completed';
     let errorMessage: string | undefined;
@@ -86,7 +93,7 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
                 eventMessage.event,
                 eventMessage.payload,
                 sessionId,
-                { onFault: () => this.evict(sessionId) },
+                { onFault: () => this.evict(sessionId) }
               );
               if (!frame) return;
               if (frame.type === 'suspended') void markSuspended(sessionId);
@@ -150,10 +157,13 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
     sessionId: string,
     meta: AgentSessionMeta,
     input: AgentResumeParams,
-    _context: Context,
+    _context: Context
   ): Promise<AgentResumeResponse> {
     const slot = await this.pool.acquireForSession(sessionId);
-    await this.observability.onWorkerAssigned({ ...toObservabilityContext(meta), workerSlot: slot.id });
+    await this.observability.onWorkerAssigned({
+      ...toObservabilityContext(meta),
+      workerSlot: slot.id,
+    });
     const result = await slot.resume(meta, input);
     if (!result.ok || !result.result) {
       throw getAgentErrors().business(result.error ?? 'Worker resume failed');

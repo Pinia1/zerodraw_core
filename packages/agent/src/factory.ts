@@ -17,6 +17,7 @@ export function createAgentModuleContext(config: AgentModuleConfig): AgentModule
   const observability = new AgentObservabilityService({
     runtimeHost: config.env.AGENT_RUNTIME_HOST,
     redis: config.redis,
+    harnessIdleMs: config.env.AGENT_HARNESS_IDLE_MS,
   });
   const runtimeHost = createAgentRuntimeHost({
     mode: config.env.AGENT_RUNTIME_HOST,

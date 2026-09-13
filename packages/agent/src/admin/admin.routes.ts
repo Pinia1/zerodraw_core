@@ -44,6 +44,11 @@ export async function agentAdminRoutes(fastify: FastifyInstance) {
     return reply.success(data);
   });
 
+  app.get('/runtime', async (_request, reply) => {
+    const data = await observability.listRuntimeSnapshots();
+    return reply.success(data);
+  });
+
   app.get('/sessions', { schema: { querystring: agentAdminSessionsQuerySchema } }, async (request, reply) => {
     const query = request.query as AgentAdminSessionsQuery;
     const data = await observability.listSessions(query);

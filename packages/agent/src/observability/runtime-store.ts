@@ -3,7 +3,10 @@ import type { AgentRedisLike, AgentRuntimeSnapshot } from './types';
 
 const RUNTIME_KEY_PREFIX = 'agent:runtime:';
 const RUNTIME_INDEX_KEY = 'agent:runtime:index';
-const RUNTIME_TTL_SECONDS = 90;
+/** 无 loaded harness 时的短 TTL（仅保留短暂 idle 残留） */
+const RUNTIME_SHORT_TTL_SECONDS = 90;
+/** idle 关闭禁用时 loaded 快照的最长 TTL（24h） */
+const RUNTIME_LOADED_FALLBACK_TTL_SECONDS = 86_400;
 
 function runtimeKey(sessionId: string): string {
   return `${RUNTIME_KEY_PREFIX}${sessionId}`;
@@ -15,7 +18,20 @@ export class AgentRuntimeStore {
   constructor(
     private readonly runtimeHost: AgentRuntimeHostKind,
     private readonly redis?: AgentRedisLike,
+    /** 与 AGENT_HARNESS_IDLE_MS 对齐；loaded/executing 快照 TTL 延长至 idle 窗口 */
+    private readonly harnessIdleMs = 900_000,
   ) {}
+
+  /** 不增加 Redis 写入次数，仅在既有 touch 上调整 EX */
+  private ttlSeconds(snapshot: AgentRuntimeSnapshot): number {
+    if (!snapshot.loaded && !snapshot.executing) {
+      return RUNTIME_SHORT_TTL_SECONDS;
+    }
+    if (this.harnessIdleMs <= 0) {
+      return RUNTIME_LOADED_FALLBACK_TTL_SECONDS;
+    }
+    return Math.ceil(this.harnessIdleMs / 1000) + 60;
+  }
 
   async touch(
     input: Omit<AgentRuntimeSnapshot, 'heartbeatAt'> & { heartbeatAt?: number },
@@ -27,7 +43,7 @@ export class AgentRuntimeStore {
 
     if (this.redis) {
       const key = runtimeKey(snapshot.sessionId);
-      await this.redis.set(key, JSON.stringify(snapshot), 'EX', RUNTIME_TTL_SECONDS);
+      await this.redis.set(key, JSON.stringify(snapshot), 'EX', this.ttlSeconds(snapshot));
       await this.redis.sadd(RUNTIME_INDEX_KEY, snapshot.sessionId);
       return;
     }

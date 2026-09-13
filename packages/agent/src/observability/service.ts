@@ -18,6 +18,7 @@ import type {
 export interface AgentObservabilityOptions {
   runtimeHost: AgentRuntimeHostKind;
   redis?: AgentRedisLike;
+  harnessIdleMs?: number;
 }
 
 export class AgentObservabilityService {
@@ -25,7 +26,11 @@ export class AgentObservabilityService {
   private readonly repo = new AgentObservabilityRepository();
 
   constructor(options: AgentObservabilityOptions) {
-    this.runtimeStore = new AgentRuntimeStore(options.runtimeHost, options.redis);
+    this.runtimeStore = new AgentRuntimeStore(
+      options.runtimeHost,
+      options.redis,
+      options.harnessIdleMs,
+    );
   }
 
   get runtimeHost(): AgentRuntimeHostKind {
@@ -324,5 +329,16 @@ export class AgentObservabilityService {
 
   aggregateUsage(query: AgentAdminUsageQuery) {
     return this.repo.aggregateUsage(query);
+  }
+
+  /** 当前进程/Redis 中登记的全部 runtime 快照（含 loaded=false 的残留条目） */
+  async listRuntimeSnapshots() {
+    const snapshots = await this.runtimeStore.listAll();
+    snapshots.sort((a, b) => b.heartbeatAt - a.heartbeatAt);
+    return {
+      snapshots,
+      loadedCount: snapshots.filter((s) => s.loaded).length,
+      executingCount: snapshots.filter((s) => s.executing).length,
+    };
   }
 }

@@ -32,7 +32,7 @@ Usage 汇总来源：
 
 ### Redis Runtime Snapshot
 
-- Key: `agent:runtime:{sessionId}`（TTL 90s，活动心跳刷新）
+- Key: `agent:runtime:{sessionId}`（`loaded`/`executing` 时 TTL ≈ `AGENT_HARNESS_IDLE_MS`；释放后短 TTL 90s）
 - Index: `agent:runtime:index`（SET）
 - 无 Redis 时降级为 API 进程内存 Map
 
@@ -43,6 +43,7 @@ Usage 汇总来源：
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | `/api/admin/agent/overview` | 会话/prompt/usage/runtime 总览 |
+| GET | `/api/admin/agent/runtime` | 内存/Redis 中全部 runtime 快照（loaded/executing） |
 | GET | `/api/admin/agent/sessions` | 分页列表（status/userId/projectId） |
 | GET | `/api/admin/agent/sessions/:id/timeline` | 事件 + prompt runs + runtime |
 | GET | `/api/admin/agent/usage` | 按 user/project/day 聚合 |

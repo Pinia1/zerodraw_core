@@ -156,3 +156,25 @@ export const agentAdminCloseSessionBodySchema = z.object({
 });
 
 export type AgentAdminCloseSessionBody = z.infer<typeof agentAdminCloseSessionBodySchema>;
+
+/** Admin：进程/Redis 中的 runtime 快照（内存 harness 状态） */
+export const agentAdminRuntimeSnapshotSchema = z.object({
+  sessionId: z.string(),
+  userId: z.number(),
+  projectId: z.string().nullable(),
+  loaded: z.boolean(),
+  executing: z.boolean(),
+  runtimeHost: agentRuntimeHostSchema,
+  workerSlot: z.number().nullable(),
+  heartbeatAt: z.number(),
+});
+
+export type AgentAdminRuntimeSnapshot = z.infer<typeof agentAdminRuntimeSnapshotSchema>;
+
+export const agentAdminRuntimeListSchema = z.object({
+  snapshots: z.array(agentAdminRuntimeSnapshotSchema),
+  loadedCount: z.number(),
+  executingCount: z.number(),
+});
+
+export type AgentAdminRuntimeList = z.infer<typeof agentAdminRuntimeListSchema>;
