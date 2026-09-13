@@ -2,31 +2,38 @@ import { randomUUID } from 'crypto';
 import { env } from '../../config/env';
 import { redis } from '../../redis';
 import { NotFoundError } from '../../utils/errors';
-import { bananaService } from '../NanoBanana/banana.services';
-import { r2Service } from '../R2/';
-import { generateQueue } from './generate.queue';
-import { generateRepository } from './generate.repository';
+import type { BananaService } from '../NanoBanana/banana.services';
+import type { R2Service } from '../R2/r2.services';
+import type { GenerateQueue } from './generate.queue';
+import type { GenerateRepository } from './generate.repository';
 import { GenerateParams } from './generators/base.generator';
 
-class GenerateService {
+export class GenerateService {
   private readonly TASK_CACHE_PREFIX = 'ai-task:';
   private readonly TASK_CACHE_TTL = 60 * 60;
+
+  constructor(
+    private readonly generateRepository: GenerateRepository,
+    private readonly generateQueue: GenerateQueue,
+    private readonly bananaService: BananaService,
+    private readonly r2Service: R2Service,
+  ) {}
 
   async run(userId: number, params: GenerateParams) {
     const taskId = randomUUID();
     const args = { ...params.args, image: params.s3Key };
-    await generateRepository.create({ id: taskId, userId, action: params.action, args });
+    await this.generateRepository.create({ id: taskId, userId, action: params.action, args });
 
     if (env.SERVER_BASE_URL) {
       const webhookUrl = `${env.SERVER_BASE_URL}/api/generate/webhook/${taskId}`;
-      const result = await bananaService.generate(params as any, webhookUrl);
+      const result = await this.bananaService.generate(params as any, webhookUrl);
       if (result.code !== 0) {
-        await generateRepository.updateById(taskId, { status: 'failed', error: result.msg });
+        await this.generateRepository.updateById(taskId, { status: 'failed', error: result.msg });
       } else {
-        await generateRepository.updateById(taskId, { status: 'processing' });
+        await this.generateRepository.updateById(taskId, { status: 'processing' });
       }
     } else {
-      await generateQueue.add(params.action, { taskId, params }, taskId);
+      await this.generateQueue.add(params.action, { taskId, params }, taskId);
     }
 
     return { taskId };
@@ -41,12 +48,12 @@ class GenerateService {
       const imageRes = await fetch(imageUrl);
       const contentType = imageRes.headers.get('content-type') || 'image/png';
       const buffer = Buffer.from(await imageRes.arrayBuffer());
-      const s3Key = await r2Service.uploadFile(buffer, contentType);
+      const s3Key = await this.r2Service.uploadFile(buffer, contentType);
 
-      await generateRepository.updateById(taskId, { status: 'completed', s3Key });
+      await this.generateRepository.updateById(taskId, { status: 'completed', s3Key });
       await redis.del(`${this.TASK_CACHE_PREFIX}${taskId}`);
     } else if (status === 'failed') {
-      await generateRepository.updateById(taskId, { status: 'failed', error: 'Generation failed' });
+      await this.generateRepository.updateById(taskId, { status: 'failed', error: 'Generation failed' });
     }
   }
 
@@ -58,7 +65,7 @@ class GenerateService {
       return data;
     }
 
-    const task = await generateRepository.findById(taskId);
+    const task = await this.generateRepository.findById(taskId);
     if (!task || task.userId !== userId) throw new NotFoundError('Task not found');
 
     const result = {
@@ -77,12 +84,10 @@ class GenerateService {
         `${this.TASK_CACHE_PREFIX}${taskId}`,
         JSON.stringify(result),
         'EX',
-        this.TASK_CACHE_TTL
+        this.TASK_CACHE_TTL,
       );
     }
 
     return result;
   }
 }
-
-export const generateService = new GenerateService();

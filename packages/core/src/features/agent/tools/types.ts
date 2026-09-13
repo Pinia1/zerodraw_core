@@ -1,4 +1,4 @@
-import type { FrontendToolName } from '@zeroDraw/api-contract';
+import type { FrontendToolCapability, FrontendToolName } from '@zeroDraw/api-contract';
 
 /** 由 web 层注入的画布 / 应用上下文，core 不直接依赖 Konva */
 export interface FrontendToolContext {
@@ -17,6 +17,8 @@ export interface FrontendToolContext {
 
 export interface FrontendToolDefinition<TArgs = unknown, TResult = unknown> {
   name: FrontendToolName;
+  kind: 'frontend';
+  capabilities: FrontendToolCapability[];
   /** 是否需要用户手动确认后再 complete（后续扩展 approval UI） */
   requiresApproval?: boolean;
   execute: (args: TArgs, ctx: FrontendToolContext) => Promise<TResult> | TResult;

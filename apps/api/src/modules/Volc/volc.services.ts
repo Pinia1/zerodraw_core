@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { env } from '../../config/env';
 import { InternalServerError } from '../../utils/errors';
 
-class VolcService {
+export class VolcService {
   private readonly BUCKET_NAME = env.BUCKET_NAME;
   private readonly REGION = env.REGION;
   private readonly ENDPOINT = `tos-accelerate.volces.com`;
@@ -104,5 +104,3 @@ class VolcService {
     }
   }
 }
-
-export const volcService = new VolcService();

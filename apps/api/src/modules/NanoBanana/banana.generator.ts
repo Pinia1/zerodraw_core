@@ -4,16 +4,20 @@ import {
   GenerateParams,
   GenerateResult,
 } from '../AIGenerate/generators/base.generator';
-import { bananaService } from './banana.services';
+import type { BananaService } from './banana.services';
 
 export class BananaGenerator extends AIGenerator {
+  constructor(private readonly bananaService: BananaService) {
+    super();
+  }
+
   getSupportedAction(): string {
     return 'GRAAI_NANO_BANANA';
   }
 
   async generate(params: GenerateParams): Promise<GenerateResult> {
     const bananaParams = params as NanobananaGenerateParams;
-    const result = await bananaService.generate(bananaParams);
+    const result = await this.bananaService.generate(bananaParams);
 
     if (result.code !== 0) {
       throw new Error(`Banana generate failed (code: ${result.code}): ${result.msg}`);
@@ -25,9 +29,6 @@ export class BananaGenerator extends AIGenerator {
       throw new Error('No taskId returned from Banana API');
     }
 
-    console.log('Polling for taskId:', taskId);
-
-    // 轮询获取结果
     const imageUrl = await this.pollResult(taskId);
 
     return {
@@ -37,18 +38,17 @@ export class BananaGenerator extends AIGenerator {
     };
   }
 
-  /** 轮询获取生成结果，3分钟超时 */
   private async pollResult(
     taskId: string,
     timeout = 5 * 60 * 1000,
-    interval = 5000
+    interval = 5000,
   ): Promise<string> {
     const deadline = Date.now() + timeout;
 
     while (Date.now() < deadline) {
-      let result: Awaited<ReturnType<typeof bananaService.getResult>>;
+      let result: Awaited<ReturnType<BananaService['getResult']>>;
       try {
-        result = await bananaService.getResult(taskId);
+        result = await this.bananaService.getResult(taskId);
       } catch {
         await new Promise((resolve) => setTimeout(resolve, interval));
         continue;

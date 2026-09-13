@@ -5,7 +5,7 @@
 // 应用层额外携带 user_id / status / title 用于归属与前端列表。
 //
 // 注：seq 用整数序列（非自增列），由 storage 层通过 agent_sessions.next_seq 管理，
-// 与 pi-agent 的 commit/scan 语义一致。详见 apps/api/src/modules/Agent/storage/mysql.storage.ts。
+// 与 pi-agent 的 commit/scan 语义一致。详见 packages/agent/src/storage/mysql.storage.ts。
 
 import { bigint, index, int, json, mysqlTable, primaryKey, timestamp, uniqueIndex, varchar, mysqlEnum } from 'drizzle-orm/mysql-core';
 import { user } from './user';

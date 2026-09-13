@@ -28,6 +28,8 @@
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/type-provider-zod": "^1.0.0",
     "@volcengine/tos-sdk": "^2.9.0",
+    "@zeroDraw/agent": "workspace:*",
+    "@zeroDraw/agent-worker": "workspace:*",
     "@zeroDraw/api-contract": "workspace:*",
     "@zeroDraw/db": "workspace:*",
     "bullmq": "^5.67.3",

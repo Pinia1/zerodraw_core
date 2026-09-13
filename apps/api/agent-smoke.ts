@@ -1,54 +1,64 @@
-// 冒烟脚本：不经过 HTTP，直接验证自写 MySQL Storage + StorageBackedSession 的
-// commit / 分支索引 / 读取回环（不调用 LLM）。
+/** 快速 smoke test：验证插件化后各 API 是否可达 */
+const BASE = 'http://127.0.0.1:3070';
 
-import { BACKGROUND_CONTEXT, StorageBackedSession } from '@earendil-works/pi-agent-core';
-import { randomUUID } from 'crypto';
+async function req(method: string, path: string, opts?: { token?: string; body?: unknown }) {
+  const headers: Record<string, string> = {};
+  if (opts?.token) headers.Authorization = `Bearer ${opts.token}`;
+  if (opts?.body) headers['Content-Type'] = 'application/json';
 
-async function main() {
-  const [{ agentRepository }, { MySqlStorage }] = await Promise.all([
-    import('./src/modules/Agent/session/repository'),
-    import('./src/modules/Agent/storage/mysql.storage'),
-  ]);
-
-  const { db } = await import('./src/db');
-  const { user } = await import('@zeroDraw/db');
-  const [firstUser] = await db.select({ userId: user.userId }).from(user).limit(1);
-  if (!firstUser) throw new Error('No user in DB — create a user before running smoke test');
-  const userId = firstUser.userId;
-  const meta = await agentRepository.create({ userId, title: 'smoke-test' });
-  console.log('created session', meta.id);
-
-  const storage = new MySqlStorage(meta.id);
-  const session = new StorageBackedSession(meta, storage);
-
-  const branch = await session.createBranch('main', null, BACKGROUND_CONTEXT);
-  console.log('tip before', await branch.getTipId(BACKGROUND_CONTEXT));
-
-  const entryId = await branch.appendMessage(
-    { role: 'user', content: '你好，测试一条消息', timestamp: Date.now() },
-    BACKGROUND_CONTEXT,
-  );
-  console.log('appended message entry', entryId);
-
-  console.log('tip after ', await branch.getTipId(BACKGROUND_CONTEXT));
-
-  const entries = await branch.findEntries(undefined, BACKGROUND_CONTEXT);
-  console.log('entries count', entries.length);
-  console.log('first entry type', entries[0]?.type, 'id', entries[0]?.id);
-
-  const stats = await session.getStats(BACKGROUND_CONTEXT);
-  console.log('stats', JSON.stringify({ messageCount: stats.messageCount, totalTokens: stats.usage.totalTokens }));
-
-  const { readMainLaneTranscript } = await import('./src/modules/Agent/session/history');
-  const transcript = await readMainLaneTranscript(meta.id);
-  console.log('transcript count', transcript.length, 'first role', (transcript[0]?.message as { role?: string })?.role);
-
-  await session.close(BACKGROUND_CONTEXT);
-  await agentRepository.delete(meta.id);
-  console.log('cleaned up. OK, randomUUID', randomUUID().length > 0 ? 'ok' : 'no');
+  const res = await fetch(`${BASE}${path}`, {
+    method,
+    headers,
+    body: opts?.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const json = await res.json().catch(() => null);
+  return { status: res.status, json };
 }
 
-main().catch((e) => {
-  console.error('SMOKE FAILED', e);
+async function main() {
+  const results: string[] = [];
+
+  const health = await req('GET', '/health');
+  results.push(`GET /health → ${health.status} ${health.json?.data?.status ?? health.json?.message}`);
+
+  const guest = await req('POST', '/api/auth/guest', {
+    body: { fingerprint: 'smoke-test-fingerprint-001234567890' },
+  });
+  const token = guest.json?.data?.token as string | undefined;
+  results.push(`POST /api/auth/guest → ${guest.status} token=${token ? 'ok' : 'missing'}`);
+
+  if (!token) {
+    console.log(results.join('\n'));
+    process.exit(1);
+  }
+
+  const agentList = await req('GET', '/api/agent?page=1&pageSize=10', { token });
+  results.push(`GET /api/agent → ${agentList.status} code=${agentList.json?.code}`);
+
+  const agentCreate = await req('POST', '/api/agent', {
+    token,
+    body: { projectId: null },
+  });
+  const sessionId = agentCreate.json?.data?.id as string | undefined;
+  results.push(
+    `POST /api/agent → ${agentCreate.status} session=${sessionId ?? agentCreate.json?.message}`,
+  );
+
+  const projects = await req('GET', '/api/project?page=1&pageSize=10', { token });
+  results.push(`GET /api/project → ${projects.status} code=${projects.json?.code}`);
+
+  const assets = await req('GET', '/api/assets/colors?page=1&pageSize=10', { token });
+  results.push(`GET /api/assets/colors → ${assets.status} code=${assets.json?.code}`);
+
+  const lib = await req('GET', '/api/lib/outputs?page=1&pageSize=10', { token });
+  results.push(`GET /api/lib/outputs → ${lib.status} code=${lib.json?.code}`);
+
+  console.log(results.join('\n'));
+  const failed = results.filter((r) => !r.includes('→ 200'));
+  process.exit(failed.length > 0 ? 1 : 0);
+}
+
+main().catch((err) => {
+  console.error(err);
   process.exit(1);
 });

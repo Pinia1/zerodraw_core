@@ -9,12 +9,17 @@ interface CreateTaskParams {
   args: Record<string, unknown>;
 }
 
-class GenerateRepository {
+export class GenerateRepository {
   async create({ id, userId, action, args }: CreateTaskParams) {
     await db.insert(aiTask).values({ id, userId, action, status: 'pending', args });
   }
 
-  async updateById(taskId: string, data: Partial<Pick<InferInsertModel<typeof aiTask>, 'status' | 'error' | 's3Key' | 'output'>>) {
+  async updateById(
+    taskId: string,
+    data: Partial<
+      Pick<InferInsertModel<typeof aiTask>, 'status' | 'error' | 's3Key' | 'output'>
+    >,
+  ) {
     await db.update(aiTask).set(data).where(eq(aiTask.id, taskId));
   }
 
@@ -35,5 +40,3 @@ class GenerateRepository {
     return row ?? null;
   }
 }
-
-export const generateRepository = new GenerateRepository();

@@ -12,26 +12,24 @@ import {
   updatePromptSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
-import { authenticate } from '../Auth/auth.middleware';
-import { assetsService } from './assets.services';
 import { favoriteBody, idParam } from './type';
 
 export async function assetsRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
-  app.addHook('onRequest', authenticate);
+  app.addHook('onRequest', fastify.authenticate);
 
   app.get('/list', { schema: { querystring: assetListQuerySchema } }, async (request, reply) => {
-    const data = await assetsService.listAll({ userId: request.user.userId, ...request.query });
+    const data = await fastify.assetsService.listAll({ userId: request.user.userId, ...request.query });
     return reply.success(data);
   });
 
   app.get('/colors', { schema: { querystring: assetListQuerySchema } }, async (request, reply) => {
-    const data = await assetsService.listColors({ userId: request.user.userId, ...request.query });
+    const data = await fastify.assetsService.listColors({ userId: request.user.userId, ...request.query });
     return reply.success(data);
   });
 
   app.post('/colors', { schema: { body: createColorSchema } }, async (request, reply) => {
-    const data = await assetsService.createColor({ userId: request.user.userId, ...request.body });
+    const data = await fastify.assetsService.createColor({ userId: request.user.userId, ...request.body });
     return reply.success(data);
   });
 
@@ -39,7 +37,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/colors/:id',
     { schema: { params: idParam, body: updateColorSchema } },
     async (request, reply) => {
-      const data = await assetsService.updateColor({
+      const data = await fastify.assetsService.updateColor({
         id: request.params.id,
         userId: request.user.userId,
         ...request.body,
@@ -49,7 +47,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
   );
 
   app.delete('/colors/:id', { schema: { params: idParam } }, async (request, reply) => {
-    await assetsService.deleteColor({ id: request.params.id, userId: request.user.userId });
+    await fastify.assetsService.deleteColor({ id: request.params.id, userId: request.user.userId });
     return reply.success(null);
   });
 
@@ -57,7 +55,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/palettes',
     { schema: { querystring: assetListQuerySchema } },
     async (request, reply) => {
-      const data = await assetsService.listPalettes({
+      const data = await fastify.assetsService.listPalettes({
         userId: request.user.userId,
         ...request.query,
       });
@@ -66,7 +64,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
   );
 
   app.post('/palettes', { schema: { body: createPaletteSchema } }, async (request, reply) => {
-    const data = await assetsService.createPalette({
+    const data = await fastify.assetsService.createPalette({
       userId: request.user.userId,
       ...request.body,
     });
@@ -77,7 +75,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/palettes/:id',
     { schema: { params: idParam, body: updatePaletteSchema } },
     async (request, reply) => {
-      await assetsService.updatePalette({
+      await fastify.assetsService.updatePalette({
         id: request.params.id,
         userId: request.user.userId,
         ...request.body,
@@ -87,32 +85,32 @@ export async function assetsRoutes(fastify: FastifyInstance) {
   );
 
   app.delete('/palettes/:id', { schema: { params: idParam } }, async (request, reply) => {
-    await assetsService.deletePalette({ id: request.params.id, userId: request.user.userId });
+    await fastify.assetsService.deletePalette({ id: request.params.id, userId: request.user.userId });
     return reply.success(null);
   });
 
   app.get('/images', { schema: { querystring: assetListQuerySchema } }, async (request, reply) => {
-    const data = await assetsService.listImages({ userId: request.user.userId, ...request.query });
+    const data = await fastify.assetsService.listImages({ userId: request.user.userId, ...request.query });
     return reply.success(data);
   });
 
   app.post('/images', { schema: { body: createImageSchema } }, async (request, reply) => {
-    const data = await assetsService.createImage({ userId: request.user.userId, ...request.body });
+    const data = await fastify.assetsService.createImage({ userId: request.user.userId, ...request.body });
     return reply.success(data);
   });
 
   app.delete('/images/:id', { schema: { params: idParam } }, async (request, reply) => {
-    await assetsService.deleteImage({ id: request.params.id, userId: request.user.userId });
+    await fastify.assetsService.deleteImage({ id: request.params.id, userId: request.user.userId });
     return reply.success(null);
   });
 
   app.get('/prompts', { schema: { querystring: assetListQuerySchema } }, async (request, reply) => {
-    const data = await assetsService.listPrompts({ userId: request.user.userId, ...request.query });
+    const data = await fastify.assetsService.listPrompts({ userId: request.user.userId, ...request.query });
     return reply.success(data);
   });
 
   app.post('/prompts', { schema: { body: createPromptSchema } }, async (request, reply) => {
-    const data = await assetsService.createPrompt({ userId: request.user.userId, ...request.body });
+    const data = await fastify.assetsService.createPrompt({ userId: request.user.userId, ...request.body });
     return reply.success(data);
   });
 
@@ -120,7 +118,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/prompts/:id',
     { schema: { params: idParam, body: updatePromptSchema } },
     async (request, reply) => {
-      await assetsService.updatePrompt({
+      await fastify.assetsService.updatePrompt({
         id: request.params.id,
         userId: request.user.userId,
         ...request.body,
@@ -133,7 +131,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/prompts/:id/favorite',
     { schema: { params: idParam, body: favoriteBody } },
     async (request, reply) => {
-      await assetsService.toggleFavoritePrompt({
+      await fastify.assetsService.toggleFavoritePrompt({
         id: request.params.id,
         userId: request.user.userId,
         isFavorite: request.body.isFavorite,
@@ -143,17 +141,17 @@ export async function assetsRoutes(fastify: FastifyInstance) {
   );
 
   app.delete('/prompts/:id', { schema: { params: idParam } }, async (request, reply) => {
-    await assetsService.deletePrompt({ id: request.params.id, userId: request.user.userId });
+    await fastify.assetsService.deletePrompt({ id: request.params.id, userId: request.user.userId });
     return reply.success(null);
   });
 
   app.get('/brushes', { schema: { querystring: assetListQuerySchema } }, async (request, reply) => {
-    const data = await assetsService.listBrushes({ userId: request.user.userId, ...request.query });
+    const data = await fastify.assetsService.listBrushes({ userId: request.user.userId, ...request.query });
     return reply.success(data);
   });
 
   app.post('/brushes', { schema: { body: createBrushSchema } }, async (request, reply) => {
-    const data = await assetsService.createBrush({ userId: request.user.userId, ...request.body });
+    const data = await fastify.assetsService.createBrush({ userId: request.user.userId, ...request.body });
     return reply.success(data);
   });
 
@@ -161,7 +159,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
     '/brushes/:id',
     { schema: { params: idParam, body: updateBrushSchema } },
     async (request, reply) => {
-      await assetsService.updateBrush({
+      await fastify.assetsService.updateBrush({
         id: request.params.id,
         userId: request.user.userId,
         ...request.body,
@@ -171,7 +169,7 @@ export async function assetsRoutes(fastify: FastifyInstance) {
   );
 
   app.delete('/brushes/:id', { schema: { params: idParam } }, async (request, reply) => {
-    await assetsService.deleteBrush({ id: request.params.id, userId: request.user.userId });
+    await fastify.assetsService.deleteBrush({ id: request.params.id, userId: request.user.userId });
     return reply.success(null);
   });
 }

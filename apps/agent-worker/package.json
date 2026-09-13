@@ -1,0 +1,42 @@
+{
+  "name": "@zeroDraw/agent-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent harness runtime — shared library and future standalone worker service",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./runtime": {
+      "types": "./src/runtime/index.ts",
+      "import": "./src/runtime/index.ts",
+      "default": "./src/runtime/index.ts"
+    },
+    "./worker": {
+      "types": "./src/worker/index.ts",
+      "import": "./src/worker/index.ts",
+      "default": "./src/worker/index.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "^0.85.1",
+    "@earendil-works/pi-ai": "^0.85.1",
+    "@zeroDraw/api-contract": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.7.0",
+    "typescript": "^5.7.2"
+  }
+}

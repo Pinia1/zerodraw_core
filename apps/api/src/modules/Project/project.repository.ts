@@ -33,7 +33,7 @@ export interface CreateProjectData {
   thumbnailKey?: string;
 }
 
-class ProjectRepository {
+export class ProjectRepository {
   private buildConditions(userId: number, deleted: boolean, keyword?: string) {
     const conditions = [eq(project.userId, userId)];
     conditions.push(deleted ? sql`${project.deletedAt} IS NOT NULL` : isNull(project.deletedAt));
@@ -101,5 +101,3 @@ class ProjectRepository {
     await db.update(project).set({ updatedAt: new Date() }).where(eq(project.id, id));
   }
 }
-
-export const projectRepository = new ProjectRepository();

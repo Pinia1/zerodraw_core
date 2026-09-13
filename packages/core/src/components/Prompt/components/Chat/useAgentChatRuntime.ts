@@ -1,6 +1,6 @@
-import type { AgentPromptImage, AgentSessionDetail } from '@zeroDraw/api-contract';
 import type { AppendMessage, CreateStartRunConfig, ThreadMessageLike } from '@assistant-ui/react';
 import { fromThreadMessageLike, useExternalStoreRuntime } from '@assistant-ui/react';
+import type { AgentPromptImage, AgentSessionDetail } from '@zeroDraw/api-contract';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgentFrontendToolsConfig } from '../../../../features/agent/tools';
@@ -77,7 +77,7 @@ export function useAgentChatRuntime({
       setMessages(transcriptToThreadMessages(detail.transcript));
       writeStoredSessionId(projectId, detail.id);
     },
-    [projectId],
+    [projectId]
   );
 
   const loadOrCreateSession = useMemoizedFn(async () => {
@@ -164,7 +164,7 @@ export function useAgentChatRuntime({
         id,
         { message: text, images: images && images.length > 0 ? images : undefined },
         handleSseFrame,
-        controller.signal,
+        controller.signal
       );
       setMessages((prev) => finalizeAllStreams(prev));
       setPhase((current) => (current === 'suspended' ? 'suspended' : 'idle'));
@@ -211,12 +211,12 @@ export function useAgentChatRuntime({
       ...prev,
       createUserThreadMessage(
         message,
-        images.map((image) => image.previewUrl),
+        images.map((image) => image.previewUrl)
       ),
     ]);
     await runPrompt(
       message,
-      images.map((image) => ({ s3Key: image.s3Key })),
+      images.map((image) => ({ s3Key: image.s3Key }))
     );
   });
 
@@ -265,7 +265,7 @@ export function useAgentChatRuntime({
       fromThreadMessageLike(
         message,
         message.id ?? `msg-${idx}`,
-        message.status ?? { type: 'complete', reason: 'stop' },
+        message.status ?? { type: 'complete', reason: 'stop' }
       ),
     onNew,
     onCancel,

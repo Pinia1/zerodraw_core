@@ -2,12 +2,9 @@ import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import { paginationQuerySchema, runningQuerySchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { authenticate } from '../Auth/auth.middleware';
-import { libService } from './lib.services';
-
 export async function libRoutes(fastify: FastifyInstance) {
   const app = fastify.withTypeProvider<ZodTypeProvider>();
-  app.addHook('onRequest', authenticate);
+  app.addHook('onRequest', fastify.authenticate);
 
   app.get(
     '/outputs',
@@ -16,7 +13,7 @@ export async function libRoutes(fastify: FastifyInstance) {
       const { page, pageSize, keyword, projectId, startDate, endDate } = request.query;
       const userId = request.user.userId;
 
-      const data = await libService.getOutputs({
+      const data = await fastify.libService.getOutputs({
         userId,
         page,
         pageSize,
@@ -34,7 +31,7 @@ export async function libRoutes(fastify: FastifyInstance) {
     const { action, projectId, startDate, endDate } = request.query;
     const userId = request.user.userId;
 
-    const data = await libService.getRunning({ userId, action, projectId, startDate, endDate });
+    const data = await fastify.libService.getRunning({ userId, action, projectId, startDate, endDate });
 
     return reply.success(data);
   });
@@ -46,7 +43,7 @@ export async function libRoutes(fastify: FastifyInstance) {
       const { id } = request.params;
       const userId = request.user.userId;
 
-      await libService.deleteOutput({ id, userId });
+      await fastify.libService.deleteOutput({ id, userId });
 
       return reply.success(id);
     }

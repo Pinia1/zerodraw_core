@@ -2,7 +2,7 @@ import { eq, projectLayer } from '@zeroDraw/db';
 import { db } from '../../db';
 import type { SaveLayerInput } from '@zeroDraw/api-contract';
 
-class ProjectLayerRepository {
+export class ProjectLayerRepository {
   async findByProjectId(projectId: string) {
     return db
       .select()
@@ -28,9 +28,7 @@ class ProjectLayerRepository {
         blendMode: l.blendMode,
         filter: l.filter ?? null,
         content: l.content,
-      }))
+      })),
     );
   }
 }
-
-export const projectLayerRepository = new ProjectLayerRepository();

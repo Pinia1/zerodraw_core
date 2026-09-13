@@ -1,8 +1,6 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { closeDatabase } from './db';
-import { generateQueue } from './modules/AIGenerate/generate.queue';
-import { agentService, frontendToolBridge } from './modules/Agent';
 import { closeRedis } from './redis';
 import { logger } from './utils/logger';
 
@@ -10,20 +8,18 @@ async function start() {
   try {
     const app = await createApp();
 
-    await frontendToolBridge.reconcileOrphaned();
     await app.listen({ port: env.PORT, host: env.HOST });
 
     logger.info(`Server started successfully`, {
       port: env.PORT,
       host: env.HOST,
       env: env.NODE_ENV,
+      agentRuntimeHost: env.AGENT_RUNTIME_HOST,
     });
 
     const shutdown = async () => {
       try {
         await app.close();
-        await agentService.closeAll();
-        await generateQueue.close();
         await closeRedis();
         await closeDatabase();
         logger.info(`Server shutdown successfully`);

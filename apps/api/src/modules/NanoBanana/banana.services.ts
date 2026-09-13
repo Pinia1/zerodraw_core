@@ -1,11 +1,8 @@
 import { NanobananaGenerateParams } from '@zeroDraw/api-contract';
-import { getRequestParmas, getRequstUrl } from '.';
+import { getRequestParmas, getRequstUrl } from './banana.helpers';
 import { env } from '../../config/env';
 import { getGrsaiHost } from '../../config/grsai';
-import { volcService } from '../Volc/volc.services';
-
-const resolveImageUrl = (key: string) =>
-  key.startsWith('$') ? `${env.R2_PUBLIC_URL}/${key}` : volcService.getSignedUrl(key);
+import type { VolcService } from '../Volc/volc.services';
 
 export interface BananaGenerateResponse {
   code: number;
@@ -31,16 +28,22 @@ export interface BananaResultResponse {
   };
 }
 
-class BananaService {
+export class BananaService {
   private readonly API_KEY = env.NANOBANANA_API_KEY;
   private readonly BASE_URL = getGrsaiHost();
 
+  constructor(private readonly volcService: VolcService) {}
+
+  private resolveImageUrl(key: string): string {
+    return key.startsWith('$') ? `${env.R2_PUBLIC_URL}/${key}` : this.volcService.getSignedUrl(key);
+  }
+
   async generate(
     params: NanobananaGenerateParams,
-    webhookUrl?: string
+    webhookUrl?: string,
   ): Promise<BananaGenerateResponse> {
     const { model } = params.args;
-    const imageUrls = params.s3Key?.map(resolveImageUrl);
+    const imageUrls = params.s3Key?.map((key) => this.resolveImageUrl(key));
 
     const requestUrl = getRequstUrl(model);
     const requestParams = getRequestParmas(model, params.args);
@@ -74,5 +77,3 @@ class BananaService {
     return response.json() as Promise<BananaResultResponse>;
   }
 }
-
-export const bananaService = new BananaService();

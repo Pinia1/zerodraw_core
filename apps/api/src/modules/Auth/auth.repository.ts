@@ -1,7 +1,7 @@
 import { and, eq, NewUser, user } from '@zeroDraw/db';
 import { db } from '../../db';
 
-class AuthRepository {
+export class AuthRepository {
   async findByPlatformUserId(userId: number, platform: string) {
     const [row] = await db
       .select()
@@ -26,5 +26,3 @@ class AuthRepository {
     return this.findById(id);
   }
 }
-
-export const authRepository = new AuthRepository();

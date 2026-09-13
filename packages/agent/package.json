@@ -1,0 +1,43 @@
+{
+  "name": "@zeroDraw/agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent harness module — sessions, tools, routes, runtime host wiring",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./setup": {
+      "types": "./src/config.ts",
+      "import": "./src/config.ts",
+      "default": "./src/config.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "^0.85.1",
+    "@earendil-works/pi-ai": "^0.85.1",
+    "@fastify/type-provider-zod": "^1.0.0",
+    "@zeroDraw/agent-worker": "workspace:*",
+    "@zeroDraw/api-contract": "workspace:*",
+    "@zeroDraw/db": "workspace:*",
+    "drizzle-orm": "^0.36.4",
+    "fastify": "^5.2.0",
+    "fastify-plugin": "^5.0.0",
+    "mysql2": "^3.11.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.2"
+  }
+}

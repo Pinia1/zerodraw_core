@@ -3,9 +3,6 @@ import { githubCallbackSchema, guestLoginSchema } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
 import { env } from '../../config/env';
 import { fingerprintToInt } from '../../utils';
-import { githubService } from '../Passport/github.service';
-import { authenticate } from './auth.middleware';
-import { authService } from './auth.services';
 import { JwtPayload, pickUserBasicInfo } from './auth.types';
 
 export async function authRoutes(fastify: FastifyInstance) {
@@ -16,8 +13,8 @@ export async function authRoutes(fastify: FastifyInstance) {
     async (request, reply) => {
       const { code } = request.query;
 
-      const { access_token } = await githubService.getAccessToken(code);
-      const userInfo = await githubService.getUserInfo(access_token);
+      const { access_token } = await fastify.githubService.getAccessToken(code);
+      const userInfo = await fastify.githubService.getUserInfo(access_token);
       const {
         id,
         login,
@@ -32,7 +29,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         following,
       } = userInfo;
 
-      const user = await authService.findOrCreateUser({
+      const user = await fastify.authService.findOrCreateUser({
         userId: id,
         username: login,
         avatar: avatar_url,
@@ -51,13 +48,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         token,
         user: pickUserBasicInfo(user),
       });
-    }
+    },
   );
 
   app.post('/guest', { schema: { body: guestLoginSchema } }, async (request, reply) => {
     const { fingerprint } = request.body;
     const userId = fingerprintToInt(fingerprint);
-    const user = await authService.findOrCreateUser({
+    const user = await fastify.authService.findOrCreateUser({
       userId,
       username: `guest_${fingerprint.slice(0, 8)}`,
       platform: 'guest',
@@ -66,7 +63,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     return reply.success({ token, user: pickUserBasicInfo(user!) });
   });
 
-  app.get('/me', { preHandler: authenticate }, async (request, reply) => {
+  app.get('/me', { preHandler: fastify.authenticate }, async (request, reply) => {
     const user = request.user as JwtPayload;
     return reply.success({ ...user });
   });

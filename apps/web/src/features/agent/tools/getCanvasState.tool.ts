@@ -2,6 +2,8 @@ import type { FrontendToolDefinition } from '@zeroDraw/core';
 
 export const getCanvasStateTool: FrontendToolDefinition = {
   name: 'get_canvas_state',
+  kind: 'frontend',
+  capabilities: ['canvas.read'],
   async execute(_args, ctx) {
     const { layers } = ctx.getLayerState();
     return {

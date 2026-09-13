@@ -70,7 +70,7 @@ function baseConditions(
   return conds;
 }
 
-class AssetsRepository {
+export class AssetsRepository {
   async findColors(userId: number, page: number, pageSize: number, projectId?: string) {
     return db
       .select(colorFields)
@@ -340,5 +340,3 @@ class AssetsRepository {
     return row ?? null;
   }
 }
-
-export const assetsRepository = new AssetsRepository();

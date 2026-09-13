@@ -4,6 +4,8 @@ import { setDrawToolMode } from '@zeroDraw/core';
 
 export const switchDrawTool: FrontendToolDefinition<SwitchDrawToolArgs> = {
   name: 'switch_draw_tool',
+  kind: 'frontend',
+  capabilities: ['canvas.tools'],
   execute(args) {
     return setDrawToolMode(args.mode);
   },

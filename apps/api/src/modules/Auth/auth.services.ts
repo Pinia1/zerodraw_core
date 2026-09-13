@@ -1,13 +1,18 @@
 import { NewUser } from '@zeroDraw/db';
 import { logger } from '../../utils/logger';
-import { authRepository } from './auth.repository';
+import type { AuthRepository } from './auth.repository';
 
-class AuthService {
+export class AuthService {
+  constructor(private readonly authRepository: AuthRepository) {}
+
   async findOrCreateUser(userData: NewUser) {
-    const existing = await authRepository.findByPlatformUserId(userData.userId!, userData.platform);
+    const existing = await this.authRepository.findByPlatformUserId(
+      userData.userId!,
+      userData.platform,
+    );
 
     if (existing) {
-      const updated = await authRepository.updateById(existing.id, userData);
+      const updated = await this.authRepository.updateById(existing.id, userData);
       logger.info(`User ${existing.username} updated`, {
         userId: updated?.id,
         platform: updated?.platform,
@@ -15,7 +20,7 @@ class AuthService {
       return updated;
     }
 
-    const created = await authRepository.create(userData);
+    const created = await this.authRepository.create(userData);
     logger.info(`User ${created?.username} created`, {
       userId: created?.id,
       platform: created?.platform,
@@ -23,5 +28,3 @@ class AuthService {
     return created;
   }
 }
-
-export const authService = new AuthService();

@@ -20,7 +20,7 @@ export interface FindRunningParams {
   endDate?: string;
 }
 
-class LibRepository {
+export class LibRepository {
   private buildOutputConditions({
     userId,
     keyword,
@@ -109,5 +109,3 @@ class LibRepository {
       .where(and(eq(aiTask.id, id), eq(aiTask.userId, userId), isNull(aiTask.deletedAt)));
   }
 }
-
-export const libRepository = new LibRepository();

@@ -29,6 +29,20 @@ export class FrontendToolRegistry {
   requiresApproval(name: FrontendToolName): boolean {
     return this.tools.get(name)?.requiresApproval ?? false;
   }
+
+  getMeta(name: FrontendToolName) {
+    const tool = this.tools.get(name);
+    if (!tool) return null;
+    return { kind: tool.kind, capabilities: [...tool.capabilities] };
+  }
+
+  summarize() {
+    return [...this.tools.values()].map((tool) => ({
+      name: tool.name,
+      kind: tool.kind,
+      capabilities: [...tool.capabilities],
+    }));
+  }
 }
 
 export function createFrontendToolRegistry(

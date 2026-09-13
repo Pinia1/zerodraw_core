@@ -1,24 +1,28 @@
 import { Job, Queue, Worker } from 'bullmq';
 import { bullRedisConnection } from '../../redis';
 import { logger } from '../../utils/logger';
-import { uploadServices } from '../Volc';
-import { generateRepository } from './generate.repository';
+import type { UploadServices } from '../../plugins/infra.plugin';
+import type { GenerateRepository } from './generate.repository';
 import { GenerateParams } from './generators/base.generator';
-import { generatorFactory } from './generators/factory';
+import type { GeneratorFactory } from './generators/factory';
 
 export interface GenerateJobData {
   taskId: string;
   params: GenerateParams;
 }
 
-class GenerateQueue {
+export class GenerateQueue {
   private readonly QUEUE_NAME = 'ai-generate';
   private readonly CONCURRENCY = 16;
 
   private queue: Queue<GenerateJobData>;
   private worker: Worker<GenerateJobData> | null = null;
 
-  constructor() {
+  constructor(
+    private readonly generateRepository: GenerateRepository,
+    private readonly generatorFactory: GeneratorFactory,
+    private readonly uploadServices: UploadServices,
+  ) {
     this.queue = new Queue<GenerateJobData>(this.QUEUE_NAME, {
       connection: bullRedisConnection,
       defaultJobOptions: {
@@ -78,9 +82,9 @@ class GenerateQueue {
       attempt: job.attemptsMade + 1,
     });
 
-    await generateRepository.updateById(taskId, { status: 'processing' });
+    await this.generateRepository.updateById(taskId, { status: 'processing' });
 
-    const generator = generatorFactory.getGenerator(params.action);
+    const generator = this.generatorFactory.getGenerator(params.action);
 
     const generateResult = await generator.generate(params);
 
@@ -88,9 +92,9 @@ class GenerateQueue {
     const contentType =
       imageRes.headers.get('content-type') || generateResult.contentType || 'image/png';
     const imageBuffer = await imageRes.arrayBuffer();
-    const s3Key = await uploadServices.uploadFile(Buffer.from(imageBuffer), contentType);
+    const s3Key = await this.uploadServices.uploadFile(Buffer.from(imageBuffer), contentType);
 
-    await generateRepository.updateById(taskId, {
+    await this.generateRepository.updateById(taskId, {
       status: 'completed',
       output: generateResult.rawResponse,
       s3Key,
@@ -110,7 +114,7 @@ class GenerateQueue {
     logger.error(`[Worker] Task ${taskId} failed (attempt ${job.attemptsMade})`, err);
 
     if (isFinalAttempt) {
-      await generateRepository.updateById(taskId, {
+      await this.generateRepository.updateById(taskId, {
         status: 'failed',
         error: err.message || 'Unknown error',
       });
@@ -119,5 +123,3 @@ class GenerateQueue {
     }
   }
 }
-
-export const generateQueue = new GenerateQueue();

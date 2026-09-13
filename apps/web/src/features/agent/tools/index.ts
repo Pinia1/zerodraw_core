@@ -1,4 +1,4 @@
-import type { AgentFrontendToolsConfig } from '@zeroDraw/core';
+import type { AgentFrontendToolsConfig, FrontendToolDefinition } from '@zeroDraw/core';
 import { getCanvasStateTool } from './getCanvasState.tool';
 import { placeSvgTool } from './placeSvg.tool';
 import { switchDrawTool } from './switchDrawTool.tool';
@@ -11,7 +11,7 @@ export function createDrawingAgentTools(
   getContext: AgentFrontendToolsConfig['getContext'],
 ): AgentFrontendToolsConfig {
   return {
-    tools: [getCanvasStateTool, switchDrawTool, placeSvgTool],
+    tools: [getCanvasStateTool, switchDrawTool, placeSvgTool] as FrontendToolDefinition[],
     getContext,
   };
 }

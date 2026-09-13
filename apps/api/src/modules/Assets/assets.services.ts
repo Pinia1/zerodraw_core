@@ -18,13 +18,15 @@ import type {
 } from '@zeroDraw/api-contract';
 import { randomUUID } from 'crypto';
 import { ForbiddenError, NotFoundError } from '../../utils/errors';
-import { assetsRepository } from './assets.repository';
+import type { AssetsRepository } from './assets.repository';
 
-class AssetsService {
+export class AssetsService {
+  constructor(private readonly assetsRepository: AssetsRepository) {}
+
   private async checkOwner(
     findOwner: (id: string) => Promise<{ userId: number } | null>,
     id: string,
-    userId: number
+    userId: number,
   ) {
     const owner = await findOwner(id);
     if (!owner) throw new NotFoundError('资源不存在');
@@ -33,8 +35,8 @@ class AssetsService {
 
   async listColors({ userId, page, pageSize, projectId }: { userId: number } & AssetListQuery) {
     const [list, total] = await Promise.all([
-      assetsRepository.findColors(userId, page, pageSize, projectId),
-      assetsRepository.countColors(userId, projectId),
+      this.assetsRepository.findColors(userId, page, pageSize, projectId),
+      this.assetsRepository.countColors(userId, projectId),
     ]);
     return { list: list as ColorItem[], total, page, pageSize };
   }
@@ -53,7 +55,7 @@ class AssetsService {
 
   async createColor({ userId, hex, name, projectId }: { userId: number } & CreateColorInput) {
     const id = randomUUID();
-    const row = await assetsRepository.createColor({ id, userId, hex, name, projectId });
+    const row = await this.assetsRepository.createColor({ id, userId, hex, name, projectId });
     return row as ColorItem;
   }
 
@@ -63,23 +65,23 @@ class AssetsService {
     hex,
     name,
   }: { id: string; userId: number } & UpdateColorInput) {
-    await this.checkOwner(assetsRepository.findColorOwner.bind(assetsRepository), id, userId);
+    await this.checkOwner(this.assetsRepository.findColorOwner.bind(this.assetsRepository), id, userId);
     const updates: Record<string, unknown> = {};
     if (hex !== undefined) updates.hex = hex;
     if (name !== undefined) updates.name = name;
-    const row = await assetsRepository.updateColor(id, updates);
+    const row = await this.assetsRepository.updateColor(id, updates);
     return row as ColorItem;
   }
 
   async deleteColor({ id, userId }: { id: string; userId: number }) {
-    await this.checkOwner(assetsRepository.findColorOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.deleteColor(id);
+    await this.checkOwner(this.assetsRepository.findColorOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.deleteColor(id);
   }
 
   async listPalettes({ userId, page, pageSize, projectId }: { userId: number } & AssetListQuery) {
     const [list, total] = await Promise.all([
-      assetsRepository.findPalettes(userId, page, pageSize, projectId),
-      assetsRepository.countPalettes(userId, projectId),
+      this.assetsRepository.findPalettes(userId, page, pageSize, projectId),
+      this.assetsRepository.countPalettes(userId, projectId),
     ]);
     return { list: list as PaletteItem[], total, page, pageSize };
   }
@@ -91,7 +93,7 @@ class AssetsService {
     projectId,
   }: { userId: number } & CreatePaletteInput) {
     const id = randomUUID();
-    const row = await assetsRepository.createPalette({ id, userId, name, colors, projectId });
+    const row = await this.assetsRepository.createPalette({ id, userId, name, colors, projectId });
     return row as PaletteItem;
   }
 
@@ -101,22 +103,22 @@ class AssetsService {
     name,
     colors,
   }: { id: string; userId: number } & UpdatePaletteInput) {
-    await this.checkOwner(assetsRepository.findPaletteOwner.bind(assetsRepository), id, userId);
+    await this.checkOwner(this.assetsRepository.findPaletteOwner.bind(this.assetsRepository), id, userId);
     const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
     if (colors !== undefined) updates.colors = colors;
-    await assetsRepository.updatePalette(id, updates);
+    await this.assetsRepository.updatePalette(id, updates);
   }
 
   async deletePalette({ id, userId }: { id: string; userId: number }) {
-    await this.checkOwner(assetsRepository.findPaletteOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.deletePalette(id);
+    await this.checkOwner(this.assetsRepository.findPaletteOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.deletePalette(id);
   }
 
   async listImages({ userId, page, pageSize, projectId }: { userId: number } & AssetListQuery) {
     const [list, total] = await Promise.all([
-      assetsRepository.findImages(userId, page, pageSize, projectId),
-      assetsRepository.countImages(userId, projectId),
+      this.assetsRepository.findImages(userId, page, pageSize, projectId),
+      this.assetsRepository.countImages(userId, projectId),
     ]);
     return { list: list as ImageItem[], total, page, pageSize };
   }
@@ -131,7 +133,7 @@ class AssetsService {
     projectId,
   }: { userId: number } & CreateImageInput) {
     const id = randomUUID();
-    const row = await assetsRepository.createImage({
+    const row = await this.assetsRepository.createImage({
       id,
       userId,
       name,
@@ -145,14 +147,14 @@ class AssetsService {
   }
 
   async deleteImage({ id, userId }: { id: string; userId: number }) {
-    await this.checkOwner(assetsRepository.findImageOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.deleteImage(id);
+    await this.checkOwner(this.assetsRepository.findImageOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.deleteImage(id);
   }
 
   async listPrompts({ userId, page, pageSize, projectId }: { userId: number } & AssetListQuery) {
     const [list, total] = await Promise.all([
-      assetsRepository.findPrompts(userId, page, pageSize, projectId),
-      assetsRepository.countPrompts(userId, projectId),
+      this.assetsRepository.findPrompts(userId, page, pageSize, projectId),
+      this.assetsRepository.countPrompts(userId, projectId),
     ]);
     return {
       list: list.map((p) => ({ ...p, isFavorite: p.isFavorite === 1 })) as PromptItem[],
@@ -170,7 +172,7 @@ class AssetsService {
     projectId,
   }: { userId: number } & CreatePromptInput) {
     const id = randomUUID();
-    const row = await assetsRepository.createPrompt({
+    const row = await this.assetsRepository.createPrompt({
       id,
       userId,
       title,
@@ -188,12 +190,12 @@ class AssetsService {
     content,
     tags,
   }: { id: string; userId: number } & UpdatePromptInput) {
-    await this.checkOwner(assetsRepository.findPromptOwner.bind(assetsRepository), id, userId);
+    await this.checkOwner(this.assetsRepository.findPromptOwner.bind(this.assetsRepository), id, userId);
     const updates: Record<string, unknown> = {};
     if (title !== undefined) updates.title = title;
     if (content !== undefined) updates.content = content;
     if (tags !== undefined) updates.tags = tags;
-    await assetsRepository.updatePrompt(id, updates);
+    await this.assetsRepository.updatePrompt(id, updates);
   }
 
   async toggleFavoritePrompt({
@@ -205,23 +207,19 @@ class AssetsService {
     userId: number;
     isFavorite: boolean;
   }) {
-    await this.checkOwner(assetsRepository.findPromptOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.toggleFavoritePrompt(id, isFavorite);
+    await this.checkOwner(this.assetsRepository.findPromptOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.toggleFavoritePrompt(id, isFavorite);
   }
 
   async deletePrompt({ id, userId }: { id: string; userId: number }) {
-    await this.checkOwner(assetsRepository.findPromptOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.deletePrompt(id);
+    await this.checkOwner(this.assetsRepository.findPromptOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.deletePrompt(id);
   }
-
-  // ----------------------------------------------------------------
-  // Brushes
-  // ----------------------------------------------------------------
 
   async listBrushes({ userId, page, pageSize, projectId }: { userId: number } & AssetListQuery) {
     const [list, total] = await Promise.all([
-      assetsRepository.findBrushes(userId, page, pageSize, projectId),
-      assetsRepository.countBrushes(userId, projectId),
+      this.assetsRepository.findBrushes(userId, page, pageSize, projectId),
+      this.assetsRepository.countBrushes(userId, projectId),
     ]);
     return { list: list as BrushItem[], total, page, pageSize };
   }
@@ -234,7 +232,7 @@ class AssetsService {
     projectId,
   }: { userId: number } & CreateBrushInput) {
     const id = randomUUID();
-    const row = await assetsRepository.createBrush({
+    const row = await this.assetsRepository.createBrush({
       id,
       userId,
       name,
@@ -252,18 +250,16 @@ class AssetsService {
     config,
     thumbnail,
   }: { id: string; userId: number } & UpdateBrushInput) {
-    await this.checkOwner(assetsRepository.findBrushOwner.bind(assetsRepository), id, userId);
+    await this.checkOwner(this.assetsRepository.findBrushOwner.bind(this.assetsRepository), id, userId);
     const updates: Record<string, unknown> = {};
     if (name !== undefined) updates.name = name;
     if (config !== undefined) updates.config = config;
     if (thumbnail !== undefined) updates.thumbnail = thumbnail;
-    await assetsRepository.updateBrush(id, updates);
+    await this.assetsRepository.updateBrush(id, updates);
   }
 
   async deleteBrush({ id, userId }: { id: string; userId: number }) {
-    await this.checkOwner(assetsRepository.findBrushOwner.bind(assetsRepository), id, userId);
-    await assetsRepository.deleteBrush(id);
+    await this.checkOwner(this.assetsRepository.findBrushOwner.bind(this.assetsRepository), id, userId);
+    await this.assetsRepository.deleteBrush(id);
   }
 }
-
-export const assetsService = new AssetsService();

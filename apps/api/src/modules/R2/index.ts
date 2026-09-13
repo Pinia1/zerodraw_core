@@ -1,1 +1,1 @@
-export * from './r2.services';
+export { R2Service } from './r2.services';

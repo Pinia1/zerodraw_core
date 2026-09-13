@@ -36,6 +36,9 @@ const envSchema = z.object({
   AGENT_BASE_URL: z.string().default('https://nekocode.ai/v1'),
   AGENT_API_KEY: z.string(),
 
+  /** Agent harness 运行位置：inprocess=API 进程内，worker=独立子进程（防 LLM/harness 崩溃拖垮主进程） */
+  AGENT_RUNTIME_HOST: z.enum(['inprocess', 'worker']).default('inprocess'),
+
   REDIS_HOST: z.string().default('127.0.0.1'),
   REDIS_PORT: z.string().transform(Number).default(6379),
   REDIS_PASSWORD: z.string().default(''),

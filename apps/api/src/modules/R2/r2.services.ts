@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { env } from '../../config/env';
 import { BadRequestError } from '../../utils/errors';
 
-class R2Service {
+export class R2Service {
   private readonly BUCKET = 'zerodraw';
   private readonly client: S3Client;
 
@@ -65,5 +65,3 @@ class R2Service {
     };
   }
 }
-
-export const r2Service = new R2Service();
