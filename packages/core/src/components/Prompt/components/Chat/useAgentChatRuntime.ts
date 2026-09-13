@@ -1,6 +1,6 @@
 import type { AppendMessage, CreateStartRunConfig, ThreadMessageLike } from '@assistant-ui/react';
 import { fromThreadMessageLike, useExternalStoreRuntime } from '@assistant-ui/react';
-import type { AgentPromptImage, AgentSessionDetail } from '@zeroDraw/api-contract';
+import type { AgentPromptImage, AgentSessionDetail, ClientToolDefinition } from '@zeroDraw/api-contract';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AgentFrontendToolsConfig } from '../../../../features/agent/tools';
@@ -30,6 +30,10 @@ import {
 export interface UseAgentChatRuntimeOptions {
   projectId?: string;
   frontendTools?: AgentFrontendToolsConfig;
+  /** 创建 session 时注册 deferred tools；省略则后端使用默认 frontend tools */
+  clientTools?: ClientToolDefinition[];
+  /** 区分同 project 下不同页面的 session 存储（如 studio / drawing） */
+  sessionScope?: string;
 }
 
 export interface AgentChatImage {
@@ -53,6 +57,8 @@ export interface UseAgentChatRuntimeReturn {
 export function useAgentChatRuntime({
   projectId = '',
   frontendTools,
+  clientTools,
+  sessionScope,
 }: UseAgentChatRuntimeOptions = {}): UseAgentChatRuntimeReturn {
   const [messages, setMessages] = useState<ThreadMessageLike[]>([]);
   const [phase, setPhase] = useState<AgentChatPhase>('initializing');
@@ -75,16 +81,16 @@ export function useAgentChatRuntime({
       setSessionId(detail.id);
       setSessionStatus(detail.status);
       setMessages(transcriptToThreadMessages(detail.transcript));
-      writeStoredSessionId(projectId, detail.id);
+      writeStoredSessionId(projectId, detail.id, sessionScope);
     },
-    [projectId]
+    [projectId, sessionScope]
   );
 
   const loadOrCreateSession = useMemoizedFn(async () => {
     setPhase('initializing');
     setError(null);
 
-    const storedId = readStoredSessionId(projectId);
+    const storedId = readStoredSessionId(projectId, sessionScope);
     if (storedId) {
       try {
         const detail = await httpGetAgentSession(storedId);
@@ -92,13 +98,15 @@ export function useAgentChatRuntime({
         setPhase(detail.status === 'suspended' ? 'suspended' : 'idle');
         return;
       } catch {
-        clearStoredSessionId(projectId);
+        clearStoredSessionId(projectId, sessionScope);
       }
     }
 
-    const created = await httpCreateAgentSession(
-      projectId ? { projectId } : {},
-    );
+    const createParams = {
+      ...(projectId ? { projectId } : {}),
+      ...(clientTools !== undefined ? { clientTools } : {}),
+    };
+    const created = await httpCreateAgentSession(createParams);
     const detail = await httpGetAgentSession(created.id);
     bindSession(detail);
     setPhase('idle');
@@ -137,7 +145,12 @@ export function useAgentChatRuntime({
       return;
     }
     if (frame.type === 'done') {
-      setSessionStatus('active');
+      const runStatus = (frame as { status?: string }).status;
+      if (runStatus === 'failed' || runStatus === 'aborted') {
+        setError(String((frame as { message?: string }).message ?? '对话失败，请重试'));
+      } else {
+        setSessionStatus('active');
+      }
       setPhase('idle');
       setMessages((prev) => finalizeAllStreams(prev));
       return;
@@ -300,7 +313,7 @@ export function useAgentChatRuntime({
 
   const startNewSession = useMemoizedFn(async () => {
     abortRef.current?.abort();
-    clearStoredSessionId(projectId);
+    clearStoredSessionId(projectId, sessionScope);
     sessionIdRef.current = null;
     setSessionId(null);
     setMessages([]);

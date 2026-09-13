@@ -199,6 +199,9 @@ importers:
       '@zeroDraw/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@zumer/snapdom':
+        specifier: ^2.24.18
+        version: 2.24.18
       antd:
         specifier: ^6.2.3
         version: 6.2.3(react-dom@18.3.1)(react@18.3.1)
@@ -9837,6 +9840,10 @@ packages:
       d3-interpolate: 3.0.1
       d3-selection: 3.0.0
       d3-zoom: 3.0.0
+    dev: false
+
+  /@zumer/snapdom@2.24.18:
+    resolution: {integrity: sha512-wMw8lNY5l0pyarAv8jbe5ayOmrR2OUnK5KLtCwuhcLhFv88d2Y38Sertb+d9pn5g20Cet4eLCRXd3yFHcWiDIQ==}
     dev: false
 
   /abstract-logging@2.0.1:

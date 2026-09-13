@@ -31,9 +31,9 @@ const envSchema = z.object({
 
   SEEDREAM_API_KEY: z.string(),
 
-  // Agent 对话模型（独立于生图 NanoBanana 的供应商/Key，OpenAI-completions 兼容中转站）
-  AGENT_MODEL: z.string().default('claude-sonnet-5'),
-  AGENT_BASE_URL: z.string().default('https://nekocode.ai/v1'),
+  // Agent 对话模型（ARK 火山方舟，Anthropic Messages 兼容 /api/plan 网关）
+  AGENT_MODEL: z.string().default('ark-code-latest'),
+  AGENT_BASE_URL: z.string().default('https://ark.cn-beijing.volces.com/api/plan'),
   AGENT_API_KEY: z.string(),
 
   /** Agent harness 运行位置：inprocess=API 进程内，worker=独立子进程（防 LLM/harness 崩溃拖垮主进程） */

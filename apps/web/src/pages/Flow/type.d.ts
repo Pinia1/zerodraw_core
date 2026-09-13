@@ -9,6 +9,7 @@ declare global {
       args?: any;
       s3Key?: string;
       taskId?: string;
+      label?: string;
     },
     'img'
   >;

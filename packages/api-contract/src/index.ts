@@ -2,6 +2,7 @@ export * from './agent';
 export * from './agent/observability';
 export * from './agent/sse';
 export * from './agent/tools';
+export * from './agent/studioFlow';
 export * from './generate';
 export * from './github';
 export * from './guest';

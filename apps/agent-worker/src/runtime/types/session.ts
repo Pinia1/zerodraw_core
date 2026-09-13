@@ -1,4 +1,5 @@
 import type { SessionMetadata } from '@earendil-works/pi-agent-core';
+import type { ClientToolDefinition } from '@zeroDraw/api-contract';
 
 /** Agent 默认对话 lane（与 pi-agent harness.lane 名称一致）。 */
 export const AGENT_MAIN_LANE = 'main';
@@ -15,4 +16,10 @@ export interface AgentSessionMeta extends SessionMetadata {
   title: string | null;
   status: AgentSessionStatus;
   projectId?: string | null;
+  /**
+   * undefined — 使用后端默认 frontend tools
+   * [] — 仅 trusted tools
+   * 非空 — createSession 时由前端注入
+   */
+  clientTools?: ClientToolDefinition[] | null;
 }

@@ -5,7 +5,7 @@ export const getCanvasStateTool: FrontendToolDefinition = {
   kind: 'frontend',
   capabilities: ['canvas.read'],
   async execute(_args, ctx) {
-    const { layers } = ctx.getLayerState();
+    const { layers } = ctx.getLayerState!();
     return {
       projectId: ctx.projectId || null,
       layerCount: layers.length,

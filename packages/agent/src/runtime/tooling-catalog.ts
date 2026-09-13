@@ -5,8 +5,8 @@ import {
   type Model,
   type MutableModels,
 } from '@earendil-works/pi-ai';
-import { openAICompletionsApi } from '@earendil-works/pi-ai/api/openai-completions.lazy';
-import type { AgentToolingCatalog } from '@zeroDraw/agent-worker/runtime';
+import { anthropicMessagesApi } from '@earendil-works/pi-ai/api/anthropic-messages.lazy';
+import type { AgentToolingCatalog, AgentToolingOptions } from '@zeroDraw/agent-worker/runtime';
 import { getAgentEnv, getAgentLogger } from '../config';
 import { summarizeToolRegistry } from '../framework';
 import { createAgentTools, type AgentHarnessToolWithMeta } from '../tools';
@@ -14,13 +14,13 @@ import { buildAgentSystemPrompt, buildToolsFingerprint } from './systemPrompt';
 
 const AGENT_PROVIDER_ID = 'agent-relay';
 
-export function buildAgentModel(): Model<'openai-completions'> {
+export function buildAgentModel(): Model<'anthropic-messages'> {
   return {
     id: getAgentEnv().AGENT_MODEL,
     name: getAgentEnv().AGENT_MODEL,
     provider: AGENT_PROVIDER_ID,
     baseUrl: getAgentEnv().AGENT_BASE_URL,
-    api: 'openai-completions',
+    api: 'anthropic-messages',
     reasoning: false,
     input: ['text', 'image'],
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
@@ -29,26 +29,53 @@ export function buildAgentModel(): Model<'openai-completions'> {
   };
 }
 
+interface ToolingSnapshot {
+  tools: AgentHarnessToolWithMeta[];
+  toolsFingerprint: string;
+  systemPrompt: string;
+}
+
+function buildSnapshot(clientTools?: AgentToolingOptions['clientTools']): ToolingSnapshot {
+  const tools = createAgentTools({ clientTools });
+  return {
+    tools,
+    toolsFingerprint: buildToolsFingerprint(tools),
+    systemPrompt: buildAgentSystemPrompt(tools),
+  };
+}
+
+function snapshotCacheKey(clientTools?: AgentToolingOptions['clientTools']): string {
+  if (clientTools === undefined) return '__default__';
+  return JSON.stringify(clientTools);
+}
+
 class AgentToolingCatalogImpl implements AgentToolingCatalog {
   private models: MutableModels | null = null;
-  private tools: AgentHarnessToolWithMeta[] | null = null;
-  private systemPrompt: string | null = null;
-  private toolsFingerprint: string | null = null;
+  private readonly snapshotCache = new Map<string, ToolingSnapshot>();
+  private loggedKeys = new Set<string>();
 
-  getTooling() {
-    if (!this.tools) {
-      this.tools = createAgentTools();
-      this.toolsFingerprint = buildToolsFingerprint(this.tools);
-      this.systemPrompt = buildAgentSystemPrompt(this.tools);
+  getTooling(options?: AgentToolingOptions) {
+    const key = snapshotCacheKey(options?.clientTools);
+    let snapshot = this.snapshotCache.get(key);
+    if (!snapshot) {
+      snapshot = buildSnapshot(options?.clientTools);
+      this.snapshotCache.set(key, snapshot);
+    }
+
+    if (!this.loggedKeys.has(key)) {
+      this.loggedKeys.add(key);
       getAgentLogger().info('[Agent] tools registered', {
-        tools: summarizeToolRegistry(this.tools),
+        clientTools:
+          options?.clientTools === undefined
+            ? 'default'
+            : options.clientTools === null
+              ? 0
+              : options.clientTools.length,
+        tools: summarizeToolRegistry(snapshot.tools),
       });
     }
-    return {
-      tools: this.tools,
-      toolsFingerprint: this.toolsFingerprint!,
-      systemPrompt: this.systemPrompt!,
-    };
+
+    return snapshot;
   }
 
   getModels(): MutableModels {
@@ -62,13 +89,13 @@ class AgentToolingCatalogImpl implements AgentToolingCatalog {
         baseUrl: getAgentEnv().AGENT_BASE_URL,
         auth: { apiKey: envApiKeyAuth('Agent relay API key', ['AGENT_API_KEY']) },
         models: [model],
-        api: openAICompletionsApi(),
+        api: anthropicMessagesApi(),
       }),
     );
     return this.models;
   }
 
-  getModel(): Model<'openai-completions'> {
+  getModel(): Model<'anthropic-messages'> {
     return buildAgentModel();
   }
 }

@@ -7,13 +7,11 @@ export async function releaseLaneIfBusy(lane: AgentLane, context: Context): Prom
   const info = await lane.inspectExecution(context);
   if (!info.current) return;
 
-  const aborted = await lane.abort(context);
-  if (!aborted.ok) return;
-
+  await lane.abort(context);
   await Promise.race([
     lane.waitForIdle(context),
     new Promise<void>((resolve) => setTimeout(resolve, 10_000)),
-  ]);
+  ]).catch(() => undefined);
 }
 
 export interface LanePromptResult {

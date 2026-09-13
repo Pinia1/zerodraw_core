@@ -79,6 +79,9 @@ export class AgentWorkerChildRuntime {
           message.error,
         );
         return;
+      case 'frontend_tool_prepare_result':
+        this.ipcTools.resolvePrepareResult(message.requestId, message.ok, message.error);
+        return;
       case 'shutdown':
         await this.shutdown();
         return;

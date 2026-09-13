@@ -173,6 +173,9 @@ export class AgentWorkerSlot {
           });
         }
         return;
+      case 'frontend_tool_prepare':
+        await this.prepareFrontendToolOnHost(message);
+        return;
       case 'tool_execute':
         await this.executeToolOnHost(message);
         return;
@@ -196,6 +199,31 @@ export class AgentWorkerSlot {
         return;
       default:
         return;
+    }
+  }
+
+  private async prepareFrontendToolOnHost(
+    message: Extract<WorkerChildMessage, { type: 'frontend_tool_prepare' }>,
+  ) {
+    try {
+      await this.toolExecutor.prepareFrontendTool({
+        sessionId: message.sessionId,
+        toolName: message.toolName,
+        toolCallId: message.toolCallId,
+        params: message.params,
+      });
+      this.sendToWorker({
+        type: 'frontend_tool_prepare_result',
+        requestId: message.requestId,
+        ok: true,
+      });
+    } catch (error) {
+      this.sendToWorker({
+        type: 'frontend_tool_prepare_result',
+        requestId: message.requestId,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

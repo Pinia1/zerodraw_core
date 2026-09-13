@@ -14,6 +14,7 @@ import {
   type AgentSessionParams,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
+import { withAgentSseStream } from '@zeroDraw/agent-worker/runtime';
 import { getAgentModuleConfig } from './config';
 import { withAgentPromptLock } from './runtime/prompt-lock';
 
@@ -63,16 +64,17 @@ export async function agentRoutes(fastify: FastifyInstance) {
       const imageContents = await buildPromptImageContents(images);
 
       reply.hijack();
-      await withAgentPromptLock(id, () =>
-        agentService.streamPrompt(id, userId, {
-          message,
-          images: imageContents,
-          raw: reply.raw,
-          corsOrigin: request.headers.origin,
-          markSuspended: agentService.markSuspended.bind(agentService),
-          markActive: agentService.markActive.bind(agentService),
-        }),
-      );
+      await withAgentSseStream(reply.raw, request.headers.origin, async (sse) => {
+        await withAgentPromptLock(id, () =>
+          agentService.streamPrompt(id, userId, {
+            message,
+            images: imageContents,
+            sse,
+            markSuspended: agentService.markSuspended.bind(agentService),
+            markActive: agentService.markActive.bind(agentService),
+          }),
+        );
+      });
     },
   );
 

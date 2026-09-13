@@ -53,11 +53,28 @@ export const httpAgentResume = (
   return request.post(`/api/agent/${id}/resume`, data);
 };
 
-export const httpCompleteFrontendTool = (
+export const httpCompleteFrontendTool = async (
   id: string,
   data: AgentFrontendToolCompleteParams,
 ): Promise<AgentFrontendToolCompleteResponse> => {
-  return request.post(`/api/agent/${id}/frontend-tools/complete`, data);
+  const res = await fetch(`${getApiBaseUrl()}/api/agent/${id}/frontend-tools/complete`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  let json: { code?: number; message?: string; data?: AgentFrontendToolCompleteResponse } = {};
+  try {
+    json = (await res.json()) as typeof json;
+  } catch {
+    // ignore malformed body
+  }
+
+  if (!res.ok || json.code !== 1000) {
+    throw new Error(json.message ?? `请求失败 (${res.status})`);
+  }
+
+  return json.data ?? { ok: true, delivered: false };
 };
 
 /** 解析 SSE 文本块 */

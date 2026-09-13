@@ -45,6 +45,24 @@ function toToolResult(payload: AgentFrontendToolCompleteParams): AgentToolResult
 export class FrontendToolBridge {
   private readonly pending = new Map<string, PendingFrontendTool>();
 
+  /** 在浏览器收到 tool_start 之前落库 pending，避免 worker 模式竞态 */
+  async preparePending(
+    sessionId: string,
+    toolCallId: string,
+    toolName: string,
+    args: unknown,
+    timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  ): Promise<void> {
+    await frontendToolCallRepository.insertPending({
+      sessionId,
+      toolCallId,
+      toolName,
+      args,
+      expiresAt: Date.now() + timeoutMs,
+    });
+    getAgentLogger().info('[Agent FrontendTool] prepared', { sessionId, toolCallId, toolName });
+  }
+
   async wait(
     sessionId: string,
     toolCallId: string,
@@ -59,13 +77,10 @@ export class FrontendToolBridge {
       this.pending.delete(key);
     }
 
-    await frontendToolCallRepository.insertPending({
-      sessionId,
-      toolCallId,
-      toolName,
-      args,
-      expiresAt: Date.now() + timeoutMs,
-    });
+    const existingRow = await frontendToolCallRepository.findOne(sessionId, toolCallId);
+    if (!existingRow) {
+      await this.preparePending(sessionId, toolCallId, toolName, args, timeoutMs);
+    }
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {

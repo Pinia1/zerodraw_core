@@ -5,9 +5,11 @@ export {
 } from './types/session';
 export type {
   AgentToolingCatalog,
+  AgentToolingOptions,
   AgentToolingSnapshot,
   HarnessSessionBindings,
 } from './types/tooling';
+export { toolingOptionsFromMeta } from './tooling-options';
 export {
   getAgentRuntimeLogger,
   noopAgentRuntimeLogger,
@@ -32,6 +34,7 @@ export {
 export {
   corsHeadersForHijack,
   KEEPALIVE_MS,
+  prepareSseResponse,
   SSE_HEADERS,
   withAgentSseStream,
   writeSseFrame,

@@ -1,4 +1,5 @@
 import type { Context, SessionMetadata } from '@earendil-works/pi-agent-core';
+import { toolingOptionsFromSessionMeta } from './tooling-options';
 import type { AgentToolingCatalog, HarnessSessionBindings } from './types/tooling';
 import {
   closeHarnessSession,
@@ -48,7 +49,8 @@ export class HarnessSessionStore<
     this.cancelIdleClose(meta.id);
     this.sessionMeta.set(meta.id, meta);
 
-    const { toolsFingerprint } = this.tooling.getTooling();
+    const toolingOptions = toolingOptionsFromSessionMeta(meta);
+    const { toolsFingerprint } = this.tooling.getTooling(toolingOptions);
     const hit = this.cache.get(meta.id);
 
     if (hit) {

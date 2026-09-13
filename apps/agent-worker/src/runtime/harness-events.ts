@@ -1,7 +1,7 @@
 import type { AgentHarness } from '@earendil-works/pi-agent-core';
-import { AGENT_MAIN_LANE } from './types/session';
-import { getAgentRuntimeLogger } from './types/logger';
 import type { AgentSseFrame } from './sse-stream';
+import { getAgentRuntimeLogger } from './types/logger';
+import { AGENT_MAIN_LANE } from './types/session';
 
 const HARNESS_EVENT_NAMES = [
   'message_start',
@@ -52,7 +52,7 @@ export function mapHarnessEventToSseFrame(
   eventName: string,
   payload: Record<string, unknown>,
   sessionId: string,
-  handlers?: HarnessEventHandlers,
+  handlers?: HarnessEventHandlers
 ): AgentSseFrame | null {
   const logger = getAgentRuntimeLogger();
 
@@ -67,7 +67,7 @@ export function mapHarnessEventToSseFrame(
       if ((payload.message as { role?: string })?.role !== 'assistant') return null;
       const evt = payload.event as { type?: string; delta?: string };
       if (evt?.type === 'text_delta') {
-        logger.debug('[Agent LLM] delta', { sessionId, delta: evt.delta });
+        logger.info('[Agent LLM] delta', { sessionId, delta: evt.delta });
         return { type: 'delta', text: evt.delta };
       }
       return null;
@@ -90,24 +90,24 @@ export function mapHarnessEventToSseFrame(
       if (!inMainLane(payload)) return null;
       return {
         type: 'tool_start',
-        toolCallId: payload.toolCallId,
-        toolName: payload.toolName,
+        toolCallId: String(payload.toolCallId ?? ''),
+        toolName: String(payload.toolName ?? ''),
         args: payload.args,
       };
     case 'tool_update':
       if (!inMainLane(payload)) return null;
       return {
         type: 'tool_update',
-        toolCallId: payload.toolCallId,
-        toolName: payload.toolName,
+        toolCallId: String(payload.toolCallId ?? ''),
+        toolName: payload.toolName ? String(payload.toolName) : undefined,
         text: toolResultText(payload.partialResult),
       };
     case 'tool_end':
       if (!inMainLane(payload)) return null;
       return {
         type: 'tool_end',
-        toolCallId: payload.toolCallId,
-        toolName: payload.toolName,
+        toolCallId: String(payload.toolCallId ?? ''),
+        toolName: payload.toolName ? String(payload.toolName) : undefined,
         isError: payload.isError,
         text: toolResultText(payload.result),
       };
@@ -120,8 +120,26 @@ export function mapHarnessEventToSseFrame(
         sessionId,
         runId: payload.runId,
         status: payload.status,
+        error: payload.error,
       });
-      return { type: 'done', runId: payload.runId, status: payload.status };
+      if (payload.status === 'failed' || payload.status === 'aborted') {
+        logger.error('[Agent LLM] run failed', undefined, {
+          sessionId,
+          runId: payload.runId,
+          status: payload.status,
+          error: payload.error,
+        });
+        handlers?.onFault?.();
+      }
+      return {
+        type: 'done',
+        runId: payload.runId,
+        status: payload.status,
+        message:
+          payload.status === 'failed' || payload.status === 'aborted'
+            ? String(payload.error ?? payload.message ?? '对话失败，请重试')
+            : undefined,
+      };
     case 'fault':
       logger.error('[Agent LLM] fault', undefined, {
         sessionId,
@@ -145,13 +163,13 @@ export function mapHarnessEventToSseFrame(
 export function attachHarnessEventForwarder<TContext extends object | undefined>(
   harness: AgentHarness<TContext>,
   forward: (eventName: HarnessEventName, payload: Record<string, unknown>) => void,
-  onFault?: () => void,
+  onFault?: () => void
 ): Array<() => void> {
   return HARNESS_EVENT_NAMES.map((eventName) =>
     harness.events.on(eventName, (payload) => {
       if (eventName === 'fault') onFault?.();
       forward(eventName, payload as Record<string, unknown>);
-    }),
+    })
   );
 }
 
@@ -161,7 +179,7 @@ export function subscribeHarnessEventsToSse<TContext extends object | undefined>
   send: (frame: AgentSseFrame) => void,
   markSuspended: (sessionId: string) => void | Promise<void>,
   markActive: (sessionId: string) => void | Promise<void>,
-  onFault?: () => void,
+  onFault?: () => void
 ): Array<() => void> {
   return attachHarnessEventForwarder(
     harness,
@@ -169,9 +187,18 @@ export function subscribeHarnessEventsToSse<TContext extends object | undefined>
       const frame = mapHarnessEventToSseFrame(eventName, payload, sessionId, { onFault });
       if (!frame) return;
       if (frame.type === 'suspended') void markSuspended(sessionId);
-      if (frame.type === 'done' && frame.status !== 'failed') void markActive(sessionId);
+      if (frame.type === 'done') {
+        if (frame.status === 'failed' || frame.status === 'aborted') {
+          send({
+            type: 'error',
+            message: String(frame.message ?? '对话失败，请重试'),
+          });
+        } else {
+          void markActive(sessionId);
+        }
+      }
       send(frame);
     },
-    onFault,
+    onFault
   );
 }

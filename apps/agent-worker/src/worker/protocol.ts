@@ -19,6 +19,12 @@ export type WorkerParentMessage =
       ok: boolean;
       result?: unknown;
       error?: string;
+    }
+  | {
+      type: 'frontend_tool_prepare_result';
+      requestId: string;
+      ok: boolean;
+      error?: string;
     };
 
 export type HarnessLifecycleEvent = 'harness_opened' | 'harness_idle_closed';
@@ -45,6 +51,15 @@ export type WorkerChildMessage =
   | { type: 'resume_result'; requestId: string; ok: boolean; result?: AgentResumeResponse; error?: string }
   | {
       type: 'tool_execute';
+      requestId: string;
+      sessionId: string;
+      userId: number;
+      toolName: string;
+      toolCallId: string;
+      params: unknown;
+    }
+  | {
+      type: 'frontend_tool_prepare';
       requestId: string;
       sessionId: string;
       userId: number;

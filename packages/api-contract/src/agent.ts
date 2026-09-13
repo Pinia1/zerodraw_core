@@ -1,11 +1,15 @@
 import { z } from 'zod';
+import { clientToolsSchema } from './agent/clientTools';
 
 export * from './agent/framework';
+export * from './agent/clientTools';
 
 /** 创建创作助手会话 */
 export const agentCreateSessionSchema = z.object({
   title: z.string().trim().max(255).optional(),
   projectId: z.string().uuid().optional(),
+  /** 浏览器 deferred 工具；省略则使用后端默认 frontend tools（兼容旧客户端） */
+  clientTools: clientToolsSchema.optional(),
 });
 
 export type AgentCreateSessionParams = z.infer<typeof agentCreateSessionSchema>;

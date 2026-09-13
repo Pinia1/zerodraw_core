@@ -1,10 +1,16 @@
-import type { FrontendToolCapability, FrontendToolName } from '@zeroDraw/api-contract';
+import type { FrontendToolCapability } from '@zeroDraw/api-contract';
 
-/** 由 web 层注入的画布 / 应用上下文，core 不直接依赖 Konva */
+export interface FlowStateSnapshot {
+  nodes: Array<{ id: string; type?: string; position: { x: number; y: number } }>;
+  edges: Array<{ id: string; source: string; target: string }>;
+  viewport: { x: number; y: number; zoom: number };
+}
+
+/** 由 web 层注入的画布 / 应用上下文，core 不直接依赖 Konva / React Flow */
 export interface FrontendToolContext {
   projectId: string;
-  /** 读取图层 store 快照（由调用方提供 getter，避免 core 绑定 zustand 单例） */
-  getLayerState: () => {
+  /** Drawing 页：读取图层 store 快照 */
+  getLayerState?: () => {
     layers: Array<{
       id: string;
       name: string;
@@ -13,10 +19,14 @@ export interface FrontendToolContext {
       order?: number;
     }>;
   };
+  /** Studio 页：读取 React Flow 快照 */
+  getFlowState?: () => FlowStateSnapshot;
+  /** Studio 页：执行画布变更（create / update / delete node、连线等） */
+  applyFlowMutation?: (mutation: unknown) => unknown;
 }
 
 export interface FrontendToolDefinition<TArgs = unknown, TResult = unknown> {
-  name: FrontendToolName;
+  name: string;
   kind: 'frontend';
   capabilities: FrontendToolCapability[];
   /** 是否需要用户手动确认后再 complete（后续扩展 approval UI） */

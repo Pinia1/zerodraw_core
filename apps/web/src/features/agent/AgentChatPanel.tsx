@@ -1,6 +1,7 @@
 import { Thread } from '@/components/thread.aui';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { ClientToolDefinition } from '@zeroDraw/api-contract';
 import { useAgentChatRuntime, useAgentFrontendToolsConfig } from '@zeroDraw/core';
 import { useMediaQuery } from '@zeroDraw/common';
 import { Alert, Button as AntButton } from 'antd';
@@ -24,10 +25,23 @@ function AgentChatWelcome() {
   );
 }
 
-const AgentChatPanel = () => {
+export interface AgentChatPanelProps {
+  projectId?: string;
+  clientTools?: ClientToolDefinition[];
+  sessionScope?: string;
+  className?: string;
+}
+
+const AgentChatPanel = ({
+  projectId: projectIdProp,
+  clientTools,
+  sessionScope,
+  className,
+}: AgentChatPanelProps = {}) => {
   const { t } = useTranslation();
   const [windowTheme] = useMediaQuery();
-  const projectId = new URLSearchParams(window.location.search).get('projectId') ?? '';
+  const projectId =
+    projectIdProp ?? new URLSearchParams(window.location.search).get('projectId') ?? '';
 
   const frontendTools = useAgentFrontendToolsConfig();
 
@@ -35,6 +49,8 @@ const AgentChatPanel = () => {
     useAgentChatRuntime({
       projectId,
       frontendTools: frontendTools ?? undefined,
+      clientTools,
+      sessionScope,
     });
 
   const busy = phase === 'streaming' || phase === 'initializing';
@@ -62,6 +78,7 @@ const AgentChatPanel = () => {
       className={cn(
         'agent-chat-panel flex h-full min-h-[320px] flex-col gap-1.5 text-foreground',
         windowTheme === 'dark' && 'dark',
+        className,
       )}
     >
       <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 pb-1.5">

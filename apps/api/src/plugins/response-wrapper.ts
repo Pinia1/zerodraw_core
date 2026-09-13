@@ -42,12 +42,16 @@ const responseWrapperPlugin: FastifyPluginCallback = (fastify, _opts, done) => {
     'onSend',
     async (request: FastifyRequest, reply: FastifyReply, payload: unknown) => {
       const path = request.url;
-      if (path.startsWith('/docs')) {
+      if (path.startsWith('/docs') || path.includes('/prompt')) {
         return payload;
       }
 
       const contentType = (reply.getHeader('Content-Type') as string) ?? '';
-      if (contentType && !contentType.includes('application/json')) {
+      if (
+        contentType &&
+        !contentType.includes('application/json') &&
+        !contentType.includes('text/event-stream')
+      ) {
         return payload;
       }
 

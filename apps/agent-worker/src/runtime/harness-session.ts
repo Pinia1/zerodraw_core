@@ -7,6 +7,7 @@ import {
   type SessionMetadata,
 } from '@earendil-works/pi-agent-core';
 import { AGENT_MAIN_LANE } from './types/session';
+import { toolingOptionsFromSessionMeta } from './tooling-options';
 import type { AgentToolingCatalog, HarnessSessionBindings } from './types/tooling';
 import { releaseLaneIfBusy } from './lane-ops';
 
@@ -31,7 +32,8 @@ export async function openHarnessSession<
 ): Promise<AgentHarnessBundle<TMeta, TToolContext>> {
   const model = tooling.getModel();
   const models = tooling.getModels();
-  const { tools: registeredTools, toolsFingerprint, systemPrompt } = tooling.getTooling();
+  const toolingOptions = toolingOptionsFromSessionMeta(meta);
+  const { tools: registeredTools, toolsFingerprint, systemPrompt } = tooling.getTooling(toolingOptions);
   const tools = bindings.wrapTools ? bindings.wrapTools(registeredTools) : registeredTools;
 
   const session = new StorageBackedSession<TMeta>(meta, bindings.createStorage(meta));

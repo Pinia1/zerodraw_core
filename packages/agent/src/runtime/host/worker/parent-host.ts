@@ -4,11 +4,13 @@ import {
   mapHarnessEventToSseFrame,
   withAgentSseStream,
   type AgentSessionMeta,
+  type AgentSseStreamContext,
 } from '@zeroDraw/agent-worker/runtime';
 import { getAgentErrors, getAgentLogger } from '../../../config';
 import { toObservabilityContext, type AgentRuntimeObservability } from '../../../observability';
 import type { AgentDeps } from '../../../tools';
 import type { FrontendToolBridge } from '../../../tools/frontend/bridge';
+import type { AgentRepository } from '../../../session/repository';
 import { HostToolExecutor } from '../tool-executor';
 import type { AgentRuntimeHost, AgentStreamPromptOptions } from '../types';
 import { AgentWorkerPool } from './worker-pool';
@@ -23,8 +25,9 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
     frontendToolBridge: FrontendToolBridge,
     poolSize: number,
     observability: AgentRuntimeObservability,
+    repository: AgentRepository,
   ) {
-    const toolExecutor = new HostToolExecutor(frontendToolBridge, deps);
+    const toolExecutor = new HostToolExecutor(frontendToolBridge, repository, deps);
     this.observability = observability;
     this.pool = new AgentWorkerPool({
       size: poolSize,
@@ -63,7 +66,7 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
     let errorMessage: string | undefined;
     let finished = false;
 
-    await withAgentSseStream(raw, corsOrigin, async ({ send }) => {
+    const runPromptBody = async ({ send }: AgentSseStreamContext) => {
       getAgentLogger().info('[Agent LLM] prompt', {
         sessionId,
         message,
@@ -87,7 +90,16 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
               );
               if (!frame) return;
               if (frame.type === 'suspended') void markSuspended(sessionId);
-              if (frame.type === 'done' && frame.status !== 'failed') void markActive(sessionId);
+              if (frame.type === 'done') {
+                if (frame.status === 'failed' || frame.status === 'aborted') {
+                  send({
+                    type: 'error',
+                    message: String(frame.message ?? '对话失败，请重试'),
+                  });
+                } else {
+                  void markActive(sessionId);
+                }
+              }
               send(frame);
             },
             onFinished: (finishedMessage) => {
@@ -117,7 +129,15 @@ export class WorkerRuntimeHost implements AgentRuntimeHost {
         .finally(() => {
           if (requestId) slot.clearPromptHandler(requestId);
         });
-    });
+    };
+
+    if (options.sse) {
+      await runPromptBody(options.sse);
+    } else if (raw) {
+      await withAgentSseStream(raw, corsOrigin, runPromptBody);
+    } else {
+      throw new Error('streamPrompt 需要 raw 或 sse 上下文');
+    }
 
     if (!finished) {
       finishStatus = 'aborted';

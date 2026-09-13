@@ -19,6 +19,12 @@ export interface GenerateSubmitCapability {
 }
 
 export interface FrontendBridgeCapability {
+  preparePending(
+    toolCallId: string,
+    toolName: string,
+    args: unknown,
+    timeoutMs?: number,
+  ): Promise<void>;
   wait(
     toolCallId: string,
     toolName: string,
@@ -58,6 +64,8 @@ export function buildAgentCapabilityMap(
       submit: (params) => deps.generate.run(userId, params),
     },
     'frontend.bridge': {
+      preparePending: (toolCallId, toolName, args, timeoutMs) =>
+        frontendBridge.preparePending(sessionId, toolCallId, toolName, args, timeoutMs),
       wait: (toolCallId, toolName, args, timeoutMs) =>
         frontendBridge.wait(sessionId, toolCallId, toolName, args, timeoutMs),
     },

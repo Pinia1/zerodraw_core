@@ -24,29 +24,30 @@ export function extractAgentMessageText(message: unknown): string {
   return textFromContent(msg.content);
 }
 
-export function sessionStorageKey(projectId: string): string {
-  return `zerodraw:agent-session:${projectId || 'default'}`;
+export function sessionStorageKey(projectId: string, scope?: string): string {
+  const base = projectId || 'default';
+  return scope ? `zerodraw:agent-session:${scope}:${base}` : `zerodraw:agent-session:${base}`;
 }
 
-export function readStoredSessionId(projectId: string): string | null {
+export function readStoredSessionId(projectId: string, scope?: string): string | null {
   try {
-    return localStorage.getItem(sessionStorageKey(projectId));
+    return localStorage.getItem(sessionStorageKey(projectId, scope));
   } catch {
     return null;
   }
 }
 
-export function writeStoredSessionId(projectId: string, sessionId: string): void {
+export function writeStoredSessionId(projectId: string, sessionId: string, scope?: string): void {
   try {
-    localStorage.setItem(sessionStorageKey(projectId), sessionId);
+    localStorage.setItem(sessionStorageKey(projectId, scope), sessionId);
   } catch {
     // ignore quota / private mode
   }
 }
 
-export function clearStoredSessionId(projectId: string): void {
+export function clearStoredSessionId(projectId: string, scope?: string): void {
   try {
-    localStorage.removeItem(sessionStorageKey(projectId));
+    localStorage.removeItem(sessionStorageKey(projectId, scope));
   } catch {
     // ignore
   }

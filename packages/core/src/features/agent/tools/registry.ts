@@ -1,8 +1,7 @@
-import type { FrontendToolName } from '@zeroDraw/api-contract';
 import type { FrontendToolContext, FrontendToolDefinition } from './types';
 
 export class FrontendToolRegistry {
-  private readonly tools = new Map<FrontendToolName, FrontendToolDefinition>();
+  private readonly tools = new Map<string, FrontendToolDefinition>();
 
   constructor(definitions: FrontendToolDefinition[] = []) {
     for (const tool of definitions) {
@@ -10,15 +9,15 @@ export class FrontendToolRegistry {
     }
   }
 
-  has(name: string): name is FrontendToolName {
-    return this.tools.has(name as FrontendToolName);
+  has(name: string): boolean {
+    return this.tools.has(name);
   }
 
-  list(): FrontendToolName[] {
+  list(): string[] {
     return [...this.tools.keys()];
   }
 
-  async execute(name: FrontendToolName, args: unknown, ctx: FrontendToolContext): Promise<unknown> {
+  async execute(name: string, args: unknown, ctx: FrontendToolContext): Promise<unknown> {
     const tool = this.tools.get(name);
     if (!tool) {
       throw new Error(`未注册的前端工具: ${name}`);
@@ -26,11 +25,11 @@ export class FrontendToolRegistry {
     return tool.execute(args, ctx);
   }
 
-  requiresApproval(name: FrontendToolName): boolean {
+  requiresApproval(name: string): boolean {
     return this.tools.get(name)?.requiresApproval ?? false;
   }
 
-  getMeta(name: FrontendToolName) {
+  getMeta(name: string) {
     const tool = this.tools.get(name);
     if (!tool) return null;
     return { kind: tool.kind, capabilities: [...tool.capabilities] };

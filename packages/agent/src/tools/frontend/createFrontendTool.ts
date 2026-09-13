@@ -1,10 +1,10 @@
 import type { AgentHarnessTool } from '@earendil-works/pi-agent-core';
 import type { Static, TSchema } from '@earendil-works/pi-ai';
-import type { FrontendToolName, ToolKind } from '@zeroDraw/api-contract';
+import type { ToolKind } from '@zeroDraw/api-contract';
 import type { AgentToolContext } from '../../session/types';
 
 export interface CreateFrontendToolOptions<TParameters extends TSchema> {
-  name: FrontendToolName;
+  name: string;
   description: string;
   label: string;
   parameters: TParameters;
@@ -24,17 +24,20 @@ export function createFrontendTool<TParameters extends TSchema>(
     label,
     parameters,
     async execute(toolCallId, params, onUpdate, toolContext) {
-      onUpdate({
-        content: [{ type: 'text', text: '等待前端执行…' }],
-        details: { status: 'pending_frontend', toolName: name },
-      });
-
-      return toolContext.capabilities['frontend.bridge']!.wait(
+      const bridge = toolContext.capabilities['frontend.bridge']!;
+      await bridge.preparePending(
         toolCallId,
         name,
         params as Static<TParameters>,
         timeoutMs,
       );
+
+      onUpdate({
+        content: [{ type: 'text', text: '等待前端执行…' }],
+        details: { status: 'pending_frontend', toolName: name },
+      });
+
+      return bridge.wait(toolCallId, name, params as Static<TParameters>, timeoutMs);
     },
   };
 }

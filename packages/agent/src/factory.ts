@@ -26,6 +26,7 @@ export function createAgentModuleContext(config: AgentModuleConfig): AgentModule
     workerPoolSize: config.env.AGENT_WORKER_POOL_SIZE,
     harnessIdleCloseMs: config.env.AGENT_HARNESS_IDLE_MS,
     observability,
+    repository,
   });
   const service = new AgentService({
     repository,

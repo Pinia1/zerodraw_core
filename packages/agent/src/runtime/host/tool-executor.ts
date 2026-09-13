@@ -4,17 +4,37 @@ import { getAgentDeps } from '../../config';
 import { createAgentToolContext } from '../../session/types';
 import { createAgentTools, type AgentDeps } from '../../tools';
 import type { FrontendToolBridge } from '../../tools/frontend/bridge';
+import type { AgentRepository } from '../../session/repository';
 
 /** 主进程侧工具执行器：worker 模式下由 IPC 回调到这里 */
 export class HostToolExecutor {
-  private readonly tools = createAgentTools();
   private readonly deps: AgentDeps;
 
   constructor(
     private readonly frontendToolBridge: FrontendToolBridge,
+    private readonly repository: AgentRepository,
     deps?: AgentDeps,
   ) {
     this.deps = deps ?? getAgentDeps();
+  }
+
+  async prepareFrontendTool(input: {
+    sessionId: string;
+    toolName: string;
+    toolCallId: string;
+    params: unknown;
+  }): Promise<void> {
+    const meta = await this.repository.findById(input.sessionId);
+    const tools = createAgentTools({ clientTools: meta?.clientTools });
+    const tool = tools.find((item) => item.name === input.toolName);
+    if (!tool || tool.kind !== 'frontend') return;
+
+    await this.frontendToolBridge.preparePending(
+      input.sessionId,
+      input.toolCallId,
+      input.toolName,
+      input.params,
+    );
   }
 
   async execute(input: {
@@ -24,9 +44,20 @@ export class HostToolExecutor {
     toolCallId: string;
     params: unknown;
   }) {
-    const tool = this.tools.find((item) => item.name === input.toolName);
+    const meta = await this.repository.findById(input.sessionId);
+    const tools = createAgentTools({ clientTools: meta?.clientTools });
+    const tool = tools.find((item) => item.name === input.toolName);
     if (!tool) {
       throw new Error(`未知工具: ${input.toolName}`);
+    }
+
+    if (tool.kind === 'frontend') {
+      await this.frontendToolBridge.preparePending(
+        input.sessionId,
+        input.toolCallId,
+        input.toolName,
+        input.params,
+      );
     }
 
     const fullContext = createAgentToolContext({

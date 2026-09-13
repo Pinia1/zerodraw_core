@@ -16,11 +16,14 @@ import {
 import { randomUUID } from 'crypto';
 import { getAgentDb } from '../config';
 import { zeroUsage } from '../usage/utils';
+import { readSessionMetadata, writeSessionMetadata } from './metadata';
 import type { AgentSessionMeta, AgentSessionStatus } from './types';
+import type { ClientToolDefinition } from '@zeroDraw/api-contract';
 
 type AgentSessionRow = typeof agentSession.$inferSelect;
 
 function toMeta(row: AgentSessionRow): AgentSessionMeta {
+  const metadata = readSessionMetadata(row.metadata);
   return {
     id: row.id,
     createdAt: row.createdAt,
@@ -29,6 +32,7 @@ function toMeta(row: AgentSessionRow): AgentSessionMeta {
     title: row.title ?? null,
     status: row.status,
     projectId: row.projectId ?? null,
+    clientTools: metadata.clientTools,
   };
 }
 
@@ -38,6 +42,7 @@ export interface CreateAgentSessionData {
   title?: string;
   projectId?: string;
   runtimeHost?: 'inprocess' | 'worker';
+  clientTools?: ClientToolDefinition[];
 }
 
 export class AgentRepository {
@@ -47,6 +52,7 @@ export class AgentRepository {
     title,
     projectId,
     runtimeHost,
+    clientTools,
   }: CreateAgentSessionData): Promise<AgentSessionMeta> {
     const sessionId = id ?? randomUUID();
     const now = Date.now();
@@ -58,7 +64,7 @@ export class AgentRepository {
       createdAt: now,
       parentSessionId: null,
       storageVersion: 1,
-      metadata: null,
+      metadata: writeSessionMetadata({ clientTools }),
       messageCount: 0,
       usagePayload: zeroUsage(),
       nextSeq: 1,

@@ -45,6 +45,7 @@ export class AgentService {
       title: input.title,
       projectId: input.projectId,
       runtimeHost: getAgentEnv().AGENT_RUNTIME_HOST,
+      clientTools: input.clientTools,
     });
     await this.deps.observability.onSessionCreated({
       ...toObservabilityContext(meta),

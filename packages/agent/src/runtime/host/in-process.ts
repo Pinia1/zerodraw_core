@@ -7,6 +7,7 @@ import {
   runLaneResume,
   subscribeHarnessEventsToSse,
   withAgentSseStream,
+  type AgentSseStreamContext,
   type AgentToolingCatalog,
 } from '@zeroDraw/agent-worker/runtime';
 import { getAgentErrors, getAgentLogger } from '../../config';
@@ -70,23 +71,31 @@ export class InProcessRuntimeHost implements AgentRuntimeHost {
     let finishStatus: AgentPromptRunStatus = 'completed';
     let errorMessage: string | undefined;
 
-    await withAgentSseStream(raw, corsOrigin, async ({ send, abortSignal }) => {
+    const runPromptBody = async ({ send, abortSignal }: AgentSseStreamContext) => {
       const { harness, lane } = await this.sessions.get(meta, BACKGROUND_CONTEXT);
       const context = withAbortSignal(abortSignal, BACKGROUND_CONTEXT);
+      let terminalRunStatus: string | undefined;
+
+      const sendTracked = (frame: Record<string, unknown>) => {
+        if (frame.type === 'done') terminalRunStatus = String(frame.status ?? 'completed');
+        send(frame);
+      };
 
       const unsubscribe = subscribeHarnessEventsToSse(
         harness,
         sessionId,
-        send,
+        sendTracked,
         markSuspended,
         markActive,
         () => this.sessions.evict(sessionId),
       );
 
-      raw.on('close', () => {
+      const onClose = () => {
         for (const stop of unsubscribe) stop();
         void releaseLaneIfBusy(lane, context).catch(() => undefined);
-      });
+      };
+      raw?.on('close', onClose);
+      abortSignal.addEventListener('abort', onClose, { once: true });
 
       getAgentLogger().info('[Agent LLM] prompt', {
         sessionId,
@@ -104,6 +113,12 @@ export class InProcessRuntimeHost implements AgentRuntimeHost {
           finishStatus = 'suspended';
           await markSuspended(sessionId);
           send({ type: 'suspended', operationId: result.operationId });
+        } else if (terminalRunStatus === 'failed') {
+          finishStatus = 'failed';
+          errorMessage = '对话失败，请重试';
+          this.sessions.evict(sessionId);
+        } else if (terminalRunStatus === 'aborted') {
+          finishStatus = 'aborted';
         }
       } catch (error) {
         if (abortSignal.aborted) {
@@ -118,12 +133,21 @@ export class InProcessRuntimeHost implements AgentRuntimeHost {
         }
         send({ type: 'error', message: errorMessage ?? 'Prompt failed' });
       } finally {
+        raw?.off('close', onClose);
         for (const stop of unsubscribe) stop();
         if (scheduleIdleClose) {
           this.sessions.scheduleIdleClose(sessionId, BACKGROUND_CONTEXT);
         }
       }
-    });
+    };
+
+    if (options.sse) {
+      await runPromptBody(options.sse);
+    } else if (raw) {
+      await withAgentSseStream(raw, corsOrigin, runPromptBody);
+    } else {
+      throw new Error('streamPrompt 需要 raw 或 sse 上下文');
+    }
 
     await onFinished?.({ status: finishStatus, errorMessage });
   }

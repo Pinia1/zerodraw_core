@@ -58,6 +58,7 @@ export {
 } from './features/agent/tools';
 export type {
   AgentFrontendToolsConfig,
+  FlowStateSnapshot,
   FrontendToolContext,
   FrontendToolDefinition,
   FrontendToolRegistry,
