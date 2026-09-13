@@ -5,6 +5,11 @@ dist/
 # Migration 文件（根据项目需求决定是否提交）
 # drizzle/
 
+# SQLite 数据文件
+data/
+*.db
+*.db-*
+
 # 备份文件
 backups/
 *.sql

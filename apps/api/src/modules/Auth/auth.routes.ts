@@ -11,6 +11,9 @@ export async function authRoutes(fastify: FastifyInstance) {
     '/github/callback',
     { schema: { querystring: githubCallbackSchema } },
     async (request, reply) => {
+      if (!fastify.githubService) {
+        return reply.status(503).send({ success: false, message: 'GitHub OAuth is not configured' });
+      }
       const { code } = request.query;
 
       const { access_token } = await fastify.githubService.getAccessToken(code);

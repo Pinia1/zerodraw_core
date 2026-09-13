@@ -1,5 +1,5 @@
 import { createApp } from './app';
-import { env } from './config/env';
+import { env, isRedisEnabled } from './config/env';
 import { closeDatabase } from './db';
 import { closeRedis } from './redis';
 import { logger } from './utils/logger';
@@ -20,7 +20,9 @@ async function start() {
     const shutdown = async () => {
       try {
         await app.close();
-        await closeRedis();
+        if (isRedisEnabled) {
+          await closeRedis();
+        }
         await closeDatabase();
         logger.info(`Server shutdown successfully`);
         process.exit(0);

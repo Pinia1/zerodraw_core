@@ -1,6 +1,16 @@
 import type { Node } from '@xyflow/react';
 
 declare global {
+  type ImageNodeData = {
+    src?: string;
+    width?: number;
+    height?: number;
+    s3Key?: string;
+    label?: string;
+  };
+
+  type ImageNode = Node<ImageNodeData, 'img'>;
+
   type VideoNodeData = {
     src?: string;
     poster?: string;

@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { redis } from '../redis';
+import { getRedis } from '../redis';
 import { TooManyRequestsError } from '../utils/errors';
 
 interface UserRateLimitOptions {
@@ -10,6 +10,9 @@ interface UserRateLimitOptions {
 
 export function userRateLimit({ max, windowSec, keyPrefix = 'rl' }: UserRateLimitOptions) {
   return async function (request: FastifyRequest, reply: FastifyReply) {
+    const redis = getRedis();
+    if (!redis) return;
+
     const userId = request.user.userId;
     const key = `${keyPrefix}:${userId}`;
 

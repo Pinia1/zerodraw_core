@@ -11,8 +11,8 @@ export class VolcService {
 
   constructor() {
     this.client = new TosClient({
-      accessKeyId: env.TOS_ACCESS_KEY,
-      accessKeySecret: env.TOS_SECRET_KEY,
+      accessKeyId: env.TOS_ACCESS_KEY!,
+      accessKeySecret: env.TOS_SECRET_KEY!,
       region: this.REGION,
       endpoint: this.ENDPOINT,
     });

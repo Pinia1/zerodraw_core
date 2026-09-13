@@ -5,8 +5,4 @@ export {
   createFrontendTool,
   type FrontendToolCompleteOutcome,
 } from './frontend';
-export {
-  createGenerateImageTool,
-  createListProjectsTool,
-  createReadProjectTool,
-} from './trusted';
+export { createListProjectsTool, createReadProjectTool } from './trusted';

@@ -44,6 +44,6 @@ async function agentPluginImpl(fastify: FastifyInstance, options: AgentPluginOpt
 
 export const agentPlugin = fp(agentPluginImpl, {
   name: '@zeroDraw/agent',
-  dependencies: ['@zeroDraw/auth', '@zeroDraw/project', '@zeroDraw/generate', '@zeroDraw/infra'],
+  dependencies: ['@zeroDraw/auth', '@zeroDraw/project', '@zeroDraw/infra'],
   fastify: '5.x',
 });

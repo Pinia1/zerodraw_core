@@ -5,12 +5,7 @@ import {
   type RegisteredAgentTool,
 } from '../framework';
 import { createRegisteredClientTool } from './clientTool';
-import { createGenerateImageTool, createListProjectsTool, createReadProjectTool } from './trusted';
-import {
-  createGetCanvasStateTool,
-  createPlaceSvgTool,
-  createSwitchDrawToolTool,
-} from './frontend/definitions';
+import { createListProjectsTool, createReadProjectTool } from './trusted';
 
 const trustedRegistrations: RegisteredAgentTool[] = [
   {
@@ -23,36 +18,12 @@ const trustedRegistrations: RegisteredAgentTool[] = [
     capabilities: ['project.read'],
     tool: createReadProjectTool(),
   },
-  {
-    kind: 'trusted',
-    capabilities: ['generate.submit'],
-    tool: createGenerateImageTool(),
-  },
-];
-
-const defaultFrontendRegistrations: RegisteredAgentTool[] = [
-  {
-    kind: 'frontend',
-    capabilities: ['frontend.bridge'],
-    tool: createGetCanvasStateTool(),
-  },
-  {
-    kind: 'frontend',
-    capabilities: ['frontend.bridge'],
-    tool: createSwitchDrawToolTool(),
-  },
-  {
-    kind: 'frontend',
-    capabilities: ['frontend.bridge'],
-    tool: createPlaceSvgTool(),
-  },
 ];
 
 export interface CreateAgentToolsOptions {
   /**
-   * undefined — 使用后端内置 frontend tools（兼容旧客户端）
-   * [] — 仅 trusted tools
-   * 非空 — 动态注册 client tools
+   * undefined / [] — 仅 trusted tools（Agent Studio 默认）
+   * 非空 — 动态注册 client tools（Studio 页 createSession 注入）
    */
   clientTools?: ClientToolDefinition[] | null;
 }
@@ -60,8 +31,7 @@ export interface CreateAgentToolsOptions {
 function resolveFrontendRegistrations(
   clientTools?: ClientToolDefinition[] | null,
 ): RegisteredAgentTool[] {
-  if (clientTools === undefined) return defaultFrontendRegistrations;
-  if (clientTools === null || clientTools.length === 0) return [];
+  if (!clientTools?.length) return [];
   return clientTools.map(createRegisteredClientTool);
 }
 

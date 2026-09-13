@@ -2,7 +2,7 @@ import { Thread } from '@/components/thread.aui';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ClientToolDefinition } from '@zeroDraw/api-contract';
-import { useAgentChatRuntime, useAgentFrontendToolsConfig } from '@zeroDraw/core';
+import { useAgentChatRuntime, useAgentFrontendToolsConfig } from '@zeroDraw/agent-ui';
 import { useMediaQuery } from '@zeroDraw/common';
 import { Alert, Button as AntButton } from 'antd';
 import { MessageSquarePlusIcon } from 'lucide-react';

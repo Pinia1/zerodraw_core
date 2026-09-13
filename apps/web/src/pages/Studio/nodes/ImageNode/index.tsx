@@ -7,9 +7,9 @@ import {
   useViewport,
   type NodeProps,
 } from '@xyflow/react';
-import { useHover, useMemoizedFn, useRequest, useUpdateEffect } from '@zeroDraw/common';
-import { Container, Icons, ToolItem } from '@zeroDraw/core';
-import { Image, Spin, Tooltip } from 'antd';
+import { useHover, useMemoizedFn } from '@zeroDraw/common';
+import { Container, Icons, ToolItem } from '@zeroDraw/agent-ui';
+import { Image, Tooltip } from 'antd';
 import React, { memo, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import {
@@ -18,9 +18,7 @@ import {
   ResizeHandle,
   ToolbarWrapper,
   Wrapper,
-} from '@/pages/Flow/nodes/Image/components';
-import { httpGetTask } from '@/services/generate';
-import { apiUrl, fileUrl } from '@/utils';
+} from '../shared/nodeLayout';
 import { useNodeResize } from '../shared/useNodeResize';
 
 const LabelBadge = styled.div`
@@ -53,13 +51,7 @@ const ImageContent = styled.div`
 
 const StudioImageNode: React.FC<NodeProps<ImageNode>> = (props) => {
   const { id, data, selected } = props;
-  const { taskId } = data;
-  const {
-    src,
-    width = 200,
-    height = 200,
-    label = '参考图',
-  } = data as ImageNode['data'];
+  const { src, width = 200, height = 200, label = '参考图' } = data as ImageNode['data'];
 
   const { setNodes } = useReactFlow();
   const nodes = useNodes();
@@ -67,39 +59,7 @@ const StudioImageNode: React.FC<NodeProps<ImageNode>> = (props) => {
   const ref = useRef<HTMLDivElement>(null);
   const isHover = useHover(ref);
   const [previewVisible, setPreviewVisible] = useState(false);
-  const [loading, setLoading] = useState(!!src);
-
-  useUpdateEffect(() => {
-    if (src) setLoading(true);
-  }, [src]);
-
-  const { cancel, data: responseData } = useRequest(() => httpGetTask(taskId as string), {
-    manual: !taskId,
-    onSuccess: (task) => {
-      if (['completed', 'failed'].includes(task.status)) {
-        setLoading(false);
-        cancel();
-      }
-      if (task.s3Key) {
-        setNodes((nds) =>
-          nds.map((n) =>
-            n.id === id
-              ? {
-                  ...n,
-                  data: {
-                    ...n.data,
-                    src: `${apiUrl}${fileUrl}/${task.s3Key}`,
-                    s3Key: task.s3Key,
-                  },
-                }
-              : n,
-          ),
-        );
-      }
-    },
-    onError: () => cancel(),
-    pollingInterval: 2000,
-  });
+  const [loadError, setLoadError] = useState(false);
 
   const onPointerDown = useNodeResize({
     id,
@@ -115,7 +75,6 @@ const StudioImageNode: React.FC<NodeProps<ImageNode>> = (props) => {
   });
 
   const multSelected = useMemo(() => nodes.filter((n) => n.selected).length > 1, [nodes]);
-  const error = responseData?.status === 'failed';
 
   const handleStyle = {
     width: 6,
@@ -139,11 +98,13 @@ const StudioImageNode: React.FC<NodeProps<ImageNode>> = (props) => {
               borderRadius: 16,
             }}
           >
-            <Tooltip title="预览">
-              <ToolItem onClick={() => setPreviewVisible(true)} style={{ minWidth: 38 }}>
-                <Icon component={Icons.IconPreview} />
-              </ToolItem>
-            </Tooltip>
+            {src ? (
+              <Tooltip title="预览">
+                <ToolItem onClick={() => setPreviewVisible(true)} style={{ minWidth: 38 }}>
+                  <Icon component={Icons.IconPreview} />
+                </ToolItem>
+              </Tooltip>
+            ) : null}
             <Tooltip title="删除">
               <ToolItem onClick={handleDelete} style={{ minWidth: 38 }}>
                 <DeleteOutlined />
@@ -157,31 +118,26 @@ const StudioImageNode: React.FC<NodeProps<ImageNode>> = (props) => {
         <ImageContent>
           <LabelBadge>{label}</LabelBadge>
           <ImageContainer $width={width} $height={height}>
-            <Image
-              preview={{
-                minScale: 0.5,
-                visible: previewVisible,
-                onVisibleChange: (visible) => {
-                  if (!visible) setPreviewVisible(false);
-                },
-                getContainer: () => document.body,
-              }}
-              src={src}
-              onLoad={() => setLoading(false)}
-              onError={() => setLoading(false)}
-            />
-            {error && (
-              <Container>
-                <Placeholder style={{ position: 'absolute', inset: 0, background: '#141414' }}>
-                  <span>{responseData?.error}</span>
-                </Placeholder>
-              </Container>
+            {src ? (
+              <Image
+                preview={{
+                  minScale: 0.5,
+                  visible: previewVisible,
+                  onVisibleChange: (visible) => {
+                    if (!visible) setPreviewVisible(false);
+                  },
+                  getContainer: () => document.body,
+                }}
+                src={src}
+                onError={() => setLoadError(true)}
+              />
+            ) : (
+              <Placeholder>上传或拖入参考图</Placeholder>
             )}
-            {loading && (
+            {loadError && (
               <Container>
                 <Placeholder style={{ position: 'absolute', inset: 0, background: '#141414' }}>
-                  <Spin size="small" />
-                  <span>加载中…</span>
+                  <span>图片加载失败</span>
                 </Placeholder>
               </Container>
             )}

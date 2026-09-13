@@ -12,8 +12,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        '@core': path.resolve(__dirname, '../../packages/core/src'),
-        '@zeroDraw/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
+        '@zeroDraw/agent-ui': path.resolve(__dirname, '../../packages/agent-ui/src/index.ts'),
         '@zeroDraw/common': path.resolve(__dirname, '../../packages/common/src/index.ts'),
       },
     },
@@ -28,7 +27,7 @@ export default defineConfig(({ mode }) => {
     },
     assetsInclude: ['**/*.wasm'],
     optimizeDeps: {
-      exclude: ['@zeroDraw/core', '@zeroDraw/common', '@zeroDraw/wasm'],
+      exclude: ['@zeroDraw/agent-ui', '@zeroDraw/common'],
     },
     build: {
       outDir: 'dist',

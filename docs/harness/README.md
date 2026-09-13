@@ -16,7 +16,7 @@
 | `packages/agent/` | Agent 业务模块（`@zeroDraw/agent`） |
 | `apps/api/src/agent/` | API 宿主装配（db、deps、auth 注入） |
 | `packages/api-contract/src/agent/` | 契约（SSE、工具名、framework 类型） |
-| `packages/core/src/features/agent/` | 前端工具注册与 SSE 分发 |
+| `packages/agent-ui/src/tools/` | 前端工具注册与 SSE 分发 |
 
 ## 环境变量
 

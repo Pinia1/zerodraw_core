@@ -1,57 +1,38 @@
-// pi-agent ( @earendil-works/pi-agent-core ) 会话持久化 schema。
-//
-// 对齐官方 sqlite backend 的存储格式（storageVersion 1, 7 张表），所有行以
-// session_id（uuid 字符串）为作用域，可放入同一张 MySQL 表内按会话隔离。
-// 应用层额外携带 user_id / status / title 用于归属与前端列表。
-//
-// 注：seq 用整数序列（非自增列），由 storage 层通过 agent_sessions.next_seq 管理，
-// 与 pi-agent 的 commit/scan 语义一致。详见 packages/agent/src/storage/mysql.storage.ts。
+// pi-agent 会话持久化 schema（SQLite 方言）。
+// 对齐官方 sqlite backend（storageVersion 1, 7 张表），应用层额外携带 user_id / status / title。
 
-import {
-  bigint,
-  index,
-  int,
-  json,
-  mysqlEnum,
-  mysqlTable,
-  primaryKey,
-  timestamp,
-  uniqueIndex,
-  varchar,
-} from 'drizzle-orm/mysql-core';
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { project } from './project';
 import { user } from './user';
 
-// 会话元数据 = pi-agent storage 元数据 + 应用层归属/列表字段
-export const agentSession = mysqlTable(
+export const agentSession = sqliteTable(
   'agent_sessions',
   {
-    id: varchar('id', { length: 36 }).primaryKey(), // uuid
-    userId: int('user_id')
+    id: text('id').primaryKey(),
+    userId: integer('user_id')
       .notNull()
-      .references(() => user.userId), // 平台用户 id（归属/鉴权）
-    status: mysqlEnum('status', ['active', 'suspended', 'closed'])
+      .references(() => user.userId),
+    status: text('status', { enum: ['active', 'suspended', 'closed'] })
       .notNull()
-      .default('active'), // 应用层会话状态
-    title: varchar('title', { length: 255 }), // 应用层会话标题
-    createdAt: bigint('created_at', { mode: 'number' }).notNull(), // pi-agent createdAt(ms)
-    parentSessionId: varchar('parent_session_id', { length: 36 }),
-    storageVersion: int('storage_version').notNull().default(1),
-    metadata: json('metadata'), // 预留，sqlite 存 null
-    messageCount: int('message_count').notNull().default(0), // 统计缓存
-    usagePayload: json('usage_payload').notNull(), // SessionStats.usage 序列化
-    nextSeq: bigint('next_seq', { mode: 'number' }).notNull(), // 下一次 commit 起始序列
-    projectId: varchar('project_id', { length: 36 }).references(() => project.id),
-    lastPromptAt: bigint('last_prompt_at', { mode: 'number' }),
-    lastActivityAt: bigint('last_activity_at', { mode: 'number' }),
-    promptCount: int('prompt_count').notNull().default(0),
-    closedAt: bigint('closed_at', { mode: 'number' }),
-    closeReason: mysqlEnum('close_reason', ['user_close', 'idle', 'admin', 'error']),
-    runtimeHost: mysqlEnum('runtime_host', ['inprocess', 'worker']),
-    updatedAt: timestamp('updated_at')
+      .default('active'),
+    title: text('title'),
+    createdAt: integer('created_at').notNull(),
+    parentSessionId: text('parent_session_id'),
+    storageVersion: integer('storage_version').notNull().default(1),
+    metadata: text('metadata', { mode: 'json' }),
+    messageCount: integer('message_count').notNull().default(0),
+    usagePayload: text('usage_payload', { mode: 'json' }).notNull(),
+    nextSeq: integer('next_seq').notNull(),
+    projectId: text('project_id').references(() => project.id),
+    lastPromptAt: integer('last_prompt_at'),
+    lastActivityAt: integer('last_activity_at'),
+    promptCount: integer('prompt_count').notNull().default(0),
+    closedAt: integer('closed_at'),
+    closeReason: text('close_reason', { enum: ['user_close', 'idle', 'admin', 'error'] }),
+    runtimeHost: text('runtime_host', { enum: ['inprocess', 'worker'] }),
+    updatedAt: integer('updated_at')
       .notNull()
-      .defaultNow()
-      .onUpdateNow(), // 应用层排序用
+      .$defaultFn(() => Date.now()),
   },
   (t) => ({
     idx_agent_sessions_user: index('idx_agent_sessions_user').on(t.userId),
@@ -60,19 +41,18 @@ export const agentSession = mysqlTable(
   }),
 );
 
-/** append-only 会话观测事件流水（Phase 2） */
-export const agentSessionEvent = mysqlTable(
+export const agentSessionEvent = sqliteTable(
   'agent_session_events',
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    userId: int('user_id')
+    id: text('id').primaryKey(),
+    sessionId: text('session_id').notNull(),
+    userId: integer('user_id')
       .notNull()
       .references(() => user.userId),
-    projectId: varchar('project_id', { length: 36 }),
-    eventType: varchar('event_type', { length: 64 }).notNull(),
-    payload: json('payload'),
-    createdAt: bigint('created_at', { mode: 'number' }).notNull(),
+    projectId: text('project_id'),
+    eventType: text('event_type').notNull(),
+    payload: text('payload', { mode: 'json' }),
+    createdAt: integer('created_at').notNull(),
   },
   (t) => ({
     idx_agent_events_session: index('idx_agent_events_session').on(t.sessionId, t.createdAt),
@@ -81,35 +61,28 @@ export const agentSessionEvent = mysqlTable(
   }),
 );
 
-/** 每次 prompt 一行（Phase 3 usage 聚合基础） */
-export const agentPromptRun = mysqlTable(
+export const agentPromptRun = sqliteTable(
   'agent_prompt_runs',
   {
-    id: varchar('id', { length: 36 }).primaryKey(),
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    userId: int('user_id')
+    id: text('id').primaryKey(),
+    sessionId: text('session_id').notNull(),
+    userId: integer('user_id')
       .notNull()
       .references(() => user.userId),
-    projectId: varchar('project_id', { length: 36 }),
-    status: mysqlEnum('status', [
-      'pending',
-      'running',
-      'completed',
-      'failed',
-      'suspended',
-      'aborted',
-    ])
+    projectId: text('project_id'),
+    status: text('status', {
+      enum: ['pending', 'running', 'completed', 'failed', 'suspended', 'aborted'],
+    })
       .notNull()
       .default('pending'),
-    startedAt: bigint('started_at', { mode: 'number' }).notNull(),
-    finishedAt: bigint('finished_at', { mode: 'number' }),
-    durationMs: int('duration_ms'),
-    usage: json('usage'),
-    errorMessage: varchar('error_message', { length: 1024 }),
-    runtimeHost: mysqlEnum('runtime_host', ['inprocess', 'worker']),
-    workerSlot: int('worker_slot'),
-    /** usage 聚合起点：start 时 agent_usage_ledger 最大 seq */
-    ledgerFromSeq: bigint('ledger_from_seq', { mode: 'number' }),
+    startedAt: integer('started_at').notNull(),
+    finishedAt: integer('finished_at'),
+    durationMs: integer('duration_ms'),
+    usage: text('usage', { mode: 'json' }),
+    errorMessage: text('error_message'),
+    runtimeHost: text('runtime_host', { enum: ['inprocess', 'worker'] }),
+    workerSlot: integer('worker_slot'),
+    ledgerFromSeq: integer('ledger_from_seq'),
   },
   (t) => ({
     idx_agent_prompt_runs_stale: index('idx_agent_prompt_runs_stale').on(t.status, t.startedAt),
@@ -125,18 +98,17 @@ export const agentPromptRun = mysqlTable(
   }),
 );
 
-// 对话条目：append-only 日志。type = message / compaction / branch_summary / custom
-export const agentEntry = mysqlTable(
+export const agentEntry = sqliteTable(
   'agent_entries',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    id: varchar('id', { length: 64 }).notNull(),
-    parentId: varchar('parent_id', { length: 64 }),
-    seq: bigint('seq', { mode: 'number' }).notNull(),
-    type: varchar('type', { length: 20 }).notNull(),
-    customType: varchar('custom_type', { length: 64 }),
-    timestamp: bigint('timestamp', { mode: 'number' }).notNull(),
-    payload: json('payload').notNull(),
+    sessionId: text('session_id').notNull(),
+    id: text('id').notNull(),
+    parentId: text('parent_id'),
+    seq: integer('seq').notNull(),
+    type: text('type').notNull(),
+    customType: text('custom_type'),
+    timestamp: integer('timestamp').notNull(),
+    payload: text('payload', { mode: 'json' }).notNull(),
   },
   (t) => ({
     pk_agent_entry: primaryKey({ columns: [t.sessionId, t.id] }),
@@ -145,43 +117,42 @@ export const agentEntry = mysqlTable(
   }),
 );
 
-// 标量值：key→JSON 值（namespace.key 寻址）
-export const agentScalarValue = mysqlTable(
+export const agentScalarValue = sqliteTable(
   'agent_scalar_values',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    namespace: varchar('namespace', { length: 64 }).notNull(),
-    key: varchar('key', { length: 255 }).notNull(),
-    seq: bigint('seq', { mode: 'number' }).notNull(),
-    value: json('value').notNull(),
+    sessionId: text('session_id').notNull(),
+    namespace: text('namespace').notNull(),
+    key: text('key').notNull(),
+    seq: integer('seq').notNull(),
+    value: text('value', { mode: 'json' }).notNull(),
   },
   (t) => ({ pk_agent_scalar_value: primaryKey({ columns: [t.sessionId, t.namespace, t.key] }) }),
 );
 
-// 列表值：按 seq 有序地把 JSON 值 append 进 (namespace,key)
-export const agentListValue = mysqlTable(
+export const agentListValue = sqliteTable(
   'agent_list_values',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    namespace: varchar('namespace', { length: 64 }).notNull(),
-    key: varchar('key', { length: 255 }).notNull(),
-    seq: bigint('seq', { mode: 'number' }).notNull(),
-    value: json('value').notNull(),
+    sessionId: text('session_id').notNull(),
+    namespace: text('namespace').notNull(),
+    key: text('key').notNull(),
+    seq: integer('seq').notNull(),
+    value: text('value', { mode: 'json' }).notNull(),
   },
-  (t) => ({ pk_agent_list_value: primaryKey({ columns: [t.sessionId, t.namespace, t.key, t.seq] }) }),
+  (t) => ({
+    pk_agent_list_value: primaryKey({ columns: [t.sessionId, t.namespace, t.key, t.seq] }),
+  }),
 );
 
-// 用量账本：每次 LLM 调用记录一行
-export const agentUsageLedger = mysqlTable(
+export const agentUsageLedger = sqliteTable(
   'agent_usage_ledger',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    id: varchar('id', { length: 64 }).notNull(),
-    seq: bigint('seq', { mode: 'number' }).notNull(),
-    entryId: varchar('entry_id', { length: 64 }),
-    adjustment: int('adjustment').notNull().default(0), // boolean 0/1
-    usage: json('usage').notNull(),
-    details: json('details'),
+    sessionId: text('session_id').notNull(),
+    id: text('id').notNull(),
+    seq: integer('seq').notNull(),
+    entryId: text('entry_id'),
+    adjustment: integer('adjustment').notNull().default(0),
+    usage: text('usage', { mode: 'json' }).notNull(),
+    details: text('details', { mode: 'json' }),
   },
   (t) => ({
     pk_agent_usage: primaryKey({ columns: [t.sessionId, t.id] }),
@@ -189,34 +160,44 @@ export const agentUsageLedger = mysqlTable(
   }),
 );
 
-// 分支条目索引：branch → 有序 entry 列表
-export const agentBranchEntry = mysqlTable(
+export const agentBranchEntry = sqliteTable(
   'agent_branch_entries',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    branchId: varchar('branch_id', { length: 64 }).notNull(),
-    entryId: varchar('entry_id', { length: 64 }).notNull(),
-    entrySeq: bigint('entry_seq', { mode: 'number' }).notNull(),
-    entryType: varchar('entry_type', { length: 20 }).notNull(),
+    sessionId: text('session_id').notNull(),
+    branchId: text('branch_id').notNull(),
+    entryId: text('entry_id').notNull(),
+    entrySeq: integer('entry_seq').notNull(),
+    entryType: text('entry_type').notNull(),
   },
   (t) => ({
     pk_agent_be: primaryKey({ columns: [t.sessionId, t.branchId, t.entryId] }),
-    idx_agent_be_seq: index('idx_agent_be_seq').on(t.sessionId, t.branchId, t.entrySeq, t.entryId, t.entryType),
-    idx_agent_be_type: index('idx_agent_be_type').on(t.sessionId, t.branchId, t.entryType, t.entrySeq, t.entryId),
+    idx_agent_be_seq: index('idx_agent_be_seq').on(
+      t.sessionId,
+      t.branchId,
+      t.entrySeq,
+      t.entryId,
+      t.entryType,
+    ),
+    idx_agent_be_type: index('idx_agent_be_type').on(
+      t.sessionId,
+      t.branchId,
+      t.entryType,
+      t.entrySeq,
+      t.entryId,
+    ),
     idx_agent_be_entry: index('idx_agent_be_entry').on(t.sessionId, t.entryId),
   }),
 );
 
-// 分支元数据：tip / base 关系（线性助手用单根分支；保留以实现分支语义）
-export const agentBranchMeta = mysqlTable(
+export const agentBranchMeta = sqliteTable(
   'agent_branch_meta',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    branchId: varchar('branch_id', { length: 64 }).notNull(),
-    tipEntryId: varchar('tip_entry_id', { length: 64 }).notNull(),
-    tipSeq: bigint('tip_seq', { mode: 'number' }).notNull(),
-    baseBranchId: varchar('base_branch_id', { length: 64 }),
-    baseSeq: bigint('base_seq', { mode: 'number' }),
+    sessionId: text('session_id').notNull(),
+    branchId: text('branch_id').notNull(),
+    tipEntryId: text('tip_entry_id').notNull(),
+    tipSeq: integer('tip_seq').notNull(),
+    baseBranchId: text('base_branch_id'),
+    baseSeq: integer('base_seq'),
   },
   (t) => ({
     pk_agent_bm: primaryKey({ columns: [t.sessionId, t.branchId] }),
@@ -224,21 +205,23 @@ export const agentBranchMeta = mysqlTable(
   }),
 );
 
-// 前端 deferred 工具调用：应用层持久化 pending 状态，与 pi-agent 内存中挂起的
-// execute() Promise 分离——进程重启后仍能查到该调用曾经存在及其最终归宿。
-export const agentFrontendToolCall = mysqlTable(
+export const agentFrontendToolCall = sqliteTable(
   'agent_frontend_tool_calls',
   {
-    sessionId: varchar('session_id', { length: 36 }).notNull(),
-    toolCallId: varchar('tool_call_id', { length: 64 }).notNull(),
-    toolName: varchar('tool_name', { length: 64 }).notNull(),
-    args: json('args').notNull(),
-    status: mysqlEnum('status', ['pending', 'completed', 'error', 'timeout', 'orphaned']).notNull().default('pending'),
-    result: json('result'),
-    message: varchar('message', { length: 1024 }),
-    createdAt: bigint('created_at', { mode: 'number' }).notNull(),
-    updatedAt: bigint('updated_at', { mode: 'number' }).notNull(),
-    expiresAt: bigint('expires_at', { mode: 'number' }).notNull(),
+    sessionId: text('session_id').notNull(),
+    toolCallId: text('tool_call_id').notNull(),
+    toolName: text('tool_name').notNull(),
+    args: text('args', { mode: 'json' }).notNull(),
+    status: text('status', {
+      enum: ['pending', 'completed', 'error', 'timeout', 'orphaned'],
+    })
+      .notNull()
+      .default('pending'),
+    result: text('result', { mode: 'json' }),
+    message: text('message'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+    expiresAt: integer('expires_at').notNull(),
   },
   (t) => ({
     pk_agent_ftc: primaryKey({ columns: [t.sessionId, t.toolCallId] }),

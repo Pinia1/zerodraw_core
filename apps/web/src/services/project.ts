@@ -1,9 +1,9 @@
 import type {
   CreateProjectInput,
   ProjectDetail,
+  ProjectFlowState,
   ProjectItem,
   ProjectListResponse,
-  SaveLayersInput,
   UpdateProjectInput,
 } from '@zeroDraw/api-contract';
 import request from '.';
@@ -25,8 +25,8 @@ export const httpGetProject = (id: string): Promise<ProjectDetail> =>
 export const httpUpdateProject = (id: string, data: UpdateProjectInput): Promise<string> =>
   request.patch(`/api/project/${id}`, data);
 
-export const httpSaveLayers = (id: string, data: SaveLayersInput): Promise<string> =>
-  request.put(`/api/project/${id}/layers`, data);
+export const httpSaveProjectFlow = (id: string, data: ProjectFlowState): Promise<string> =>
+  request.put(`/api/project/${id}/flow`, data);
 
 export const httpDeleteProject = (id: string): Promise<string> =>
   request.delete(`/api/project/${id}`);

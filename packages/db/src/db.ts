@@ -1,44 +1,38 @@
+import BetterSqlite3 from 'better-sqlite3';
+
+export type SqliteDatabase = InstanceType<typeof BetterSqlite3>;
 import { config } from 'dotenv';
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as schema from './schema';
 
-// 获取 __dirname (ESM)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 加载环境变量
 config({ path: path.resolve(__dirname, '../../../.env') });
 
-// 创建 MySQL 连接池
-const poolConnection = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'zerodraw',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
+function resolveDbPath(): string {
+  const url = process.env.DATABASE_URL ?? 'file:./data/app.db';
+  const raw = url.startsWith('file:') ? url.slice('file:'.length) : url;
+  return path.isAbsolute(raw) ? raw : path.resolve(__dirname, '../../..', raw);
+}
 
-// 创建 Drizzle 数据库实例
-export const db = drizzle(poolConnection, {
-  schema,
-  mode: 'default',
-});
+const dbPath = resolveDbPath();
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
-// 导出连接池，用于原始 SQL 查询或关闭连接
-export const pool = poolConnection;
+const sqlite: SqliteDatabase = new BetterSqlite3(dbPath);
+sqlite.pragma('journal_mode = WAL');
+sqlite.pragma('foreign_keys = ON');
 
-// 测试数据库连接
+export const db = drizzle(sqlite, { schema });
+export const sqliteDb: SqliteDatabase = sqlite;
+
 export async function testConnection() {
   try {
-    const connection = await pool.getConnection();
+    sqlite.prepare('SELECT 1').get();
     console.log('✅ Database connection successful');
-    connection.release();
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);
@@ -46,10 +40,9 @@ export async function testConnection() {
   }
 }
 
-// 优雅关闭数据库连接
 export async function closeConnection() {
   try {
-    await pool.end();
+    sqlite.close();
     console.log('✅ Database connection closed');
   } catch (error) {
     console.error('❌ Error closing database connection:', error);

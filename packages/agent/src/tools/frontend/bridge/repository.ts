@@ -1,4 +1,5 @@
-import { agentFrontendToolCall, and, eq } from '@zeroDraw/db';
+import { agentFrontendToolCall } from '@zeroDraw/db';
+import { and, eq } from 'drizzle-orm';
 import { getAgentDb } from '../../../config';
 
 export type FrontendToolCallStatus = 'pending' | 'completed' | 'error' | 'timeout' | 'orphaned';
@@ -39,7 +40,8 @@ class FrontendToolCallRepository {
         updatedAt: now,
         expiresAt: row.expiresAt,
       })
-      .onDuplicateKeyUpdate({
+      .onConflictDoUpdate({
+        target: [agentFrontendToolCall.sessionId, agentFrontendToolCall.toolCallId],
         set: {
           toolName: row.toolName,
           args: row.args as object,

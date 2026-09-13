@@ -4,7 +4,7 @@ import {
   type HarnessSessionBindings,
   type HarnessSessionStoreOptions,
 } from '@zeroDraw/agent-worker/runtime';
-import { MySqlStorage } from '../storage/mysql.storage';
+import { SqliteStorage } from '../storage/sqlite.storage';
 import type { AgentSessionMeta, AgentToolContext } from '../session/types';
 
 export type ApiHarnessSessionBindings = Omit<
@@ -23,7 +23,7 @@ export function createApiHarnessSessionStore(
     toolingCatalog,
     {
       ...bindings,
-      createStorage: (meta) => new MySqlStorage(meta.id),
+      createStorage: (meta) => new SqliteStorage(meta.id),
     },
     options,
   );

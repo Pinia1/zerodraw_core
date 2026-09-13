@@ -8,7 +8,7 @@ import {
 import { useHover, useMemoizedFn } from '@zeroDraw/common';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { ResizeHandle, Wrapper } from '@/pages/Flow/nodes/Image/components';
+import { ResizeHandle, Wrapper } from '../shared/nodeLayout';
 import { MarkdownPreview } from '../shared/MarkdownPreview';
 import { useNodeResize } from '../shared/useNodeResize';
 

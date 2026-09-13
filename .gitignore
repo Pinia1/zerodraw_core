@@ -1,3 +1,6 @@
+# Local runtime data (SQLite + uploads)
+data/
+
 # Dependencies
 node_modules
 packages/libmypaint

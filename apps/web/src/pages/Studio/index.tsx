@@ -6,7 +6,7 @@ import { createStudioAgentTools, studioClientToolDefinitions } from '@/features/
 
 import { useMediaQuery, useMemoizedFn, useRequest } from '@zeroDraw/common';
 
-import { AgentFrontendToolsProvider } from '@zeroDraw/core';
+import { AgentFrontendToolsProvider } from '@zeroDraw/agent-ui';
 
 import type { FlowMutationResult } from '@zeroDraw/api-contract';
 
@@ -70,7 +70,7 @@ const StudioPage = () => {
 
     refreshDeps: [projectId],
 
-    onError: () => navigate('/projects', { replace: true }),
+    onError: () => navigate('/', { replace: true }),
   });
 
   const algorithm = useMemo(
@@ -119,6 +119,9 @@ const StudioPage = () => {
               }
               flow={
                 <StudioFlowCanvas
+                  key={projectId ?? 'draft'}
+                  projectId={projectId ?? undefined}
+                  initialFlowState={project?.flowState ?? null}
                   onRegisterGetFlowState={registerGetFlowState}
                   onRegisterApplyFlowMutation={registerApplyFlowMutation}
                 />

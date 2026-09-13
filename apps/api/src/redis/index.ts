@@ -1,36 +1,38 @@
 import Redis from 'ioredis';
-import { env } from '../config/env';
+import { env, isRedisEnabled } from '../config/env';
 import { logger } from '../utils/logger';
 
-/** 通用 Redis 连接（用于缓存等） */
-export const redis = new Redis({
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
-  db: env.REDIS_DB,
-  maxRetriesPerRequest: null, // BullMQ 要求设为 null
-  retryStrategy(times) {
-    const delay = Math.min(times * 200, 5000);
-    return delay;
-  },
-});
+let redis: Redis | undefined;
 
-redis.on('connect', () => {
-  logger.info('Redis connected');
-});
+export function getRedis(): Redis | undefined {
+  if (!isRedisEnabled) return undefined;
+  if (!redis) {
+    redis = new Redis({
+      host: env.REDIS_HOST,
+      port: env.REDIS_PORT,
+      password: env.REDIS_PASSWORD || undefined,
+      db: env.REDIS_DB,
+      maxRetriesPerRequest: null,
+      lazyConnect: true,
+      retryStrategy(times) {
+        return Math.min(times * 200, 5000);
+      },
+    });
 
-redis.on('error', (err) => {
-  logger.error('Redis connection error', { error: err.message });
-});
+    redis.on('connect', () => {
+      logger.info('Redis connected');
+    });
 
-export const bullRedisConnection = {
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
-  db: env.REDIS_DB,
-  maxRetriesPerRequest: null,
-};
+    redis.on('error', (err) => {
+      logger.error('Redis connection error', { error: err.message });
+    });
+  }
+  return redis;
+}
 
 export const closeRedis = async () => {
-  await redis.quit();
+  if (redis) {
+    await redis.quit();
+    redis = undefined;
+  }
 };

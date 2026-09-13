@@ -37,7 +37,7 @@
 
 - **Orchestrator**（harness + lane + LLM）与 **Tool 执行**、**HTTP** 分层。
 - Worker 是 **Node 子进程**（`child_process.fork`），**不是** Redis/BullMQ worker。
-- 前端 deferred 工具（`place_svg` 等）必须在**主进程**完成：`frontendToolBridge` 持有内存 Promise，浏览器 `complete` 回调主 API。
+- 前端 deferred 工具（`get_flow_state`、`create_flow_node` 等）必须在**主进程**完成：`frontendToolBridge` 持有内存 Promise，浏览器 `complete` 回调主 API。
 
 ---
 
@@ -71,7 +71,7 @@ packages/api-contract/src/agent/
 ├── tools.ts                 # 工具名、args/result schema
 └── sse.ts                   # SSE 帧解析
 
-packages/core/src/features/agent/
+packages/agent-ui/src/tools/
 ├── tools/                   # 浏览器侧 FrontendTool 实现
 ├── registry.ts
 └── dispatcher.ts            # SSE tool_start → 浏览器 execute → complete
@@ -85,8 +85,8 @@ packages/core/src/features/agent/
 
 | Kind | 执行位置 | 示例 | 说明 |
 | --- | --- | --- | --- |
-| `trusted` | API 主进程 | `read_project`, `generate_image` | 直接调宿主 capability |
-| `frontend` | 用户浏览器 | `get_canvas_state`, `place_svg` | 服务端 deferred + IPC/bridge |
+| `trusted` | API 主进程 | `read_project` | 直接调宿主 capability |
+| `frontend` | 用户浏览器 | `get_flow_state`, `create_flow_node` | 服务端 deferred + IPC/bridge |
 | `sandbox` | 隔离运行时（预留） | — | 通过 `SandboxRuntime` 执行不可信代码 |
 
 注册表见 `tools/index.ts`，元数据由 `framework/registry.ts` 的 `buildRegisteredAgentTools` 附加，并在 `execute` 前裁剪 capability。
@@ -97,7 +97,7 @@ packages/core/src/features/agent/
 
 ```typescript
 // 宿主侧 capability（API）
-'project.read' | 'generate.submit' | 'frontend.bridge'
+'project.read' | 'frontend.bridge'
 
 // 浏览器侧 capability（FrontendTool 元数据）
 'canvas.read' | 'canvas.mutate' | 'canvas.tools'

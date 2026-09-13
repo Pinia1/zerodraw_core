@@ -1,4 +1,5 @@
-import { eq, user } from '@zeroDraw/db';
+import { user } from '@zeroDraw/db';
+import { eq } from 'drizzle-orm';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../../db';
 import { UnauthorizedError } from '../../utils/errors';

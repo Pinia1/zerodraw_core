@@ -1,20 +1,26 @@
-import { boolean, int, mysqlTable, timestamp, varchar } from 'drizzle-orm/mysql-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { user } from './user';
 
-export const project = mysqlTable('projects', {
-  id: varchar('id', { length: 36 }).primaryKey(),
-  userId: int('user_id')
+export const project = sqliteTable('projects', {
+  id: text('id').primaryKey(),
+  userId: integer('user_id')
     .notNull()
     .references(() => user.userId),
-  name: varchar('name', { length: 255 }).notNull().default('Untitled'),
-  thumbnailKey: varchar('thumbnail_key', { length: 500 }),
-  canvasWidth: int('canvas_width').notNull().default(800),
-  canvasHeight: int('canvas_height').notNull().default(600),
-  backgroundColor: varchar('background_color', { length: 50 }).notNull().default('#ffffff'),
-  backgroundVisible: boolean('background_visible').notNull().default(false),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
-  deletedAt: timestamp('deleted_at'),
+  name: text('name').notNull().default('Untitled'),
+  thumbnailKey: text('thumbnail_key'),
+  canvasWidth: integer('canvas_width').notNull().default(800),
+  canvasHeight: integer('canvas_height').notNull().default(600),
+  backgroundColor: text('background_color').notNull().default('#ffffff'),
+  backgroundVisible: integer('background_visible', { mode: 'boolean' }).notNull().default(false),
+  /** Studio 画布快照：nodes / edges / viewport JSON */
+  flowState: text('flow_state', { mode: 'json' }).$type<Record<string, unknown> | null>(),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  deletedAt: integer('deleted_at', { mode: 'timestamp' }),
 });
 
 export type Project = typeof project.$inferSelect;

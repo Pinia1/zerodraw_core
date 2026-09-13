@@ -8,11 +8,8 @@ import {
   agentSession,
   agentSessionEvent,
   agentUsageLedger,
-  and,
-  desc,
-  eq,
-  sql,
 } from '@zeroDraw/db';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getAgentDb } from '../config';
 import { zeroUsage } from '../usage/utils';

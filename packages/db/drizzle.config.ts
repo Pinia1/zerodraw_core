@@ -1,27 +1,22 @@
 import { defineConfig } from 'drizzle-kit';
+import fs from 'node:fs';
+import path from 'node:path';
+
+function resolveDbPath(): string {
+  const url = process.env.DATABASE_URL ?? 'file:./data/app.db';
+  const raw = url.startsWith('file:') ? url.slice('file:'.length) : url;
+  const resolved = path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), '../../', raw);
+  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  return resolved;
+}
 
 export default defineConfig({
-  // schema 文件位置
   schema: './src/schema/index.ts',
-
-  // migration 文件输出目录
   out: './drizzle',
-
-  // 数据库方言
-  dialect: 'mysql',
-
-  // 数据库连接配置
+  dialect: 'sqlite',
   dbCredentials: {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'zerodraw',
+    url: resolveDbPath(),
   },
-
-  // 详细日志
   verbose: true,
-
-  // 严格模式
   strict: true,
 });

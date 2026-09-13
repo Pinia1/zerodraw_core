@@ -4,8 +4,8 @@ import { logger } from '../../utils/logger';
 import { GithubTokenResponse, GithubUser } from './github.types';
 
 export class GithubService {
-  private readonly clientId: string = env.GITHUB_CLIENT_ID;
-  private readonly clientSecret: string = env.GITHUB_CLIENT_SECRET;
+  private readonly clientId: string = env.GITHUB_CLIENT_ID!;
+  private readonly clientSecret: string = env.GITHUB_CLIENT_SECRET!;
 
   private readonly githubAccessTokenUrl = 'https://github.com/login/oauth/access_token';
   private readonly githubUserInfoUrl = 'https://api.github.com/user';

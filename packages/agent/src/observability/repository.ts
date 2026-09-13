@@ -11,14 +11,8 @@ import {
   agentSession,
   agentSessionEvent,
   agentUsageLedger,
-  and,
-  desc,
-  eq,
-  gt,
-  gte,
-  lte,
-  sql,
 } from '@zeroDraw/db';
+import { and, desc, eq, gt, gte, lte, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { getAgentDb } from '../config';
 import { addUsage, zeroUsage } from '../usage/utils';
@@ -277,8 +271,8 @@ export class AgentObservabilityRepository {
         .from(agentPromptRun),
       getAgentDb()
         .select({
-          totalTokens: sql<number>`coalesce(sum(cast(json_unquote(json_extract(${agentPromptRun.usage}, '$.totalTokens')) as unsigned)), 0)`,
-          totalCost: sql<number>`coalesce(sum(cast(json_unquote(json_extract(${agentPromptRun.usage}, '$.cost.total')) as decimal(20,6))), 0)`,
+          totalTokens: sql<number>`coalesce(sum(cast(json_extract(${agentPromptRun.usage}, '$.totalTokens') as integer)), 0)`,
+          totalCost: sql<number>`coalesce(sum(cast(json_extract(${agentPromptRun.usage}, '$.cost.total') as real)), 0)`,
         })
         .from(agentPromptRun)
         .where(sql`${agentPromptRun.usage} is not null`),

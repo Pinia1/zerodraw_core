@@ -1,5 +1,5 @@
 import { useAuiState } from '@assistant-ui/react';
-import { Fetch, PromptEditor, type AgentChatImage, type PromptEditorRef } from '@zeroDraw/core';
+import { Fetch, PromptEditor, type AgentChatImage, type PromptEditorRef } from '@zeroDraw/agent-ui';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 

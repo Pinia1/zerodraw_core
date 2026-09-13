@@ -1,6 +1,5 @@
 import type { AgentToolResult } from '@earendil-works/pi-agent-core';
 import type { ProjectDetail } from '@zeroDraw/api-contract';
-import type { GenerateParams } from '../types/generate';
 import type { AgentDeps } from '../tools/deps';
 import type { FrontendToolBridge } from '../tools/frontend/bridge';
 
@@ -12,10 +11,6 @@ export interface ProjectReadCapability {
     deleted?: boolean;
   }): ReturnType<AgentDeps['project']['listProjects']>;
   getProject(projectId: string): Promise<ProjectDetail>;
-}
-
-export interface GenerateSubmitCapability {
-  submit(params: GenerateParams): ReturnType<AgentDeps['generate']['run']>;
 }
 
 export interface FrontendBridgeCapability {
@@ -35,7 +30,6 @@ export interface FrontendBridgeCapability {
 
 export interface AgentCapabilityMap {
   'project.read': ProjectReadCapability;
-  'generate.submit': GenerateSubmitCapability;
   'frontend.bridge': FrontendBridgeCapability;
 }
 
@@ -59,9 +53,6 @@ export function buildAgentCapabilityMap(
           deleted: query.deleted ?? false,
         }),
       getProject: (projectId) => deps.project.getProject({ id: projectId, userId }),
-    },
-    'generate.submit': {
-      submit: (params) => deps.generate.run(userId, params),
     },
     'frontend.bridge': {
       preparePending: (toolCallId, toolName, args, timeoutMs) =>

@@ -1,9 +1,11 @@
 import type { ImageContent } from '@earendil-works/pi-ai';
 import type { AgentPromptImage } from '@zeroDraw/api-contract';
-import type * as dbSchema from '@zeroDraw/db';
+import type * as dbSchema from '@zeroDraw/db/schema';
 import { setAgentRuntimeLogger, type AgentRuntimeLogger } from '@zeroDraw/agent-worker/runtime';
-import type { MySql2Database } from 'drizzle-orm/mysql2';
-import type { Pool } from 'mysql2/promise';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
+
+export type AgentSqliteDatabase = InstanceType<typeof BetterSqlite3>;
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { AgentDeps } from './tools/deps';
 import type { AgentRedisLike } from './observability/types';
@@ -31,7 +33,7 @@ export interface AgentEnvConfig {
   AGENT_SESSION_IDLE_CLOSE_MS: number;
 }
 
-export type AgentDatabase = MySql2Database<typeof dbSchema>;
+export type AgentDatabase = BetterSQLite3Database<typeof dbSchema>;
 
 export type AgentAuthenticateHook = (
   request: FastifyRequest,
@@ -40,7 +42,7 @@ export type AgentAuthenticateHook = (
 
 export interface AgentModuleConfig {
   db: AgentDatabase;
-  pool: Pool;
+  sqlite: AgentSqliteDatabase;
   logger: AgentRuntimeLogger;
   env: AgentEnvConfig;
   deps: AgentDeps;
@@ -73,8 +75,8 @@ export function getAgentDb(): AgentDatabase {
   return getAgentModuleConfig().db;
 }
 
-export function getAgentPool(): Pool {
-  return getAgentModuleConfig().pool;
+export function getAgentSqlite(): AgentSqliteDatabase {
+  return getAgentModuleConfig().sqlite;
 }
 
 export function getAgentLogger(): AgentRuntimeLogger {

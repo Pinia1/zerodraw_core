@@ -3,7 +3,7 @@ import {
   type CreateFlowNodeArgs,
   type FlowMutationResult,
 } from '@zeroDraw/api-contract';
-import type { FrontendToolDefinition } from '@zeroDraw/core';
+import type { FrontendToolDefinition } from '@zeroDraw/agent-ui';
 
 export const createFlowNodeTool: FrontendToolDefinition<CreateFlowNodeArgs, FlowMutationResult> = {
   name: 'create_flow_node',

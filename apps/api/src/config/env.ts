@@ -6,7 +6,6 @@ import { z } from 'zod';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load .env from monorepo root
 config({ path: resolve(__dirname, '../../../..', '.env') });
 
 const envSchema = z.object({
@@ -14,57 +13,48 @@ const envSchema = z.object({
   PORT: z.string().transform(Number).default(3000),
   HOST: z.string().default('0.0.0.0'),
 
-  DB_HOST: z.string(),
-  DB_PORT: z.string().transform(Number).default(3306),
-  DB_USER: z.string(),
-  DB_PASSWORD: z.string(),
-  DB_NAME: z.string(),
+  DATABASE_URL: z.string().default('file:./data/app.db'),
 
   JWT_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string().default('7d'),
 
-  GITHUB_CLIENT_ID: z.string(),
-  GITHUB_CLIENT_SECRET: z.string(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
 
-  TOS_ACCESS_KEY: z.string(),
-  TOS_SECRET_KEY: z.string(),
+  TOS_ACCESS_KEY: z.string().optional(),
+  TOS_SECRET_KEY: z.string().optional(),
 
-  SEEDREAM_API_KEY: z.string(),
+  SEEDREAM_API_KEY: z.string().optional(),
 
-  // Agent 对话模型（ARK 火山方舟，Anthropic Messages 兼容 /api/plan 网关）
   AGENT_MODEL: z.string().default('ark-code-latest'),
   AGENT_BASE_URL: z.string().default('https://ark.cn-beijing.volces.com/api/plan'),
   AGENT_API_KEY: z.string(),
 
-  /** Agent harness 运行位置：inprocess=API 进程内，worker=独立子进程（防 LLM/harness 崩溃拖垮主进程） */
   AGENT_RUNTIME_HOST: z.enum(['inprocess', 'worker']).default('inprocess'),
-  /** worker 模式下 fork 子进程池大小（session 亲和性 + 最少负载分配） */
   AGENT_WORKER_POOL_SIZE: z.string().transform(Number).default(2),
-  /** harness 空闲自动关闭（毫秒）；仅释放内存，DB session 保留以便下次 prompt 重建 */
   AGENT_HARNESS_IDLE_MS: z.string().transform(Number).default(15 * 60 * 1000),
-  /** Agent 观测台 Admin API token（Header: X-Admin-Token）；未设置则禁用 /api/admin/agent */
   AGENT_ADMIN_TOKEN: z.string().optional(),
-  /** running prompt run 超过此时间未 finish，启动时标记 aborted（毫秒） */
   AGENT_PROMPT_RUN_STALE_MS: z.string().transform(Number).default(2 * 60 * 60 * 1000),
-  /** 无活动会话超过此时间在启动时以 idle 关闭；0 禁用（毫秒） */
   AGENT_SESSION_IDLE_CLOSE_MS: z.string().transform(Number).default(0),
 
-  REDIS_HOST: z.string().default('127.0.0.1'),
+  REDIS_HOST: z.string().optional(),
   REDIS_PORT: z.string().transform(Number).default(6379),
   REDIS_PASSWORD: z.string().default(''),
   REDIS_DB: z.string().transform(Number).default(0),
 
-  NANOBANANA_API_KEY: z.string(),
+  NANOBANANA_API_KEY: z.string().optional(),
 
-  CLOUDFLARE_ACCOUNT_ID: z.string(),
-  CLOUDFLARE_ACCESS_KEY_ID: z.string(),
-  CLOUDFLARE_SECRET_ACCESS_KEY: z.string(),
+  CLOUDFLARE_ACCOUNT_ID: z.string().optional(),
+  CLOUDFLARE_ACCESS_KEY_ID: z.string().optional(),
+  CLOUDFLARE_SECRET_ACCESS_KEY: z.string().optional(),
   R2_PUBLIC_URL: z.string().default('https://cdn.zerodraw.cn'),
   SERVER_BASE_URL: z.string().optional(),
-  UPLOAD_PROVIDER: z.enum(['volc', 'r2']).default('volc'),
+  UPLOAD_PROVIDER: z.enum(['volc', 'r2', 'local']).default('local'),
 
   BUCKET_NAME: z.string().default('zerodraw'),
   REGION: z.string().default('shanghai'),
+
+  LOCAL_UPLOAD_DIR: z.string().default('./data/uploads'),
 });
 
 function validateEnv() {
@@ -81,3 +71,6 @@ function validateEnv() {
 
 export const env = validateEnv();
 export type Env = z.infer<typeof envSchema>;
+
+export const isRedisEnabled = Boolean(env.REDIS_HOST);
+export const isCloudUploadEnabled = Boolean(env.TOS_ACCESS_KEY && env.TOS_SECRET_KEY);

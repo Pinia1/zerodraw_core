@@ -1,7 +1,7 @@
 import type {
   CreateProjectInput,
   ListProjectQuery,
-  SaveLayersInput,
+  SaveProjectFlowInput,
   UpdateProjectInput,
 } from '@zeroDraw/api-contract';
 
@@ -23,12 +23,12 @@ export interface UpdateProjectParams extends UpdateProjectInput {
   userId: number;
 }
 
-export interface SaveLayersParams extends SaveLayersInput {
-  projectId: string;
+export interface DeleteProjectParams {
+  id: string;
   userId: number;
 }
 
-export interface DeleteProjectParams {
+export interface SaveProjectFlowParams extends SaveProjectFlowInput {
   id: string;
   userId: number;
 }

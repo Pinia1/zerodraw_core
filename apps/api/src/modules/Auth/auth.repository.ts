@@ -1,4 +1,5 @@
-import { and, eq, NewUser, user } from '@zeroDraw/db';
+import { NewUser, user } from '@zeroDraw/db';
+import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
 
 export class AuthRepository {

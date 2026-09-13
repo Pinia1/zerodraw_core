@@ -1,85 +1,84 @@
-# zeroDraw
+# Agent Studio
 
-一款运行在浏览器中的矢量 & 位图绘画工具，支持多图层、AI 辅助生图、丰富的画笔与选区工具。
+基于 `@zeroDraw/agent` 框架的单机版 Agent 工作台：Studio 画布 + Agent 对话 + Admin 监控。
 
-**[在线体验 zerodraw.cn](https://zerodraw.cn/login)**
+无需 MySQL / Redis 即可本地运行（SQLite + 本地文件存储）。
 
-> 服务器部署在香港，国内访问可能较慢，建议挂梯子以获得更好的体验。
+## 功能
 
-## 功能特性
+- **Studio** — 流程图画布（Markdown / 图片 / 视频节点），Agent 可通过 client tools 读写画布
+- **Agent 对话** — 多轮会话、前端 deferred 工具、SSE 流式输出
+- **项目管理** — 创建 / 列表 / 打开项目
+- **Admin 监控** — `/admin/agent` 观测 harness runtime、会话与 prompt run
+- **Guest 登录** — 无需 GitHub OAuth 即可试用
 
-- **多图层管理** — 支持新建、拖拽排序、显示/隐藏、不透明度、混合模式（正片叠底/滤色/叠加等）、图层滤镜
-- **画笔工具** — 自由笔触，可调尺寸、不透明度、硬度、平滑度、压感模拟
-- **橡皮擦** — 像素橡皮擦 & 对象橡皮擦（一笔删除整个图元素）
-- **图形工具** — 矩形、椭圆、直线，支持渐变填充
-- **套索选区** — 自由/矩形/椭圆选区，支持加选、减选、反选、复制/剪切到新图层
-- **位图化（Rope）** — 将矢量图层栅格化为位图
-- **AI 生图** — 基于画布草图输入 Prompt，AI 生成修改结果
-- **自动保存** — 数据存储于 IndexedDB，无需手动保存
-- **导出** — 按图层顺序合成，正确应用混合模式与滤镜，支持高分辨率输出
-- **快捷键** — 支持撤销/重做、空格平移、滚轮缩放等常用操作
-- **触控支持** — iPad / 平板双指缩放与平移
+## 快速开始
 
-## 技术栈
+### 1. 环境变量
 
-| 层级      | 技术                         |
-| --------- | ---------------------------- |
-| 前端框架  | React 18 + TypeScript + Vite |
-| 渲染引擎  | Konva（Canvas 2D）           |
-| 状态管理  | Zustand                      |
-| UI 组件库 | Ant Design                   |
-| 后端      | Node.js + Fastify            |
-| 包管理    | pnpm + Turborepo（Monorepo） |
+复制 `.env.example` 为 `.env`，至少配置：
+
+```env
+DATABASE_URL=file:./data/app.db
+JWT_SECRET=change-me
+AGENT_API_KEY=your-ark-api-key
+```
+
+可选：`AGENT_ADMIN_TOKEN`（Admin API）、`REDIS_HOST`（runtime 快照共享）、TOS 凭证（云上传）。
+
+### 2. 安装与建表
+
+```bash
+pnpm install
+cd packages/db && npx drizzle-kit push --force
+```
+
+### 3. 启动
+
+```bash
+pnpm dev          # web + api
+pnpm dev:api      # 仅 API（3070）
+pnpm dev:web      # 仅前端
+```
+
+- 前端：http://localhost:5173
+- API：http://localhost:3070
+- Admin：http://localhost:5173/admin/agent
+
+### 4. Smoke test
+
+```bash
+cd apps/api && pnpm test:agent-smoke
+```
 
 ## 项目结构
 
 ```
-zerodraw/
+zeroDraw/
 ├── apps/
-│   ├── web/        # React 前端应用
-│   └── api/        # Node.js 后端服务
-└── packages/
-    ├── core/       # 核心绘图逻辑
-    ├── common/     # 公共工具
-    ├── db/         # 数据库模型
-    ├── api-contract/  # 前后端接口契约
-    └── docs/       # 文档站（dumi）
+│   ├── api/           # Fastify API（auth / project / file / agent）
+│   ├── web/           # React 前端（Home / Studio / Admin）
+│   └── agent-worker/  # Agent harness 子进程运行时
+├── packages/
+│   ├── agent/         # Agent 框架核心（会话、工具、runtime host）
+│   ├── agent-ui/      # 前端 Agent UI 组件与 chat runtime
+│   ├── db/            # Drizzle SQLite schema
+│   └── api-contract/  # 共享 Zod / TS 契约
+└── data/              # SQLite 与本地 uploads（gitignore）
 ```
 
-## 快速开始
+## 技术栈
 
-**环境要求：** Node.js >= 18、pnpm >= 8
+| 层级 | 技术 |
+| --- | --- |
+| 前端 | React 18 + Vite + `@zeroDraw/agent-ui` |
+| 后端 | Fastify 5 + `@zeroDraw/agent` |
+| 数据库 | SQLite（better-sqlite3 + Drizzle） |
+| Agent | pi-agent-core + ARK `/api/plan` 网关 |
+| 包管理 | pnpm + Turborepo |
 
-```bash
-# 安装依赖
-pnpm install
+## 说明
 
-# 启动全部服务（前端 + 后端）
-pnpm dev
-
-# 只启动前端
-pnpm dev:web
-
-# 只启动后端
-pnpm dev:api
-
-# 启动文档站
-pnpm dev:docs
-```
-
-复制 `.env.example` 为 `.env` 并填写所需的环境变量后再启动后端。
-
-## 文档
-
-完整使用手册见 [zerodraw.cn/docs/guide](https://zerodraw.cn/docs/guide)，包含：
-
-- [快速开始](https://zerodraw.cn/docs/guide)
-- [绘图工具](https://zerodraw.cn/docs/guide/tools)
-- [图层管理](https://zerodraw.cn/docs/guide/layers)
-- [AI 生图](https://zerodraw.cn/docs/guide/ai)
-- [快捷键](https://zerodraw.cn/docs/guide/shortcuts)
-- [导出](https://zerodraw.cn/docs/guide/export)
-
-## License
-
-MIT
+- 原 zeroDraw 绘画 / Konva / `@zeroDraw/core` 已移除。
+- Agent 会话持久化见 `packages/agent/src/storage/sqlite.storage.ts`。
+- Studio 注册的前端工具定义：`apps/web/src/features/agent/tools/studio/clientDefinitions.ts`。

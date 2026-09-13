@@ -37,7 +37,7 @@ async function main() {
 
   const agentCreate = await req('POST', '/api/agent', {
     token,
-    body: { projectId: null },
+    body: {},
   });
   const sessionId = agentCreate.json?.data?.id as string | undefined;
   results.push(
@@ -46,12 +46,6 @@ async function main() {
 
   const projects = await req('GET', '/api/project?page=1&pageSize=10', { token });
   results.push(`GET /api/project → ${projects.status} code=${projects.json?.code}`);
-
-  const assets = await req('GET', '/api/assets/colors?page=1&pageSize=10', { token });
-  results.push(`GET /api/assets/colors → ${assets.status} code=${assets.json?.code}`);
-
-  const lib = await req('GET', '/api/lib/outputs?page=1&pageSize=10', { token });
-  results.push(`GET /api/lib/outputs → ${lib.status} code=${lib.json?.code}`);
 
   console.log(results.join('\n'));
   const failed = results.filter((r) => !r.includes('→ 200'));

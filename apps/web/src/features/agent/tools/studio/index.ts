@@ -1,4 +1,4 @@
-import type { AgentFrontendToolsConfig, FrontendToolDefinition } from '@zeroDraw/core';
+import type { AgentFrontendToolsConfig, FrontendToolDefinition } from '@zeroDraw/agent-ui';
 import { connectFlowNodesTool } from './connectFlowNodes.tool';
 import { createFlowNodeTool } from './createFlowNode.tool';
 import { deleteFlowNodeTool } from './deleteFlowNode.tool';

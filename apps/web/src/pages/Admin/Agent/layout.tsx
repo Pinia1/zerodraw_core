@@ -112,8 +112,8 @@ export default function AdminAgentLayout() {
             }}
           >
             <Typography.Text type="secondary">Harness 可观测性 · 只读监控 + 会话管理</Typography.Text>
-            <Button type="link" onClick={() => navigate('/projects')}>
-              返回项目
+            <Button type="link" onClick={() => navigate('/')}>
+              返回首页
             </Button>
           </Header>
           <PageBody>

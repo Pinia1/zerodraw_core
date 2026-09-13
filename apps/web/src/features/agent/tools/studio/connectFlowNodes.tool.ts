@@ -3,7 +3,7 @@ import {
   type ConnectFlowNodesArgs,
   type FlowMutationResult,
 } from '@zeroDraw/api-contract';
-import type { FrontendToolDefinition } from '@zeroDraw/core';
+import type { FrontendToolDefinition } from '@zeroDraw/agent-ui';
 
 export const connectFlowNodesTool: FrontendToolDefinition<
   ConnectFlowNodesArgs,

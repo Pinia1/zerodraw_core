@@ -8,7 +8,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import { useHover, useMemoizedFn } from '@zeroDraw/common';
-import { Container, ToolItem } from '@zeroDraw/core';
+import { Container, ToolItem } from '@zeroDraw/agent-ui';
 import { Spin, Tooltip } from 'antd';
 import React, { memo, useEffect, useMemo, useRef } from 'react';
 import styled from 'styled-components';
@@ -17,7 +17,7 @@ import {
   ResizeHandle,
   ToolbarWrapper,
   Wrapper,
-} from '@/pages/Flow/nodes/Image/components';
+} from '../shared/nodeLayout';
 import { MOCK_GENERATE_MS, MOCK_VIDEO_POSTER, MOCK_VIDEO_SRC } from '../shared/mockVideo';
 import { useNodeResize } from '../shared/useNodeResize';
 

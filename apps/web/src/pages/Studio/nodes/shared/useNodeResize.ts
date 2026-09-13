@@ -1,7 +1,7 @@
 import { useReactFlow } from '@xyflow/react';
 import { useMemoizedFn } from '@zeroDraw/common';
 import { useRef } from 'react';
-import type { Corner } from '@/pages/Flow/nodes/Image/components';
+import type { Corner } from './nodeLayout';
 
 interface UseNodeResizeOptions {
   id: string;

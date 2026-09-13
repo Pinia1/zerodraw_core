@@ -1,9 +1,9 @@
 import Icon, { LoadingOutlined } from '@ant-design/icons';
 import { useMemoizedFn } from '@zeroDraw/common';
-import { Container, generateUUID, Icons, ToolItem } from '@zeroDraw/core';
+import { Container, generateUUID, Icons, ToolItem } from '@zeroDraw/agent-ui';
 import { Divider, Tooltip } from 'antd';
 import React, { useMemo } from 'react';
-import useUpload from '@/pages/hooks/useUpload';
+import useUpload from '../hooks/useUpload';
 import { apiUrl, fileUrl } from '@/utils';
 
 interface StudioToolBarProps {

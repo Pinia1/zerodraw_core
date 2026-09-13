@@ -3,15 +3,9 @@ export * from './agent/observability';
 export * from './agent/sse';
 export * from './agent/tools';
 export * from './agent/studioFlow';
-export * from './generate';
 export * from './github';
 export * from './guest';
-export * from './lib';
-export * from './nanobanana';
-
-export * from './seedream';
 export * from './project';
-export * from './assets';
 
 export interface ApiResponse<T = unknown> {
   code: number;

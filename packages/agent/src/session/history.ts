@@ -1,6 +1,6 @@
 import { BACKGROUND_CONTEXT, type Context, type Entry } from '@earendil-works/pi-agent-core';
 import type { AgentTranscriptEntry } from '@zeroDraw/api-contract';
-import { MySqlStorage } from '../storage/mysql.storage';
+import { SqliteStorage } from '../storage/sqlite.storage';
 
 const TRANSCRIPT_ENTRY_TYPES = new Set<Entry['type']>(['message', 'compaction', 'branch_summary']);
 
@@ -43,7 +43,7 @@ export async function readMainLaneTranscript(
   sessionId: string,
   context: Context = BACKGROUND_CONTEXT,
 ): Promise<AgentTranscriptEntry[]> {
-  const storage = new MySqlStorage(sessionId);
+  const storage = new SqliteStorage(sessionId);
   try {
     const entries = await storage.scanEntries({ order: 'asc' }, context);
     return entries.filter((e) => TRANSCRIPT_ENTRY_TYPES.has(e.type)).map(entryToTranscript);

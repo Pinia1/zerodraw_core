@@ -1,71 +1,19 @@
 import { z } from 'zod';
 
-/** 由浏览器执行、服务端 deferred 挂起的工具名 */
-export const FRONTEND_TOOL_NAMES = ['get_canvas_state', 'switch_draw_tool', 'place_svg'] as const;
-
-export const drawToolModeSchema = z.enum(['pen', 'brush', 'fill']);
-
-export type DrawToolMode = z.infer<typeof drawToolModeSchema>;
+/** 由浏览器执行、服务端 deferred 挂起的 Studio 工具名 */
+export const FRONTEND_TOOL_NAMES = [
+  'get_flow_state',
+  'create_flow_node',
+  'update_flow_node',
+  'delete_flow_node',
+  'connect_flow_nodes',
+] as const;
 
 export type FrontendToolName = (typeof FRONTEND_TOOL_NAMES)[number];
 
 export function isFrontendToolName(name: string): name is FrontendToolName {
   return (FRONTEND_TOOL_NAMES as readonly string[]).includes(name);
 }
-
-/** get_canvas_state：读取当前画布图层摘要（只读） */
-export const getCanvasStateArgsSchema = z.object({});
-
-export type GetCanvasStateArgs = z.infer<typeof getCanvasStateArgsSchema>;
-
-export const getCanvasStateResultSchema = z.object({
-  projectId: z.string().nullable(),
-  layerCount: z.number().int().nonnegative(),
-  layers: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      visible: z.boolean(),
-      opacity: z.number(),
-      order: z.number().optional(),
-    }),
-  ),
-});
-
-export type GetCanvasStateResult = z.infer<typeof getCanvasStateResultSchema>;
-
-/** switch_draw_tool：切换画笔工具组形态（钢笔 / 毛刷 / 填充） */
-export const switchDrawToolArgsSchema = z.object({
-  mode: drawToolModeSchema,
-});
-
-export type SwitchDrawToolArgs = z.infer<typeof switchDrawToolArgsSchema>;
-
-export const switchDrawToolResultSchema = z.object({
-  previousMode: drawToolModeSchema.nullable(),
-  currentMode: drawToolModeSchema,
-});
-
-export type SwitchDrawToolResult = z.infer<typeof switchDrawToolResultSchema>;
-
-/** place_svg：SVG 解析为矢量 path，Path2D 渲染为新图层 */
-export const placeSvgArgsSchema = z.object({
-  svg: z.string().min(1),
-  width: z.number().positive().optional(),
-  height: z.number().positive().optional(),
-  name: z.string().optional(),
-});
-
-export type PlaceSvgArgs = z.infer<typeof placeSvgArgsSchema>;
-
-export const placeSvgResultSchema = z.object({
-  layerId: z.string(),
-  pathCount: z.number().int().nonnegative(),
-  width: z.number(),
-  height: z.number(),
-});
-
-export type PlaceSvgResult = z.infer<typeof placeSvgResultSchema>;
 
 /** 前端完成 deferred 工具调用 */
 export const agentFrontendToolCompleteSchema = z.object({

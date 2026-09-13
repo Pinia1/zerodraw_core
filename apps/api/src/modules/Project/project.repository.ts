@@ -1,4 +1,5 @@
-import { and, desc, eq, project, sql } from '@zeroDraw/db';
+import { project } from '@zeroDraw/db';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { isNull } from 'drizzle-orm';
 import { db } from '../../db';
 
@@ -10,8 +11,9 @@ const projectFields = {
   canvasHeight: project.canvasHeight,
   backgroundColor: project.backgroundColor,
   backgroundVisible: project.backgroundVisible,
-  createdAt: sql<number>`UNIX_TIMESTAMP(${project.createdAt}) * 1000`,
-  updatedAt: sql<number>`UNIX_TIMESTAMP(${project.updatedAt}) * 1000`,
+  flowState: project.flowState,
+  createdAt: sql<number>`cast(${project.createdAt} as integer)`,
+  updatedAt: sql<number>`cast(${project.updatedAt} as integer)`,
 };
 
 export interface FindProjectsParams {

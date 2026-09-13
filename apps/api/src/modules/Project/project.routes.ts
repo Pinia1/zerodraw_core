@@ -2,7 +2,7 @@ import { ZodTypeProvider } from '@fastify/type-provider-zod';
 import {
   createProjectSchema,
   listProjectQuerySchema,
-  saveLayersSchema,
+  saveProjectFlowSchema,
   updateProjectSchema,
 } from '@zeroDraw/api-contract';
 import { FastifyInstance } from 'fastify';
@@ -31,6 +31,18 @@ export async function projectRoutes(fastify: FastifyInstance) {
     return reply.success(data);
   });
 
+  app.put(
+    '/:id/flow',
+    { schema: { params: z.object({ id: z.string() }), body: saveProjectFlowSchema } },
+    async (request, reply) => {
+      const { id } = request.params;
+      const userId = request.user.userId;
+
+      await fastify.projectService.saveProjectFlow({ id, userId, ...request.body });
+      return reply.success(id);
+    },
+  );
+
   app.patch(
     '/:id',
     { schema: { params: z.object({ id: z.string() }), body: updateProjectSchema } },
@@ -39,18 +51,6 @@ export async function projectRoutes(fastify: FastifyInstance) {
       const userId = request.user.userId;
 
       await fastify.projectService.updateProject({ id, userId, ...request.body });
-      return reply.success(id);
-    },
-  );
-
-  app.put(
-    '/:id/layers',
-    { schema: { params: z.object({ id: z.string() }), body: saveLayersSchema } },
-    async (request, reply) => {
-      const { id } = request.params;
-      const userId = request.user.userId;
-
-      await fastify.projectService.saveLayers({ projectId: id, userId, ...request.body });
       return reply.success(id);
     },
   );

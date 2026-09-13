@@ -6,7 +6,7 @@
 
 @source "./components";
 @source "./features/**/*.{ts,tsx,css}";
-@source "../../packages/core/src";
+@source "../../packages/agent-ui/src";
 
 @custom-variant dark (&:is(.dark *));
 

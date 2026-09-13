@@ -1,47 +1,19 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
-      "version": "5",
-      "when": 1769947402728,
-      "tag": "0000_striped_unus",
+      "version": "6",
+      "when": 1789310530744,
+      "tag": "0000_init_sqlite",
       "breakpoints": true
     },
     {
       "idx": 1,
-      "version": "5",
-      "when": 1769948274066,
-      "tag": "0001_swift_mephisto",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1789138791075,
-      "tag": "0002_mixed_nicolaos",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1789222033763,
-      "tag": "0003_useful_terror",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1789281000000,
-      "tag": "0005_conscious_frightful_four",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1789282000000,
-      "tag": "0006_agent_prompt_run_ledger_seq",
+      "version": "6",
+      "when": 1789311000000,
+      "tag": "0001_add_project_flow_state",
       "breakpoints": true
     }
   ]

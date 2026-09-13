@@ -5,7 +5,7 @@ import type {
   FlowMutationResult,
   UpdateFlowNodeArgs,
 } from '@zeroDraw/api-contract';
-import { generateUUID } from '@zeroDraw/core';
+import { generateUUID } from '@zeroDraw/agent-ui';
 import type { Edge } from '@xyflow/react';
 import type { StudioFlowState } from '../types';
 

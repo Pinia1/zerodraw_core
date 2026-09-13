@@ -7,15 +7,10 @@ import type {
   FrontendToolBridge,
 } from '@zeroDraw/agent';
 import type { AuthService } from '../modules/Auth/auth.services';
-import type { AssetsService } from '../modules/Assets/assets.services';
-import type { GenerateQueue } from '../modules/AIGenerate/generate.queue';
-import type { GenerateService } from '../modules/AIGenerate/generate.services';
 import type { GithubService } from '../modules/Passport/github.service';
 import type { ProjectService } from '../modules/Project/project.services';
+import type { LocalStorageService } from '../modules/Local/local.storage';
 import type { R2Service } from '../modules/R2/r2.services';
-import type { LibService } from '../modules/Lib/lib.services';
-import type { BananaService } from '../modules/NanoBanana/banana.services';
-import type { SeedreamService } from '../modules/Seedream/seedream.services';
 import type { VolcService } from '../modules/Volc/volc.services';
 import type { UploadServices } from '../plugins/infra.plugin';
 
@@ -35,16 +30,11 @@ declare module 'fastify' {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     authService: AuthService;
     projectService: ProjectService;
-    generateService: GenerateService;
-    generateQueue: GenerateQueue;
-    assetsService: AssetsService;
-    libService: LibService;
-    r2Service: R2Service;
-    volcService: VolcService;
+    localStorage: LocalStorageService;
+    r2Service?: R2Service;
+    volcService?: VolcService;
     uploadServices: UploadServices;
-    githubService: GithubService;
-    bananaService: BananaService;
-    seedreamService: SeedreamService;
+    githubService?: GithubService;
     agentService: AgentService;
     frontendToolBridge: FrontendToolBridge;
     agentRuntimeHost: AgentRuntimeHost;

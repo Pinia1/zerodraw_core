@@ -4,8 +4,12 @@ services:
       context: .
       dockerfile: nginx/Dockerfile
       args:
-        GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
-        VITE_DOCS_URL: ${VITE_DOCS_URL:-https://zerodraw.cn}
+        GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_IMAGE_THUMBNAIL: ${VITE_IMAGE_THUMBNAIL:-/api/file/thumbnail}
+        VITE_IMAGE_FILE: ${VITE_IMAGE_FILE:-/api/file/s3}
+        VITE_R2_URL: ${VITE_R2_URL:-https://cdn.zerodraw.cn}
+        VITE_R2_THUMBNAIL_URL: ${VITE_R2_THUMBNAIL_URL:-https://cdn.zerodraw.cn/cdn-cgi/image}
     ports:
       - "80:3000"
     depends_on:
@@ -22,46 +26,11 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      DB_HOST: mysql
-      DB_PORT: "3306"
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
+      DATABASE_URL: file:./data/app.db
+      UPLOAD_PROVIDER: ${UPLOAD_PROVIDER:-local}
+      LOCAL_UPLOAD_DIR: ./data/uploads
       PORT: "3070"
       HOST: "0.0.0.0"
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-
-  mysql:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: zerodraw
-      MYSQL_USER: zero_user
-      MYSQL_PASSWORD: 123456
     volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - ./data:/app/data
     restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-volumes:
-  mysql_data:
-  redis_data:

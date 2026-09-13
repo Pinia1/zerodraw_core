@@ -1,5 +1,4 @@
 import type { ProjectDetail } from '@zeroDraw/api-contract';
-import type { GenerateParams } from '../types/generate';
 
 /** Agent 工具可调用的业务服务（由宿主通过 configureAgentModule 注入）。 */
 export interface AgentDeps {
@@ -12,8 +11,5 @@ export interface AgentDeps {
       deleted?: boolean;
     }): Promise<{ list: unknown[]; total: number; page: number; pageSize: number }>;
     getProject(query: { id: string; userId: number }): Promise<ProjectDetail>;
-  };
-  generate: {
-    run(userId: number, params: GenerateParams): Promise<{ taskId: string }>;
   };
 }

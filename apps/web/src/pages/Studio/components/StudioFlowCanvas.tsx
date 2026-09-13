@@ -13,13 +13,16 @@ import {
   useNodesState,
   useReactFlow,
   type Connection,
+  type Edge,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { FlowMutationResult } from '@zeroDraw/api-contract';
+import type { ProjectFlowState } from '@zeroDraw/api-contract';
 import { useMemoizedFn } from '@zeroDraw/common';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { initialEdges, initialNodes } from '../constants';
+import { usePersistFlowState } from '../hooks/usePersistFlowState';
 import type { StudioFlowState } from '../types';
 
 const FlowContainer = styled.div`
@@ -42,23 +45,55 @@ const FlowContainer = styled.div`
 `;
 
 interface StudioFlowEditorProps {
+  projectId?: string;
+  initialFlowState?: ProjectFlowState | null;
   onRegisterGetFlowState: (getter: () => StudioFlowState) => void;
   onRegisterApplyFlowMutation: (handler: (mutation: StudioFlowMutation) => FlowMutationResult) => void;
 }
 
 function StudioFlowEditor({
+  projectId,
+  initialFlowState,
   onRegisterGetFlowState,
   onRegisterApplyFlowMutation,
 }: StudioFlowEditorProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<StudioNode>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const { fitView, getViewport } = useReactFlow();
+  const seeded = useMemo(
+    () => ({
+      nodes: (initialFlowState?.nodes as StudioNode[] | undefined) ?? initialNodes,
+      edges: (initialFlowState?.edges as Edge[] | undefined) ?? initialEdges,
+      viewport: initialFlowState?.viewport ?? { x: 0, y: 0, zoom: 1 },
+    }),
+    [initialFlowState],
+  );
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<StudioNode>(seeded.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(seeded.edges);
+  const [viewportRevision, setViewportRevision] = useState(0);
+  const { fitView, getViewport, setViewport } = useReactFlow();
+
+  useEffect(() => {
+    setNodes(seeded.nodes);
+    setEdges(seeded.edges);
+    setViewport(seeded.viewport);
+  }, [seeded, setEdges, setNodes, setViewport]);
 
   const getFlowState = useMemoizedFn((): StudioFlowState => ({
     nodes,
     edges,
     viewport: getViewport(),
   }));
+
+  const persistState = useMemo(
+    () => ({
+      nodes,
+      edges,
+      viewport: getViewport(),
+      viewportRevision,
+    }),
+    [edges, getViewport, nodes, viewportRevision],
+  );
+
+  usePersistFlowState(projectId, persistState);
 
   useEffect(() => {
     onRegisterGetFlowState(getFlowState);
@@ -93,6 +128,7 @@ function StudioFlowEditor({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onMoveEnd={() => setViewportRevision((value) => value + 1)}
         nodeTypes={studioNodeTypes}
         onlyRenderVisibleElements
         selectionOnDrag
@@ -129,6 +165,8 @@ function StudioFlowEditor({
 }
 
 interface StudioFlowCanvasProps {
+  projectId?: string;
+  initialFlowState?: ProjectFlowState | null;
   onRegisterGetFlowState: (getter: () => StudioFlowState) => void;
   onRegisterApplyFlowMutation: (
     handler: (mutation: StudioFlowMutation) => FlowMutationResult,
@@ -136,12 +174,16 @@ interface StudioFlowCanvasProps {
 }
 
 export function StudioFlowCanvas({
+  projectId,
+  initialFlowState,
   onRegisterGetFlowState,
   onRegisterApplyFlowMutation,
 }: StudioFlowCanvasProps) {
   return (
     <ReactFlowProvider>
       <StudioFlowEditor
+        projectId={projectId}
+        initialFlowState={initialFlowState}
         onRegisterGetFlowState={onRegisterGetFlowState}
         onRegisterApplyFlowMutation={onRegisterApplyFlowMutation}
       />

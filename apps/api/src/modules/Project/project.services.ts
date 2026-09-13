@@ -1,21 +1,28 @@
-import type { ProjectDetail, ProjectItem, ProjectLayerDetail } from '@zeroDraw/api-contract';
+import {
+  projectFlowStateSchema,
+  type ProjectDetail,
+  type ProjectFlowState,
+  type ProjectItem,
+} from '@zeroDraw/api-contract';
 import { ForbiddenError, NotFoundError } from '../../utils/errors';
-import type { ProjectLayerRepository } from './projectLayer.repository';
 import type { ProjectRepository } from './project.repository';
 import type {
   CreateProjectParams,
   DeleteProjectParams,
   GetProjectParams,
   ListProjectParams,
-  SaveLayersParams,
+  SaveProjectFlowParams,
   UpdateProjectParams,
 } from './project.type';
 
+function parseFlowState(raw: unknown): ProjectFlowState | null {
+  if (raw == null) return null;
+  const parsed = projectFlowStateSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 export class ProjectService {
-  constructor(
-    private readonly projectRepository: ProjectRepository,
-    private readonly projectLayerRepository: ProjectLayerRepository,
-  ) {}
+  constructor(private readonly projectRepository: ProjectRepository) {}
 
   async listProjects({ userId, page, pageSize, keyword, deleted }: ListProjectParams) {
     const [total, list] = await Promise.all([
@@ -32,21 +39,23 @@ export class ProjectService {
     const owner = await this.projectRepository.findOwner(id);
     if (owner?.userId !== userId) throw new ForbiddenError();
 
-    const layers = await this.projectLayerRepository.findByProjectId(id);
-
     return {
       ...row,
-      layers: layers.map((l) => ({
-        id: l.id,
-        name: l.name,
-        order: l.order,
-        opacity: l.opacity,
-        visible: l.visible,
-        blendMode: l.blendMode,
-        filter: (l.filter as any) ?? null,
-        content: (l.content as any) ?? {},
-      })) as ProjectLayerDetail[],
+      flowState: parseFlowState(row.flowState),
     };
+  }
+
+  async saveProjectFlow({ id, userId, nodes, edges, viewport }: SaveProjectFlowParams) {
+    const owner = await this.projectRepository.findOwner(id);
+    if (!owner || owner.deletedAt) throw new NotFoundError();
+    if (owner.userId !== userId) throw new ForbiddenError();
+
+    const flowState = projectFlowStateSchema.parse({ nodes, edges, viewport });
+    await this.projectRepository.update(id, {
+      flowState,
+      updatedAt: new Date(),
+    });
+    return id;
   }
 
   async createProject({
@@ -91,18 +100,6 @@ export class ProjectService {
     return id;
   }
 
-  async saveLayers({ projectId, userId, layers }: SaveLayersParams) {
-    const owner = await this.projectRepository.findOwner(projectId);
-    if (!owner || owner.deletedAt) throw new NotFoundError();
-    if (owner.userId !== userId) throw new ForbiddenError();
-
-    await this.projectLayerRepository.deleteByProjectId(projectId);
-    await this.projectLayerRepository.bulkInsert(projectId, layers);
-    await this.projectRepository.touchUpdatedAt(projectId);
-
-    return projectId;
-  }
-
   async deleteProject({ id, userId }: DeleteProjectParams) {
     const owner = await this.projectRepository.findOwner(id);
     if (!owner || owner.deletedAt) throw new NotFoundError();
@@ -126,7 +123,6 @@ export class ProjectService {
     if (!owner) throw new NotFoundError();
     if (owner.userId !== userId) throw new ForbiddenError();
 
-    await this.projectLayerRepository.deleteByProjectId(id);
     await this.projectRepository.permanentDelete(id);
     return id;
   }

@@ -1,10 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
-import { env } from '../config/env';
-import { BananaService } from '../modules/NanoBanana/banana.services';
+import { env, isCloudUploadEnabled } from '../config/env';
+import { LocalStorageService } from '../modules/Local/local.storage';
 import { GithubService } from '../modules/Passport/github.service';
 import { R2Service } from '../modules/R2/r2.services';
-import { SeedreamService } from '../modules/Seedream/seedream.services';
 import { VolcService } from '../modules/Volc/volc.services';
 
 export interface UploadServices {
@@ -12,27 +11,35 @@ export interface UploadServices {
 }
 
 export function createUploadServices(
-  r2Service: R2Service,
-  volcService: VolcService
+  localStorage: LocalStorageService,
+  r2Service?: R2Service,
+  volcService?: VolcService,
 ): UploadServices {
-  const provider = env.NODE_ENV === 'development' ? 'volc' : env.UPLOAD_PROVIDER;
-  return provider === 'r2' ? r2Service : volcService;
+  if (env.UPLOAD_PROVIDER === 'local' || !isCloudUploadEnabled) {
+    return localStorage;
+  }
+  if (env.UPLOAD_PROVIDER === 'r2' && r2Service) {
+    return r2Service;
+  }
+  if (volcService) {
+    return volcService;
+  }
+  return localStorage;
 }
 
 async function infraPluginImpl(fastify: FastifyInstance): Promise<void> {
-  const r2Service = new R2Service();
-  const volcService = new VolcService();
-  const uploadServices = createUploadServices(r2Service, volcService);
-  const githubService = new GithubService();
-  const bananaService = new BananaService(volcService);
-  const seedreamService = new SeedreamService(volcService);
+  const localStorage = new LocalStorageService();
+  const r2Service = env.CLOUDFLARE_ACCESS_KEY_ID ? new R2Service() : undefined;
+  const volcService = isCloudUploadEnabled ? new VolcService() : undefined;
+  const uploadServices = createUploadServices(localStorage, r2Service, volcService);
+  const githubService =
+    env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET ? new GithubService() : undefined;
 
-  fastify.decorate('r2Service', r2Service);
-  fastify.decorate('volcService', volcService);
+  fastify.decorate('localStorage', localStorage);
+  if (r2Service) fastify.decorate('r2Service', r2Service);
+  if (volcService) fastify.decorate('volcService', volcService);
   fastify.decorate('uploadServices', uploadServices);
-  fastify.decorate('githubService', githubService);
-  fastify.decorate('bananaService', bananaService);
-  fastify.decorate('seedreamService', seedreamService);
+  if (githubService) fastify.decorate('githubService', githubService);
 }
 
 export const infraPlugin = fp(infraPluginImpl, {

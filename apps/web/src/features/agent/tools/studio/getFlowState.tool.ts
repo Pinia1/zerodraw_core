@@ -3,7 +3,7 @@ import {
   type GetFlowStateArgs,
   type GetFlowStateResult,
 } from '@zeroDraw/api-contract';
-import type { FrontendToolDefinition } from '@zeroDraw/core';
+import type { FrontendToolDefinition } from '@zeroDraw/agent-ui';
 import { summarizeStudioNode } from '@/pages/Studio/flowBridge/summarizeNode';
 import type { StudioFlowState } from '@/pages/Studio/types';
 

@@ -1,22 +1,26 @@
-import { int, mysqlTable, text, timestamp, varchar } from 'drizzle-orm/mysql-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const user = mysqlTable('users', {
-  id: int('id').primaryKey().autoincrement(),
-  userId: int('user_id').unique().notNull(),
-  viewNum: int('view_num').default(0),
-  platform: varchar('platform', { length: 255 }).notNull(),
-  username: varchar('username', { length: 255 }).notNull(),
-  email: varchar('email', { length: 255 }),
-  avatar: varchar('avatar', { length: 500 }),
-  name: varchar('name', { length: 255 }),
+export const user = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().unique(),
+  viewNum: integer('view_num').default(0),
+  platform: text('platform').notNull(),
+  username: text('username').notNull(),
+  email: text('email'),
+  avatar: text('avatar'),
+  name: text('name'),
   bio: text('bio'),
-  blog: varchar('blog', { length: 500 }),
-  location: varchar('location', { length: 255 }),
-  publicRepos: int('public_repos').default(0),
-  followers: int('followers').default(0),
-  following: int('following').default(0),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+  blog: text('blog'),
+  location: text('location'),
+  publicRepos: integer('public_repos').default(0),
+  followers: integer('followers').default(0),
+  following: integer('following').default(0),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 export type User = typeof user.$inferSelect;
